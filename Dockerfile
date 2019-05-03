@@ -7,9 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rxp cvs patch fetchmail ssmtp openssl libemail-mime-perl \
 	&& rm -rf /var/lib/apt/lists/*
 
+COPY bin /usr/local/
+
 RUN useradd -ms /bin/bash -u 1074 afido
 WORKDIR /home/afido
-COPY bin ./
 
 USER afido:users
 
