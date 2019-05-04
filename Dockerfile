@@ -4,7 +4,7 @@ MAINTAINER <diestel@steloj.de>
 # https://packages.debian.org/stretch/perl/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    rxp cvs patch fetchmail ssmtp openssl libemail-mime-perl \
+    openssh-server rxp cvs patch fetchmail ssmtp openssl libemail-mime-perl \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY bin /usr/local/
@@ -31,3 +31,6 @@ USER afido:users
 # la interŝanĝo de XML-dosieroj kun la redaktoservo okazu per komuna dosierujo revo/xml
 # docker run -v /pado/al/xml:revo/xml voko-vaneso redaktoservo.pl -a
 
+ENTRYPOINT ["./docker-entrypoint.sh"]
+
+CMD ["perl","processmail.pl"]

@@ -18,16 +18,37 @@ use MIME::Entity;
 $verbose      = 1;
 $debug        = 0;
 
-# dosierujoj
-$revo_home    = $ENV{"HOME"};
-$VOKO         = $ENV{"VOKO"};
-$tmp          = "$revo_home/revotmp";
-$log_mail     = "$revo_home/revolog";
-$revo_base    = "$revo_home/revo";
-$revo_etc     = "$revo_home/etc";
+# baza agordo
+$afido_dir    = "/var/afido"; # tmp, log
+$dict_home    = $ENV{"HOME"};
+$dict_base    = "$dict_home/dict"; # xml, dok, dtd
+$dict_etc     = "/run/secrets"; # redaktantoj
+$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
+$revo_url     = "http://purl.oclc.org/NET/voko/revo";
 
-$parts_dir    = "$revo_home/revotmp/mailparts";
-$mail_folder  = "/var/spool/mail/revo";
+# FARENDA: legu tiujn el sekreto(j)
+$revoservo    = '[Revo-Servo]';
+$revo_mailaddr= 'revo@reta-vortaro.de';
+$redaktilo_from= 'revo@steloj.de';
+$revolist     = 'wolfram';
+$revo_from    = "Reta Vortaro <$revo_mailaddr>";
+$signature    = "--\nRevo-Servo $revo_mailaddr\n"
+    ."retposhta servo por redaktantoj de Reta Vortaro.\n";
+
+
+# programoj
+$xmlcheck     = '/usr/bin/rxp -V -s';
+$cvs          = '/usr/bin/cvs';
+$sendmail     = '/usr/lib/sendmail -t -i';
+$patch        = '/usr/bin/patch';
+
+# dosierujoj
+$tmp          = "$afido_dir/tmp";
+$log_mail     = "$afido_dir/log";
+$dtd_dir      = "$dict_base/dtd";
+
+$parts_dir    = "$afido_dir/tmp/mailparts";
+$mail_folder  = "/var/spool/mail/afido";
 $mail_error   = "$tmp/mailerr";
 $mail_send    = "$tmp/mailsend";
 $xml_temp     = "$tmp/xml";
@@ -37,33 +58,17 @@ $old_mail     = "$log_mail/oldmail";
 $err_mail     = "$log_mail/errmail";
 $prc_mail     = "$log_mail/prcmail";
 
-$xml_dir      = "$revo_base/xml";
-$dok_dir      = "$revo_base/dok";
+$xml_dir      = "$dict_base/xml";
+$dok_dir      = "$dict_base/dok";
 
 $mail_local   = "$tmp/mail";
-#$editor_file  = "$revo_home/etc/redaktoroj";
-$editor_file  = "$revo_etc/redaktantoj";
+$editor_file  = "$dict_etc/redaktantoj";
 $attachments  = "$tmp/mailatt/attchm".$$."_";
-$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
-$revo_url     = "http://purl.oclc.org/NET/voko/revo";
-
-# programoj
-$xmlcheck     = '/usr/bin/rxp -V -s';
-$cvs          = '/usr/bin/cvs';
-$sendmail     = '/usr/lib/sendmail -t -i';
-$patch        = '/usr/bin/patch';
 
 # diversaj
 $mail_begin   = '^From[^:]';
 $possible_keys= 'komando|teksto|shangho';
 $commands     = 'redakt[oui]|help[oui]|aldon[oui]'; # .'|dokumento|artikolo|historio|propono'
-$revoservo    = '[Revo-Servo]';
-$revo_mailaddr= 'revo@reta-vortaro.de';
-$redaktilo_from= 'revo@steloj.de';
-$revolist     = 'wolfram';
-$revo_from    = "Reta Vortaro <$revo_mailaddr>";
-$signature    = "--\nRevo-Servo $revo_mailaddr\n"
-    ."retposhta servo por redaktantoj de Reta Vortaro.\n";
 $separator    = "=" x 50 . "\n";
 
 ################ la precipa masho de la programo ##############
@@ -759,9 +764,9 @@ sub checkxml {
     my $teksto = shift;
     my $err;
 
-    # aldonu dtd symlink se ankorau mankas
-    symlink("$VOKO/dtd","$xml_temp/../dtd") ;
-#	|| warn "Ne povis ligi de $VOKO/dtd al $xml_temp/../dtd\n";
+    # aldonu dtd symlink se ankoraŭ mankas
+    symlink("$dtd_dir","$xml_temp/../dtd") ;
+#	|| warn "Ne povis ligi de $dtd_dir al $xml_temp/../dtd\n";
 
     # enmetu Log se ankorau mankas...
     unless ($teksto =~ /<!--\s+\044Log/s) {

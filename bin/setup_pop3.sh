@@ -16,7 +16,7 @@ if [ ! -e ${fetchmailrc} ]; then
     POP3_PASSWORD=$(cat /run/secrets/voko-afido.pop3_password)
     
     mkdir -p ${certs}
-    openssl s_client -connect "${POP3_SERVER}":465 -showcerts > "${certs}/${POP3_SERVER}.cert.pem"
+    openssl s_client -connect "${POP3_SERVER}":995 -showcerts > "${certs}/${POP3_SERVER}.cert.pem"
     c_rehash ${certs}
     echo "poll ${POP3_SERVER} proto pop3 user \"${POP3_USER}\" password ${POP3_PASSWORD} sslproto TLS1 sslcertpath ${certs}" > ${fetchmailrc}
     chmod u-w ${fetchmailrc}
