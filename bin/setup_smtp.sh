@@ -1,4 +1,7 @@
 #!/bin/bash
+set -x # trace
+# set -e # exit on erros in pipe
+
 ssmtpconf=/etc/ssmtp/ssmtp.conf
 
 if [ ! -e ${ssmtpconf} ]; then

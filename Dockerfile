@@ -3,16 +3,17 @@ MAINTAINER <diestel@steloj.de>
 
 # https://packages.debian.org/stretch/perl/
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssh-server rxp cvs patch fetchmail ssmtp openssl libemail-mime-perl \
-	&& rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+    openssh-server rxp cvs patch ssmtp libemail-mime-perl \
+	&& mkdir -p /var/run/sshd && rm -rf /var/lib/apt/lists/*
 
-COPY bin /usr/local/
+COPY bin/* /usr/local/bin/
+#ENV PATH "$PATH:/usr/local/bin"
 
 RUN useradd -ms /bin/bash -u 1074 afido
 WORKDIR /home/afido
 
-USER afido:users
+###USER afido:users
 
 
 # farenda:
@@ -31,6 +32,24 @@ USER afido:users
 # la interŝanĝo de XML-dosieroj kun la redaktoservo okazu per komuna dosierujo revo/xml
 # docker run -v /pado/al/xml:revo/xml voko-vaneso redaktoservo.pl -a
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+###ENTRYPOINT ["docker-entrypoint.sh"]
+#ENTRYPOINT ["echo","$PATH"]
 
-CMD ["perl","processmail.pl"]
+#CMD ["perl","processmail.pl"]
+
+# Por teste eniri la procesumon unuope vi devas aldoni sekretojn ekz. tiel:
+# 
+# mkdir -p ~/etc/secrets
+# echo "smtp.provizanto.org" > ~/etc/secrets/voko-afido.smtp_server 
+# echo "redaktoservo@provizanto.org" > ~/etc/secrets/voko-afido.smtp_user
+# echo "M14P$svort0" > ~/etc/secrets/voko-afido.smtp_password -
+# echo "pop3.provizanto.org" > ~/etc/secrets/voko-afido.pop3_server -
+# echo "redaktoservo@provizanto.org" > ~/etc/secrets/voko-afido.pop3_user -
+# echo "M14P$svort0" > ~/etc/secrets/voko-afido.pop3_password -
+# sudo chmod 400 ~/etc/secrets/voko-afido* && chown 1074 ~/etc/secrets/voko-afido*
+#
+# docker run -it -v ~/etc/secrets:/run/secrets voko-afido bash
+
+USER root
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]

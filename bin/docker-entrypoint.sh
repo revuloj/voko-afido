@@ -6,7 +6,6 @@
 # ankoraŭ mankas. Por ŝanĝi ilin necesas rekrei la procesumon voko-afido kun ŝanĝitaj sekretoj
 # aŭ forigi fetchmailrc kaj ssmtp.conf
 
-setup_pop3.sh
 setup_smtp.sh
 
 exec "$@"
