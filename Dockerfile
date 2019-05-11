@@ -10,7 +10,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 COPY bin/* /usr/local/bin/
 #ENV PATH "$PATH:/usr/local/bin"
 
-RUN useradd -ms /bin/bash -u 1074 afido
+RUN useradd -ms /bin/bash -u 1074 afido && mkdir -p /home/afido/.ssh
 WORKDIR /home/afido
 
 ###USER afido:users
@@ -32,7 +32,7 @@ WORKDIR /home/afido
 # la interŝanĝo de XML-dosieroj kun la redaktoservo okazu per komuna dosierujo revo/xml
 # docker run -v /pado/al/xml:revo/xml voko-vaneso redaktoservo.pl -a
 
-###ENTRYPOINT ["docker-entrypoint.sh"]
+
 #ENTRYPOINT ["echo","$PATH"]
 
 #CMD ["perl","processmail.pl"]
@@ -52,4 +52,5 @@ WORKDIR /home/afido
 
 USER root
 EXPOSE 22
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["/usr/sbin/sshd", "-D"]
