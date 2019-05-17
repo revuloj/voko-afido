@@ -18,6 +18,7 @@ use MIME::Entity;
 $verbose      = 1;
 $debug        = 0;
 
+# FARENDA: legu tiujn el /docker swarm config/
 # baza agordo
 $afido_dir    = "/var/afido"; # tmp, log
 $dict_home    = $ENV{"HOME"};
@@ -25,6 +26,7 @@ $dict_base    = "$dict_home/dict"; # xml, dok, dtd
 $dict_etc     = "/run/secrets"; # redaktantoj
 $vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
 $revo_url     = "http://purl.oclc.org/NET/voko/revo";
+$mail_folder  = "/var/spool/mail/tomocero";
 
 # FARENDA: legu tiujn el sekreto(j)
 $revoservo    = '[Revo-Servo]';
@@ -48,7 +50,6 @@ $log_mail     = "$afido_dir/log";
 $dtd_dir      = "$dict_base/dtd";
 
 $parts_dir    = "$afido_dir/tmp/mailparts";
-$mail_folder  = "/var/spool/mail/afido";
 $mail_error   = "$tmp/mailerr";
 $mail_send    = "$tmp/mailsend";
 $xml_temp     = "$tmp/xml";

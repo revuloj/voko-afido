@@ -8,5 +8,6 @@
 
 setup_ssh.sh
 setup_smtp.sh
+setup_var.sh
 
 exec "$@"

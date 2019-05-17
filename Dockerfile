@@ -4,7 +4,7 @@ MAINTAINER <diestel@steloj.de>
 # https://packages.debian.org/stretch/perl/
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    openssh-server rxp cvs patch ssmtp libemail-mime-perl \
+    openssh-server rxp cvs patch ssmtp libmime-tools-perl \
 	&& mkdir -p /var/run/sshd && rm -rf /var/lib/apt/lists/*
 
 COPY bin/* /usr/local/bin/
