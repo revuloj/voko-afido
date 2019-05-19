@@ -4,7 +4,7 @@ MAINTAINER <diestel@steloj.de>
 # https://packages.debian.org/stretch/perl/
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    openssh-server rxp cvs patch ssmtp libmime-tools-perl \
+    openssh-server rxp cvs curl unzip patch ssmtp libmime-tools-perl \
 	&& mkdir -p /var/run/sshd && rm -rf /var/lib/apt/lists/*
 
 COPY bin/* /usr/local/bin/
@@ -15,6 +15,8 @@ WORKDIR /home/afido
 
 ###USER afido:users
 
+RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/master.zip \
+  && unzip master.zip voko-grundo-master/dtd/* && rm master.zip && mkdir dict && ln -s voko-grundo-master/dtd dict/dtd
 
 # farenda:
 #
