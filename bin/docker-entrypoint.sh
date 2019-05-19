@@ -9,5 +9,6 @@
 setup_ssh.sh
 setup_smtp.sh
 setup_var.sh
+setup_dict.sh
 
 exec "$@"
