@@ -41,7 +41,9 @@ $signature    = "--\nRevo-Servo $revo_mailaddr\n"
 # programoj
 $xmlcheck     = '/usr/bin/rxp -V -s';
 $cvs          = '/usr/bin/cvs';
-$sendmail     = '/usr/lib/sendmail -t -i';
+# -t ne subtenata de ssmtp
+#$sendmail     = '/usr/lib/sendmail -t -i';
+$sendmail     = '/usr/lib/sendmail -i';
 $patch        = '/usr/bin/patch';
 
 # dosierujoj
@@ -63,7 +65,7 @@ $xml_dir      = "$dict_base/xml";
 $dok_dir      = "$dict_base/dok";
 
 $mail_local   = "$tmp/mail";
-$editor_file  = "$dict_etc/redaktantoj";
+$editor_file  = "$dict_etc/voko.redaktantoj";
 $attachments  = "$tmp/mailatt/attchm".$$."_";
 
 # diversaj
@@ -336,8 +338,8 @@ sub process_ent {
 
 	    # se ambau - komando kaj xml - estas trovitaj, daurigu
 	    if ($komando and $xmltxt) {
-		normal_message("$komando\n\n$xmltxt");
-		return;
+			normal_message("$komando\n\n$xmltxt");
+			return;
 	    }
 	}
 	# en la plurparta mesagho shajne ne trovighis la serchita
@@ -349,16 +351,17 @@ sub process_ent {
 sub is_editor {
     my $from_addr = shift;
     my $reply_addr = shift;
-    my $res_addr = '';
+	my $res_addr = '';
+	my $email_addr;
 
-    chomp $email_addr;
+    chomp $from_addr;
     chomp $reply_addr;
 
     my $pos = index($from_addr,$redaktilo_from);
     if ($pos == 0 || $pos == 1) {
-	$email_addr = $reply_addr;
+		$email_addr = $reply_addr;
     } else {
-	$email_addr = $from_addr;
+		$email_addr = $from_addr;
     }
     
     $email_addr =~ s/\([^\)]+\)//s; # nomindiko lau malnova maniero
@@ -366,7 +369,7 @@ sub is_editor {
     $email_addr =~ s/\s+$//s;
     $email_addr =~ s/^.*<([a-z0-9\.\_\-]+\@[a-z0-9\._\-]+)>.*$/<$1>/si;
     unless ($email_addr =~ /<?[a-z0-9\.\_\-]+\@[a-z0-9\._\-]+>?/i) { 
-	return; # ne estas valida retadreso
+		return; # ne estas valida retadreso
     }
 
     # serchu en la dosiero kun redaktoroj
@@ -418,50 +421,50 @@ sub normal_message {
     my ($cmd,$arg,$xml);
 
     if ($text =~ s/^[\s\n]*($commands)[ \t]*:[ \t]*(.*?)\n//si) {
-	$cmd = $1;
-	$arg = $2;
+		$cmd = $1;
+		$arg = $2;
 
-	# legu chion ghis malplena linio au "<?xml..."
-	while (($text !~ /^\s*\n/) and ($text !~ /^\s*<\?xml/i)) {
-	    $text =~ s/^[ \t]*(.*?)\n//;
-	    $arg .= $1;
-	}
+		# legu chion ghis malplena linio au "<?xml..."
+		while (($text !~ /^\s*\n/) and ($text !~ /^\s*<\?xml/i)) {
+			$text =~ s/^[ \t]*(.*?)\n//;
+			$arg .= $1;
+		}
 
-	# la resto povus esti la artikolo
-	$text =~ s/^[\s\n]*//;
-	
-	# kaze, ke iu subskribo finas la mesaghon, forigu
-	# chion post </vortaro>
-	$text =~ s/(<\/vortaro>).*$/$1/s;
+		# la resto povus esti la artikolo
+		$text =~ s/^[\s\n]*//;
+		
+		# kaze, ke iu subskribo finas la mesaghon, forigu
+		# chion post </vortaro>
+		$text =~ s/(<\/vortaro>).*$/$1/s;
 
-	# anstataŭigu nbsp per spacoj linikomence, kion faras ekz. retposhtilo Evolution
-	# $text =~ s/^(\240+)/tr_nbsp($1)/me;
-	$text =~ s/^((?:\302\240)+)/tr_nbsp($1)/meg;	
-	
-	if ($text) {
-	    $xml = $text;
-	}
+		# anstataŭigu nbsp per spacoj linikomence, kion faras ekz. retposhtilo Evolution
+		# $text =~ s/^(\240+)/tr_nbsp($1)/me;
+		$text =~ s/^((?:\302\240)+)/tr_nbsp($1)/meg;	
+		
+		if ($text) {
+			$xml = $text;
+		}
 
-	komando($cmd,$arg,$xml);
+		komando($cmd,$arg,$xml);
 	
     } else {
-	# sekurigu la dosieron
-	unless (open MSG,">$tmp/_err_msg") {
-	    warn "Ne povis malfermi $tmp/_err_msg: $!\n";
-	    report("ERARO   : nekonata komando en la poshtajho");
-	    return;
-	}
-	print MSG $text;
-	close MSG;
+		# sekurigu la dosieron
+		unless (open MSG,">$tmp/_err_msg") {
+			warn "Ne povis malfermi $tmp/_err_msg: $!\n";
+			report("ERARO   : nekonata komando en la poshtajho");
+			return;
+		}
+		print MSG $text;
+		close MSG;
 
-	# kelkaj pseudaj variabloj necesaj
-	$article_id = "???.xml";
-	$komando = "???";
-	$shangho = "???";
+		# kelkaj pseudaj variabloj necesaj
+		$article_id = "???.xml";
+		$komando = "???";
+		$shangho = "???";
 
-	# raportu eraron
-	report("ERARO   : nekonata komando en la poshtajho","$tmp/_err_msg");
-	return;
+		# raportu eraron
+		report("ERARO   : nekonata komando en la poshtajho","$tmp/_err_msg");
+		return;
     }
 }
 
@@ -472,28 +475,28 @@ sub komando {
     $komando = $cmd;
 
     if ($cmd =~ /^help[oui]$/i) {
-	cmd_hlp();
+		cmd_hlp();
 
     } elsif ($cmd =~ /^dokumento/i) {
-	cmd_dokument($arg);
+		cmd_dokument($arg);
 
     } elsif ($cmd =~ /^redakt[oui]/i) {
-	cmd_redakt($arg, $txt);
+		cmd_redakt($arg, $txt);
 
     } elsif ($cmd =~ /^aldon[oui]/i) {
-	cmd_aldon($arg, $txt);
+		cmd_aldon($arg, $txt);
 
     } elsif ($cmd =~ /^historio/i) {
-	cmd_histori($arg);
+		cmd_histori($arg);
 	
     } elsif ($cmd =~ /^artikolo/i) {
-	cmd_artikol($arg);
+		cmd_artikol($arg);
 
     } elsif ($cmd =~ /^propon[oui]/i) {
-	cmd_propon($arg, $txt);
+		cmd_propon($arg, $txt);
     } else {
-	report("ERARO   : nekonata komando $cmd");
-	return;
+		report("ERARO   : nekonata komando $cmd");
+		return;
     }
 }
 
@@ -519,34 +522,34 @@ sub report {
     # donu provizoran nomon al kunsendajho
     if ($file) {
 
-	# enmetu "redakto: $shanghoj" komence
-	if ($file =~ /\.xml$/) {
-	    unless (open FILE, $file) {
-		warn "Ne povis malfermi $file: $!\n";
-		goto "MOVE_FILE";
-	    }
-	    $text = join('',<FILE>);
-	    close FILE;
-	    unless (open FILE, ">$file") {
-		warn "Ne povis malfermi $file: $!\n";
-		goto "MOVE_FILE";
-	    }
-	    print FILE "$komando: $shangho\n\n";
-	    print FILE $text;
-	    close FILE;
-	}
-	
+		# enmetu "redakto: $shanghoj" komence
+		if ($file =~ /\.xml$/) {
+			unless (open FILE, $file) {
+				warn "Ne povis malfermi $file: $!\n";
+				goto "MOVE_FILE";
+			}
+			$text = join('',<FILE>);
+			close FILE;
+			unless (open FILE, ">$file") {
+				warn "Ne povis malfermi $file: $!\n";
+				goto "MOVE_FILE";
+			}
+			print FILE "$komando: $shangho\n\n";
+			print FILE $text;
+			close FILE;
+		}
+		
 MOVE_FILE:
-	# donu provizoran nomon al la dosiero
-	$file_no++;
-	$attachment = "$attachments$file_no";
-	`mv $file $attachment`;
+		# donu provizoran nomon al la dosiero
+		$file_no++;
+		$attachment = "$attachments$file_no";
+		`mv $file $attachment`;
     }
 
     # skribu informon en $mail_send por poste sendi raporton al $editor
     unless (open SMAIL, ">>$mail_send") {
-	warn "Ne povis malfermi $mail_send: $!\n";
-	return;
+		warn "Ne povis malfermi $mail_send: $!\n";
+		return;
     }
 
     print SMAIL "sendinto: $editor\n";
@@ -577,19 +580,19 @@ sub send_reports {
 
 	while (<SMAIL>) {
 	    # elprenu la sendinton
-	    if (s/^sendinto: *([^\n]+)\n//) {
-		$mail_addr = $1;
-		# chu dosierojn sendu?
-		if (s/^dosieroj: *([^\n\s]+)\n//) {
-		    $dos = $1;
-		    if ($_ =~ /artikolo: *([^\n]+)\n/s) { $art_id = $1; }
-		    
-		    $dosieroj{$mail_addr} .= "$dos $art_id|";
-		}
-		$reports{$mail_addr} .= $_;
+		if (s/^sendinto: *([^\n]+)\n//) {
+			$mail_addr = $1;
+			# chu dosierojn sendu?
+			if (s/^dosieroj: *([^\n\s]+)\n//) {
+				$dos = $1;
+				if ($_ =~ /artikolo: *([^\n]+)\n/s) { $art_id = $1; }
+				
+				$dosieroj{$mail_addr} .= "$dos $art_id|";
+			}
+			$reports{$mail_addr} .= $_;
 	    } else {
-		warn "Ne povis elpreni sendinton el $_\n";
-		next;
+			warn "Ne povis elpreni sendinton el $_\n";
+			next;
 	    }
 	}
 	close SMAIL;
@@ -615,35 +618,35 @@ sub send_reports {
 				 Data=>$message);
 	    
 	    # alpendigu dosierojn
-	    if ($dos) {
-		for $file (split (/\|/,$dos)) {
-		    if ($file =~ /^\s*([^\s]+)\s+(.+?)\s*$/) {
-			$file = $1;
-			$art_id = $2;
+		if ($dos) {
+			for $file (split (/\|/,$dos)) {
+				if ($file =~ /^\s*([^\s]+)\s+(.+?)\s*$/) {
+					$file = $1;
+					$art_id = $2;
 
-			if ($art_id =~ /^\044([^\044]+)\044$/) {
-			    $art_id = $1;
-			    $art_id =~ /^Id: ([^ ,\.]+\.xml),v/;
-			    $marko = $1;
-			} else {
-			    $marko=$art_id;
+					if ($art_id =~ /^\044([^\044]+)\044$/) {
+						$art_id = $1;
+						$art_id =~ /^Id: ([^ ,\.]+\.xml),v/;
+						$marko = $1;
+					} else {
+						$marko=$art_id;
+					}
+				} else { $art_id = $file; $marko=$file; }
+				
+				print "attach: $file\n" if ($debug);
+				if (-e $file) {
+					$mail_handle->attach(Path=>$file,
+							Type=>'text/plain',
+							Encoding=>'quoted-printable',
+							Disposition=>'attachment',
+							Filename=>$marko,
+							Description=>$art_id);
+				}
 			}
-		    } else { $art_id = $file; $marko=$file; }
-		    
-		    print "attach: $file\n" if ($debug);
-		    if ($file) {
-			$mail_handle->attach(Path=>$file,
-					     Type=>'text/plain',
-					     Encoding=>'quoted-printable',
-					     Disposition=>'attachment',
-					     Filename=>$marko,
-					     Description=>$art_id);
-		    }
-		}
 	    }
 	    
 	    # forsendu
-	    unless (open SENDMAIL, "|$sendmail") {
+	    unless (open SENDMAIL, "|$sendmail $mail_addr") {
 		warn "Ne povas dukti al $sendmail: $!\n";
 		next;
 	    }
@@ -680,7 +683,7 @@ sub send_newarts_report {
 					  Data=>$message);
 	    
 	# forsendu
-	unless (open SENDMAIL, "|$sendmail") {
+	unless (open SENDMAIL, "|$sendmail $revolist") {
 	    warn "Ne povas dukti al $sendmail: $!\n";
 	    return;
 	}
@@ -717,7 +720,7 @@ sub cmd_help {
 			 Description=>"helpo pri Revo-servo");
 
     # forsendu
-    unless (open SENDMAIL, "|$sendmail") {
+    unless (open SENDMAIL, "|$sendmail $mail_addr") {
 	warn "Ne povas dukti al $sendmail: $!\n";
 	return;
     }
@@ -751,13 +754,13 @@ sub cmd_redakt {
 
 
     unless ($art =~ /^[a-z0-9_]+$/i) {
-	report("ERARO   : Ne valida artikolmarko $art. Ghi povas enhavi nur "
+		report("ERARO   : Ne valida artikolmarko $art. Ghi povas enhavi nur "
 	      ."literojn, ciferojn kaj substrekon.\n");
-	return;
+		return;
     }
 
     if (checkxml($teksto)) {
-	checkin($art,$id);
+		checkin($art,$id);
     }
 }
 
@@ -893,14 +896,14 @@ sub checkin {
 
     # raportu erarojn
     if ($log =~ /^\s*$/s) {
-	report("ERARO   : La sendita artikolo shajne ne diferencas de "
-	      ."la aktuala versio.");
-	return;
+		report("ERARO   : La sendita artikolo shajne ne diferencas de "
+			."la aktuala versio.");
+		return;
     } elsif (($log =~ /aborting\s*$/s) 
 	     or ($err !~ /^\s*$/s)) {
-	report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
-	      ."$log\n$err","$tmp/xml.xml");
-	return;
+		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
+			."$log\n$err","$tmp/xml.xml");
+		return;
     }
 
     # raportu sukceson 
@@ -963,7 +966,7 @@ sub cmd_aldon {
 
     # kontroli la sintakson
     if (checkxml($teksto)) {
-	checkinnew($art);
+		checkinnew($art);
     }
 }
 
