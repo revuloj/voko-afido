@@ -774,7 +774,7 @@ sub checkxml {
 
     # enmetu Log se ankorau mankas...
     unless ($teksto =~ /<!--\s+\044Log/s) {
-	$teksto =~ s/(<\/vortaro>)/\n<!--\n\044Log\044\n-->\n$1/s;
+		$teksto =~ s/(<\/vortaro>)/\n<!--\n\044Log\044\n-->\n$1/s;
     }
 
     # mallongigu Log al 20 linioj
@@ -782,8 +782,8 @@ sub checkxml {
 
     # skribu la dosieron provizore al tmp
     unless (open XML,">$xml_temp/xml.xml") {
-	warn "Ne povis malfermi $xml_temp/xml.xml: $!\n";
-	return;
+		warn "Ne povis malfermi $xml_temp/xml.xml: $!\n";
+		return;
     }
 
     print XML $teksto;
@@ -799,15 +799,15 @@ sub checkxml {
     unlink("$xml_temp/xml.err");
 
     if ($err) {
-	$err .= "\nkunteksto:\n".xml_context($err,"$xml_temp/xml.xml");
-	print "XML-eraroj:\n$err" if ($verbose);
+		$err .= "\nkunteksto:\n".xml_context($err,"$xml_temp/xml.xml");
+		print "XML-eraroj:\n$err" if ($verbose);
 
-	report("ERARO   : La XML-dosiero enhavas la sekvajn "
-	      ."sintakserarojn:\n$err","$xml_temp/xml.xml");
-	return;
+		report("ERARO   : La XML-dosiero enhavas la sekvajn "
+			."sintakserarojn:\n$err","$xml_temp/xml.xml");
+		return;
     } else {
-	print "XML: en ordo\n" if ($debug);
-	return 1;
+		print "XML: en ordo\n" if ($debug);
+		return 1;
     }
 }
 
