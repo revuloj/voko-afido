@@ -4,7 +4,7 @@ MAINTAINER <diestel@steloj.de>
 # https://packages.debian.org/stretch/perl/
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    openssh-server rxp cvs curl unzip patch ssmtp libmime-tools-perl \
+    openssh-server ca-certificates openssl rxp git cvs curl unzip patch ssmtp libmime-tools-perl \
 	&& mkdir -p /var/run/sshd && rm -rf /var/lib/apt/lists/*
 
 COPY bin/* /usr/local/bin/
@@ -32,7 +32,7 @@ RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/master.zip \
 # ssmtp: https://linuxundich.de/gnu-linux/system-mails-ohne-einen-mail-server-mit-ssmtp-verschicken/
 #
 # la interŝanĝo de XML-dosieroj kun la redaktoservo okazu per komuna dosierujo revo/xml
-# docker run -v /pado/al/xml:revo/xml voko-vaneso redaktoservo.pl -a
+# docker run -v /pado/al/xml:revo/xml voko-afido redaktoservo.pl -a
 
 
 #ENTRYPOINT ["echo","$PATH"]

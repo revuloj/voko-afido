@@ -3,7 +3,7 @@
 # prenas la redaktitajn artikolojn el la poshtfako
 # au alia dosiero donita en la komandlinio kaj
 # analizas, sintakse kontrolas, metas en la vortaron
-# kaj arkivigas (per CVS) ilin.
+# kaj arkivas (per CVS) ilin.
 #
 # voku:
 #  processmail.pl [<mesagh-dosiero>]
@@ -16,7 +16,7 @@ use MIME::Entity;
 
 # kiom da informoj
 $verbose      = 1;
-$debug        = 0;
+$debug        = 1;
 
 # FARENDA: legu tiujn el /docker swarm config/
 # baza agordo
@@ -41,6 +41,7 @@ $signature    = "--\nRevo-Servo $revo_mailaddr\n"
 # programoj
 $xmlcheck     = '/usr/bin/rxp -V -s';
 $cvs          = '/usr/bin/cvs';
+$git          = '/usr/bin/git';
 # -t ne subtenata de ssmtp
 #$sendmail     = '/usr/lib/sendmail -t -i';
 $sendmail     = '/usr/lib/sendmail -i';
@@ -62,6 +63,7 @@ $err_mail     = "$log_mail/errmail";
 $prc_mail     = "$log_mail/prcmail";
 
 $xml_dir      = "$dict_base/xml";
+$git_dir      = "$dict_base/revo-fonto/revo";
 $dok_dir      = "$dict_base/dok";
 
 $mail_local   = "$tmp/mail";
@@ -154,7 +156,7 @@ send_newarts_report();
 
 $filename = `date +%Y%m%d_%H%M%S`;    
 
-# arkivigu la poshtdosieron
+# arkivu la poshtdosieron
 if ($mail_file eq $mail_local) {
     print "\nshovas $mail_local al $old_mail/$filename\n" if ($verbose);
     `mv $mail_local $old_mail/$filename`;
@@ -402,15 +404,15 @@ sub urlencoded_form {
     my ($key,$value);
 
     $text =~ s/!?\n//sg;
-    foreach $pair (split ('&',$text)) {
-	if ($pair =~ /(.*?)=(.*)/) {
-	    ($key,$value) = ($1,$2);
-	    if ($key =~ /^(?:$possible_keys)$/) {
-		$value =~ s/\+/ /g; # anstatauigu '+' per ' '
-		$value =~ s/%(..)/pack('c',hex($1))/seg;
-		$content{$key} = $value;
-	    };
-	}
+	foreach $pair (split ('&',$text)) {
+		if ($pair =~ /(.*?)=(.*)/) {
+			($key,$value) = ($1,$2);
+			if ($key =~ /^(?:$possible_keys)$/) {
+			$value =~ s/\+/ /g; # anstatauigu '+' per ' '
+			$value =~ s/%(..)/pack('c',hex($1))/seg;
+			$content{$key} = $value;
+			};
+		}
     };           
 
     komando($content{'komando'},$content{'shangho'},$content{'teksto'});
@@ -868,10 +870,24 @@ sub checkin {
 	return;
     }
 
-    # checkin
+    # checkin in CSV
     my $xmlfile="$art.xml";
-    `mv $xml_temp/xml.xml $xml_dir/$xmlfile`;
+    `cp $xml_temp/xml.xml $xml_dir/$xmlfile`;
+
     chdir($xml_dir);
+	checkin_csv($xmlfile);
+
+	# checkin in Git
+    `mv $xml_temp/xml.xml $git_dir/$xmlfile`;
+
+	chdir($git_dir);
+	checkin_git($xmlfile,$edtr);
+
+	unlink("$tmp/shanghoj.msg");
+}
+
+sub checkin_csv {
+	my $xmlfile = shift;
     `$cvs ci -F $tmp/shanghoj.msg $xmlfile 1> $tmp/ci.log 2> $tmp/ci.err`;
 
     # chu checkin sukcesis?
@@ -892,7 +908,6 @@ sub checkin {
     # forigu provizorajn dosierojn
     unlink("$tmp/ci.log");
     unlink("$tmp/ci.err");
-    unlink("$tmp/shanghoj.msg");
 
     # raportu erarojn
     if ($log =~ /^\s*$/s) {
@@ -908,6 +923,59 @@ sub checkin {
 
     # raportu sukceson 
     report("KONFIRMO: $log");
+	return 1;
+}
+
+sub checkin_git {
+	my ($xmlfile,$edtr) = @_;
+	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+	`$git commit -F $tmp/shanghoj.msg $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+
+	# chu 'commit' sukcesis?
+    open LOG,"$tmp/git.log";
+    $log = join('',<LOG>);
+    print "git-log:\n$log\n" if ($debug);
+    close LOG;
+
+    open ERR,"$tmp/git.err";
+    $err = join('',<ERR>);
+    print "git-err:\n$err\n" if ($debug);
+	close ERR;
+  
+    unlink("$tmp/git.log");
+	unlink("$tmp/git.err");
+
+	# ekz. git.log se estas ŝanĝo:
+	#	[master 601545b1d0] +spaco
+	#	Author: Revo <revo@steloj.de>
+	#	1 file changed, 1 insertion(+), 1 deletion(-)
+	
+	# ekz. git.log se ne estas ŝanĝo:
+	#On branch master
+	#Your branch is ahead of 'origin/master' by 1 commit.
+	#  (use "git push" to publish your local commits)
+	#nothing to commit, working tree clean
+
+    # se log estas ne malplena, (kaj enhavas "1 file") - chio en ordo, 
+    # se err estas ne malplena  - eraro
+    # se log enhavas 'nothing to commit', la dosiero ne estas shanghita   
+
+    # raportu erarojn
+    if ($log =~ /nothing\sto\scommit/s) {
+# ni ne bezonas dum ni arĥivas unue en CVS:		
+#		report("ERARO   : La sendita artikolo shajne ne diferencas de "
+#			."la aktuala versio.");
+		return;
+    } elsif ($err !~ /^\s*$/s) {
+		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
+			."$log\n$err","$tmp/xml.xml");
+		return;
+    }
+
+    # raportu sukceson 
+# ni ne bezonas dum ni arĥivas unue en CVS:		
+#    report("KONFIRMO: $log");
+	return 1;
 }
 
 sub merge_revisions {
