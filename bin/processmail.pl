@@ -928,6 +928,9 @@ sub checkin_csv {
 
 sub checkin_git {
 	my ($xmlfile,$edtr) = @_;
+
+	incr_ver("$git_dir/$xmlfile");
+
 	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
 	`$git commit -F $tmp/shanghoj.msg $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
 
@@ -976,6 +979,28 @@ sub checkin_git {
 # ni ne bezonas dum ni arĥivas unue en CVS:		
 #    report("KONFIRMO: $log");
 	return 1;
+}
+
+sub incr_ver {
+	my $artfile = shift;
+
+	# $Id: test.xml,v 1.51 2019/12/01 16:57:36 afido Exp $
+    open ART,"$artfile";
+    my $art = join('',<ART>);
+    close ART;
+
+	$art =~ s/\$Id:\s+([^\.]+)\.xml,v\s+(\d)\.(\d+)\s+(?:\d\d\d\d\/\d\d\/\d\d\s+\d\d:\d\d:\d\d)/id_incr($1,$2,$3)/se;
+
+	open ART,">$artfile";
+	print ART $art;
+	close ART;
+}
+
+sub id_incr {
+	my ($fn,$major,$minor) = @_;
+	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	my $now = sprintf("%04d/%02d/%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec);
+	return "\$Id: $fn.xml,v $major.". ( ++$minor )." $now";
 }
 
 sub merge_revisions {
