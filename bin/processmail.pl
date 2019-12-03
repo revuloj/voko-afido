@@ -989,7 +989,11 @@ sub incr_ver {
     my $art = join('',<ART>);
     close ART;
 
-	$art =~ s/\$Id:\s+([^\.]+)\.xml,v\s+(\d)\.(\d+)\s+(?:\d\d\d\d\/\d\d\/\d\d\s+\d\d:\d\d:\d\d)/id_incr($1,$2,$3)/se;
+	$art =~ m/\$Id:\s+([^\.]+)\.xml,v\s+(\d)\.(\d+)\s+(?:\d\d\d\d\/\d\d\/\d\d\s+\d\d:\d\d:\d\d)(.*?)\$/s;	
+	my $ver = id_incr($2,$3);
+	my $id = '$Id: '.$1.'.xml,v '.$ver.$4.'$';
+	$art =~ s/\$Id:[^\$]+\$/$id/;
+	$art =~ s/\$Log:\s+([^\.]+)\.xml,v\s+\$(.*?)-->/log_incr($1,$2,$ver)/se;
 
 	open ART,">$artfile";
 	print ART $art;
@@ -997,10 +1001,24 @@ sub incr_ver {
 }
 
 sub id_incr {
-	my ($fn,$major,$minor) = @_;
+	my ($major,$minor) = @_;
 	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 	my $now = sprintf("%04d/%02d/%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec);
-	return "\$Id: $fn.xml,v $major.". ( ++$minor )." $now";
+	return "$major.". ( ++$minor )." $now";
+}
+
+sub log_incr {
+	my ($fn,$log,$ver) = @_;
+
+	# mallongigu je maks. 10 linioj
+	my @lines = split(/\n/,$log);
+	$log = join("\n",splice(@lines,0,20));
+
+	open SHG, "$tmp/shanghoj.msg";
+	my $shg = join('',<SHG>);
+	close SHG;
+
+	return "\$Log: $fn.xml,v \$\nversio $ver\n".$shg."\n$log\n-->";
 }
 
 sub merge_revisions {
