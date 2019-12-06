@@ -1023,6 +1023,7 @@ sub log_incr {
 }
 
 sub git_push {
+	chdir($git_dir);
 	`$git push origin master 1> $tmp/git.log 2> $tmp/git.err`;
 
 	# chu 'push' sukcesis?
@@ -1115,11 +1116,26 @@ sub checkinnew {
     print MSG "$edtr: $shangho";
     close MSG;
 
-    # checkin
+    # checkin CSV
     my $xmlfile="$art.xml";
-    `mv $xml_temp/xml.xml $xml_dir/$xmlfile`;
-    chdir($xml_dir);
-    `$cvs add $xmlfile 1> $tmp/ci.log 2> $tmp/ci.err`;
+	`cp $xml_temp/xml.xml $xml_dir/$xmlfile`;
+	
+	chdir($xml_dir);
+	checkinnew_csv($xmlfile);
+
+	# checkin in Git
+    `mv $xml_temp/xml.xml $git_dir/$xmlfile`;
+
+	chdir($git_dir);
+	checkinnew_git($xmlfile,$edtr);
+
+	unlink("$tmp/shanghoj.msg");
+}
+
+sub checkinnew_csv {
+	my $xmlfile = shift;
+
+	`$cvs add $xmlfile 1> $tmp/ci.log 2> $tmp/ci.err`;
     `$cvs ci -F $tmp/shanghoj.msg $xmlfile 1>> $tmp/ci.log 2>> $tmp/ci.err`;
 
     # chu checkin sukcesis?
@@ -1140,7 +1156,6 @@ sub checkinnew {
     # forigu provizorajn dosierojn
     unlink("$tmp/ci.log");
     unlink("$tmp/ci.err");
-    unlink("$tmp/shanghoj.msg");
 
     # ignoru kelkajn mesaghojn, eligitaj de cvs add kiel "eraro"
     $err =~ s/\Acvs add: use.*?\Z//sg;
@@ -1162,6 +1177,88 @@ sub checkinnew {
     # raportu sukceson
     push @newarts, ("$edtr: $art ( $revo_url/art/$art.html )");
     report("KONFIRMO: $log");
+}
+
+sub checkinnew_git {
+	my ($xmlfile,$edtr) = @_;
+
+	init_ver("$git_dir/$xmlfile");
+
+	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+	`$git add $xmlfile`;
+	`$git commit -F $tmp/shanghoj.msg $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+
+	# chu 'commit' sukcesis?
+    open LOG,"$tmp/git.log";
+    $log = join('',<LOG>);
+    print "git-log:\n$log\n" if ($debug);
+    close LOG;
+
+    open ERR,"$tmp/git.err";
+    $err = join('',<ERR>);
+    print "git-err:\n$err\n" if ($debug);
+	close ERR;
+  
+    unlink("$tmp/git.log");
+	unlink("$tmp/git.err");
+
+	# ekz. git.log se estas ŝanĝo:
+	#	[master 601545b1d0] +spaco
+	#	Author: Revo <revo@steloj.de>
+	#	1 file changed, 1 insertion(+), 1 deletion(-)
+	
+	# ekz. git.log se ne estas ŝanĝo:
+	#On branch master
+	#Your branch is ahead of 'origin/master' by 1 commit.
+	#  (use "git push" to publish your local commits)
+	#nothing to commit, working tree clean
+
+    # se log estas ne malplena, (kaj enhavas "1 file") - chio en ordo, 
+    # se err estas ne malplena  - eraro
+    # se log enhavas 'nothing to commit', la dosiero ne estas shanghita   
+
+    # raportu erarojn
+    if ($log =~ /nothing\sto\scommit/s) {
+# ni ne bezonas dum ni arĥivas unue en CVS:		
+#		report("ERARO   : La sendita artikolo shajne ne diferencas de "
+#			."la aktuala versio.");
+		return;
+    } elsif ($err !~ /^\s*$/s) {
+		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
+			."$log\n$err","$tmp/xml.xml");
+		return;
+    }
+
+    # raportu sukceson 
+# ni ne bezonas dum ni arĥivas unue en CVS:		
+#    report("KONFIRMO: $log");
+	return 1;
+}
+
+sub init_ver {
+	my $artfile = shift;
+
+	# $Id: test.xml,v 1.1 2019/12/01 16:57:36 afido Exp $
+    open ART,"$artfile";
+    my $art = join('',<ART>);
+    close ART;
+
+	open SHG, "$tmp/shanghoj.msg";
+	my $shg = join('',<SHG>);
+	close SHG;
+
+	$artfile =~ m|/([^/]+\.xml)|;
+	my $fn = $1;
+	my $ver = id_incr("1","0");
+	my $id = '$Id: '.$fn.',v '.$ver.' afido Exp $';
+	my $log = "\n<!--\n\$Log: $fn,v \$\nversio $ver\n$shg\n-->\n";
+
+	$art =~ s/\$Id:[^\$]*\$/$id/;
+	$art =~ s/<\/vortaro>/$log<\/vortaro>/s;
+
+	open ART,">$artfile";
+	print ART $art;
+	close ART;
 }
 
 sub cmd_dokument {

@@ -20,6 +20,17 @@ if [ ! "$(ls -A ${dict}/revo-fonto)" ]; then
   chown -R afido.users ${dict}/revo-fonto
 fi
 
+if [ ! -s /home/afido/.ssh/known_hosts ]; then
+  gh_rsa=$(ssh-keyscan -t rsa github.com)
+  gh_fp=$(echo -e "${gh_rsa}" | ssh-keygen -lf -)
+  if [[ "${gh_fp}" == *"2048 SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8 github.com (RSA)"* ]]; then
+    echo -e "${gh_rsa}" >> /home/afido/.ssh/known_hosts
+
+    chown afido.users /home/afido/.ssh/known_hosts
+    chmod 600 /home/afido/.ssh/known_hosts
+  fi  
+fi
+
 if [ ! "$(git config --global user.email)" ]; then
   echo "Metante Revo-uzanton por Git..."
 
