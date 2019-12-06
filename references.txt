@@ -1,0 +1,11 @@
+
+https://developer.github.com/v3/guides/managing-deploy-keys/#deploy-keys
+https://gist.github.com/zhujunsan/a0becf82ade50ed06115
+
+ssh -i ~/.ssh/id_rsa_revo -T git@github.com
+
+https://snipe.net/2013/04/11/multiple-github-deploy-keys-single-server/
+https://help.github.com/en/github/using-git/changing-a-remotes-url
+
+git remote -v
+git remote set-url origin git@github.com:revuloj/revo-fonto.git 

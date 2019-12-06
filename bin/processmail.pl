@@ -153,6 +153,7 @@ close MAIL;
 # sendu raportojn
 send_reports();
 send_newarts_report();
+git_push();
 
 $filename = `date +%Y%m%d_%H%M%S`;    
 
@@ -168,7 +169,7 @@ if (-e $mail_error) {
 }
 
 if (-e $mail_send) {
-    print "shovas $mail_send al $log_mail/$filename\n" if ($verbose);
+    print "shovas $mail_send al $prc_mail/$filename\n" if ($verbose);
     `mv $mail_send $prc_mail/$filename`;
 }  
 
@@ -1019,6 +1020,24 @@ sub log_incr {
 	close SHG;
 
 	return "\$Log: $fn.xml,v \$\nversio $ver\n".$shg."\n$log\n-->";
+}
+
+sub git_push {
+	`$git push origin master 1> $tmp/git.log 2> $tmp/git.err`;
+
+	# chu 'push' sukcesis?
+    open LOG,"$tmp/git.log";
+    $log = join('',<LOG>);
+    print "git-log:\n$log\n" if ($debug);
+    close LOG;
+
+    open ERR,"$tmp/git.err";
+	$err = join('',<ERR>);
+	warn "git-err:\n$err\n" if ($err);
+	close ERR;
+  
+    unlink("$tmp/git.log");
+	unlink("$tmp/git.err");
 }
 
 sub merge_revisions {

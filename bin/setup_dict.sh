@@ -16,7 +16,7 @@ fi
 if [ ! "$(ls -A ${dict}/revo-fonto)" ]; then
   echo "Elverŝante aktualajn XML-dosierojn per Git al revo-fonto/..."
 
-  git clone -q https://github.com/revuloj/revo-fonto.git ${dict}/revo-fonto
+  git clone -q git@github.com:revuloj/revo-fonto.git ${dict}/revo-fonto
   chown -R afido.users ${dict}/revo-fonto
 fi
 

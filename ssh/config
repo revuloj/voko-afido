@@ -1,0 +1,4 @@
+Host github.com
+Hostname github.com
+IdentityFile /run/secrets/voko-afido.github_key
+# User

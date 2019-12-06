@@ -12,6 +12,7 @@ COPY bin/* /usr/local/bin/
 
 RUN useradd -ms /bin/bash -u 1074 afido && mkdir -p /home/afido/.ssh
 WORKDIR /home/afido
+COPY ssh/* .ssh
 
 ###USER afido:users
 
