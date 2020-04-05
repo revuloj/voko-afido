@@ -70,7 +70,7 @@ for gist in ${gists}/*; do
 
     else
       echo "ERARO: dosiero ${id}/${file} havas malĝustan tipon aŭ estas tro granda:"
-      cat ${gist}
+      cat ${gist} && rm ${gist}
     fi
 
   done

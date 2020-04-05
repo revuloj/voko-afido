@@ -34,8 +34,8 @@ fi
 if [ ! "$(git config --global user.email)" ]; then
   echo "Metante Revo-uzanton por Git..."
 
-  git config --file ${dict}/revo-fonto/.git/config user.email "revo@reta-vortaro.de"
-  git config --file ${dict}/revo-fonto/.git/config user.name "revo"
+  git config --file ${dict}/revo-fonto/.git/config user.email "RetaVortaro@steloj.de"
+  git config --file ${dict}/revo-fonto/.git/config user.name "reta-vortaro"
 fi
 
 

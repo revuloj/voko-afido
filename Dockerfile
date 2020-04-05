@@ -5,6 +5,7 @@ MAINTAINER <diestel@steloj.de>
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     openssh-server ca-certificates openssl rxp git cvs curl unzip patch ssmtp libmime-tools-perl \
+    libjson-perl \
 	&& mkdir -p /var/run/sshd && rm -rf /var/lib/apt/lists/*
 
 COPY bin/* /usr/local/bin/

@@ -32,7 +32,7 @@ $mail_folder  = "/var/spool/mail/tomocero";
 $revoservo    = '[Revo-Servo]';
 $revo_mailaddr= 'revo@reta-vortaro.de';
 $redaktilo_from= 'revo@steloj.de';
-$revolist     = 'wolfram';
+##$revolist     = 'wolfram';
 $revo_from    = "Reta Vortaro <$revo_mailaddr>";
 $signature    = "--\nRevo-Servo $revo_mailaddr\n"
     ."retposhta servo por redaktantoj de Reta Vortaro.\n";
@@ -86,8 +86,8 @@ $mail_date  = '';
 $shangho    = '';
 $komando    = '';
 $file_no    = 0;
-@newarts    = ();
-
+##@newarts    = ();
+git_pull();
 if ($ARGV[0]) {
     $mail_file = shift @ARGV;
 } else {
@@ -152,7 +152,7 @@ close MAIL;
 
 # sendu raportojn
 send_reports();
-send_newarts_report();
+##send_newarts_report();
 git_push();
 
 $filename = `date +%Y%m%d_%H%M%S`;    
@@ -589,8 +589,11 @@ sub send_reports {
 			if (s/^dosieroj: *([^\n\s]+)\n//) {
 				$dos = $1;
 				if ($_ =~ /artikolo: *([^\n]+)\n/s) { $art_id = $1; }
-				
-				$dosieroj{$mail_addr} .= "$dos $art_id|";
+				# foje jam malaperis la aldonenda dosiero pro antaŭa eraro, kio kaŭzus
+				# senfinan sendadon de ĉiam la sama eraro..., do aldonu nur se la dosiero ekzistas
+				if (-e $dos) {				
+					$dosieroj{$mail_addr} .= "$dos $art_id|";
+				}
 			}
 			$reports{$mail_addr} .= $_;
 	    } else {
@@ -662,38 +665,38 @@ sub send_reports {
     }
 }
 
-sub send_newarts_report {
-    my ($message,$mail_handle);
-
-    # legu la respondojn el $mail_send
-    if (@newarts) {
-
-	print "Informo pri novaj artikoloj al <$revolist>:\n",
-	    join ("\n",@newarts), "\n" if ($debug);
-	
-	# preparu mesaghon
-	$message = "Saluton!\nAldonighis " . ($#newarts+1)
-	    . " nova(j) artikolo(j)...\n\n";
-	foreach $entry (@newarts) {
-	    $message .= "$entry\n";
-	}
-	$message .= "\n$signature";
-	    
-	$mail_handle = build MIME::Entity(Type=>"text/plain",
-					  From=>$revo_from,
-					  To=>"$revolist",
-					  Subject=>"novaj artikoloj",
-					  Data=>$message);
-	    
-	# forsendu
-	unless (open SENDMAIL, "|$sendmail $revolist") {
-	    warn "Ne povas dukti al $sendmail: $!\n";
-	    return;
-	}
-	$mail_handle->print(\*SENDMAIL);
-	close SENDMAIL;
-    }
-}
+##sub send_newarts_report {
+##    my ($message,$mail_handle);
+##
+##    # legu la respondojn el $mail_send
+##    if (@newarts) {
+##
+##	print "Informo pri novaj artikoloj al <$revolist>:\n",
+##	    join ("\n",@newarts), "\n" if ($debug);
+##	
+##	# preparu mesaghon
+##	$message = "Saluton!\nAldonighis " . ($#newarts+1)
+##	    . " nova(j) artikolo(j)...\n\n";
+##	foreach $entry (@newarts) {
+##	    $message .= "$entry\n";
+##	}
+##	$message .= "\n$signature";
+##	    
+##	$mail_handle = build MIME::Entity(Type=>"text/plain",
+##					  From=>$revo_from,
+##					  To=>"$revolist",
+##					  Subject=>"novaj artikoloj",
+##					  Data=>$message);
+##	    
+##	# forsendu
+##	unless (open SENDMAIL, "|$sendmail $revolist") {
+##	    warn "Ne povas dukti al $sendmail: $!\n";
+##	    return;
+##	}
+##	$mail_handle->print(\*SENDMAIL);
+##	close SENDMAIL;
+##    }
+##}
 
 
 
@@ -837,7 +840,9 @@ sub checkin {
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
     my $ark_id = get_archive_version($art);
-    if ($ark_id ne $id) {
+	# estas problemo, ke versioj de CVS kaj Git momente povas devii je sekundo
+	# por mildigi la problemon ni ignoras la tempon
+    if (substr($ark_id,0,-19) ne substr($id,0,-19)) {
 	# provu solvi la versiokonflikton
 #	report ("PROBLEMO: La de vi sendita artikolo\n"
 #	       ."ne bazighas sur la aktuala arkiva versio\n"
@@ -1003,7 +1008,7 @@ sub incr_ver {
 
 sub id_incr {
 	my ($major,$minor) = @_;
-	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
 	my $now = sprintf("%04d/%02d/%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec);
 	return "$major.". ( ++$minor )." $now";
 }
@@ -1022,6 +1027,24 @@ sub log_incr {
 	return "\$Log: $fn.xml,v \$\nversio $ver\n".$shg."\n$log\n-->";
 }
 
+sub git_pull {
+	chdir($git_dir);
+	`$git pull origin master 1> $tmp/git.log 2> $tmp/git.err`;
+
+	# chu 'pull' sukcesis?
+	open LOG,"$tmp/git.log";
+	$log = join('',<LOG>);
+	print "git-log:\n$log\n" if ($debug);
+	close LOG;
+
+	open ERR,"$tmp/git.err";
+	$err = join('',<ERR>);
+	warn "git-err:\n$err\n" if ($err);
+	close ERR;
+
+	unlink("$tmp/git.log");
+	unlink("$tmp/git.err");
+}
 sub git_push {
 	chdir($git_dir);
 	`$git push origin master 1> $tmp/git.log 2> $tmp/git.err`;
@@ -1121,7 +1144,7 @@ sub checkinnew {
 	`cp $xml_temp/xml.xml $xml_dir/$xmlfile`;
 	
 	chdir($xml_dir);
-	checkinnew_csv($xmlfile);
+	checkinnew_csv($xmlfile,$art);
 
 	# checkin in Git
     `mv $xml_temp/xml.xml $git_dir/$xmlfile`;
@@ -1134,6 +1157,7 @@ sub checkinnew {
 
 sub checkinnew_csv {
 	my $xmlfile = shift;
+	my $art = shift;
 
 	`$cvs add $xmlfile 1> $tmp/ci.log 2> $tmp/ci.err`;
     `$cvs ci -F $tmp/shanghoj.msg $xmlfile 1>> $tmp/ci.log 2>> $tmp/ci.err`;
@@ -1175,7 +1199,7 @@ sub checkinnew_csv {
     }
 
     # raportu sukceson
-    push @newarts, ("$edtr: $art ( $revo_url/art/$art.html )");
+    ##push @newarts, ("$edtr: $art ( $revo_url/art/$art.html )");
     report("KONFIRMO: $log");
 }
 
@@ -1253,7 +1277,7 @@ sub init_ver {
 	my $id = '$Id: '.$fn.',v '.$ver.' afido Exp $';
 	my $log = "\n<!--\n\$Log: $fn,v \$\nversio $ver\n$shg\n-->\n";
 
-	$art =~ s/\$Id:[^\$]*\$/$id/;
+	$art =~ s/\$Id[^\$]*\$/$id/;
 	$art =~ s/<\/vortaro>/$log<\/vortaro>/s;
 
 	open ART,">$artfile";
