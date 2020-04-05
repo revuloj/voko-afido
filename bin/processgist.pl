@@ -84,18 +84,17 @@ $file_no    = 0;
 
 $json_parser = JSON->new->allow_nonref;
 #$json_parser->allow_tags(true);
+
+# legu redaktantoj el JSON-dosiero kaj transformu al HASH por 
+# trovi ilin facile laŭ numero (red_id)
 $fe=read_json_file($editor_file);
-#print Dumper($fe);
+%editors = map { $_->{red_id} => $_	} @{$fe};
 
-%editors = map { 
-	print $_->{"red_id"};
-	print Dumper($_);
-	$_->{red_id} => $_; 
-		} @{$fe};
+#opendir my $GISTS, $gist_dir or die "Ne povis legi gistojn el $gist_dir: $!\n";
 
-opendir my $GISTS, $gist_dir or die "Ne povis legi gistojn el $gist_dir: $!\n";
-
-while (my $file = readdir($GISTS)) {
+foreach my $file (glob "$gist_dir/*") {
+#while (my $file = readdir($GISTS)) {
+	#next unless (-f $file); # ignoru dosierujojn
 
     print '-' x 50, "\n" if ($verbose);
 
@@ -105,7 +104,8 @@ while (my $file = readdir($GISTS)) {
     $article_id = '';
 
     # malfermu kaj enlegu la giston
-	$gist = read_json_file("$gist_dir/$file");
+	#$gist = read_json_file("$gist_dir/$file");
+	$gist = read_json_file("$file");
     unless ($gist) {
 		next;
     }
@@ -122,7 +122,7 @@ while (my $file = readdir($GISTS)) {
     process_gist($gist);
 }
 
-closdir $GISTS;
+#closedir $GISTS;
 
 # sendu raportojn
 send_reports();
@@ -963,10 +963,15 @@ sub read_json_file {
   	my $j = read_file($file);
     print substr($j,0,20),"...\n" if ($debug);
 
+	unless ($j) {
+		warn "Malplena aŭ mankanta JSON-dosiero '$file'";
+		return;
+	}
+
     my $parsed = $json_parser->decode($j);
 	unless ($parsed) {
 		warn "Ne eblis analizi enhavon de JSON-dosiero '$file'.\n";
-		return 0;
+		return;
 	}
 	return $parsed;	  
 }
