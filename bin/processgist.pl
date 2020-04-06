@@ -46,14 +46,14 @@ $git          = '/usr/bin/git';
 $sendmail     = '/usr/lib/sendmail -i';
 
 # dosierujoj
-$tmp          = "$afido_dir/tmp";
-$log          = "$afido_dir/log";
+$tmp          = "$dict_base/tmp";
+$log          = "$dict_base/log";
 $dtd_dir      = "$dict_base/dtd";
 
-$mail_error   = "$tmp/mailerr";
+#$mail_error   = "$tmp/mailerr";
 $mail_send    = "$tmp/mailsend";
 $xml_temp     = "$tmp/xml";
-$dtd_temp     = "$tmp/dtd";
+#$dtd_temp     = "$tmp/dtd";
 
 $prc_gist     = "$log/prcgist";
 
@@ -67,7 +67,7 @@ $editor_file  = "$dict_etc/redaktantoj.json"; #"$dict_etc/voko.redaktantoj";
 
 # diversaj
 #$possible_keys= 'komando|teksto|shangho';
-$commands     = 'redakt[oui]|help[oui]|aldon[oui]'; # .'|dokumento|artikolo|historio|propono'
+$commands     = 'redakt[oui]|aldon[oui]'; # .'|dokumento|artikolo|historio|propono'
 $separator    = "=" x 50 . "\n";
 
 ################ la precipa masho de la programo ##############
@@ -81,6 +81,11 @@ $shangho    = '';
 $komando    = '';
 $file_no    = 0;
 #@newarts    = ();
+
+# certigu, ke provizoraj dosierujoj ekzistu
+mkdir($tmp); 
+mkdir($log);
+mkdir($xml_temp);
 
 $json_parser = JSON->new->allow_nonref;
 #$json_parser->allow_tags(true);
@@ -173,9 +178,8 @@ sub process_gist {
 		 	."de la registrita nomo (".$editor->{red_nomo}.")!\n"
 	}
 
-	# traktu priskribon redakt/aldon...
-	# traktu XML
-
+	# traktu priskribon redakt/aldon..., XML...
+	komando_lau_priskribo($gist)
 }
 
 sub is_editor {
@@ -187,18 +191,30 @@ sub is_editor {
     return $ed;
 }
 
-sub analizo_priskribo {
-    my $desc = shift;
-    my ($cmd,$shg);
+sub komando_lau_priskribo {
+    my $gist = shift;
+    my ($cmd,$arg);
 
-    if ($desc =~ s/^[\s\n]*($commands)[ \t]*:[ \t]*(.*?)//si) {
+	my $desc = $gist->{description};
+    if ($desc =~ s/^[\s\n]*($commands)[ \t]*:[ \t]*(.*)//si) {
 		$cmd = $1;
-		$shg = $2;
+		$arg = $2;
 
-		komando($cmd,$arg,$xml);
+		print "cmd: $cmd, arg: $arg\n" if ($debug);
+
+		if ($cmd =~ /^redakt[oui]/i) {
+			cmd_redakt($gist, $arg);
+
+		} elsif ($cmd =~ /^aldon[oui]/i) {
+			cmd_aldon($gist, $arg);
+
+		} else {
+			report("ERARO   : nekonata komando $cmd");
+			return;
+		}
 	
     } else {
-	 	warn "La priskribon ne konformas al la konvencio: '$desc'\n";
+	 	warn "La priskribo ne konformas kun la konvencio: '$desc'\n";
 		report("ERARO   : nekonata komando en la redakto");
 
 		# kelkaj pseudaj variabloj necesaj
@@ -212,23 +228,6 @@ sub analizo_priskribo {
     }
 }
 
-sub komando {
-    my ($cmd,$arg,$txt) = @_;
-
-    # memoru por poste
-    $komando = $cmd;
-
-	if ($cmd =~ /^redakt[oui]/i) {
-		cmd_redakt($arg, $txt);
-
-    } elsif ($cmd =~ /^aldon[oui]/i) {
-		cmd_aldon($arg, $txt);
-
-    } else {
-		report("ERARO   : nekonata komando $cmd");
-		return;
-    }
-}
 
 
 ######################### respondoj al sendintoj ###################
@@ -416,18 +415,18 @@ sub send_reports {
 
 ###################### komandoj kaj helpfunkcioj ##############
 
-
+# redakto de jam ekzistanta artikolo
 sub cmd_redakt {
-    my ($shangh,$teksto) = @_;
-    my $id,$art,$err;
-    $shangho = $shangh; # memoru por poste
-    $shangho =~ s/[\200-\377]/?/g; # forigu ne-askiajn signojn
+    my ($gist,$shangho) = @_;
+    my $id,$art,$err,$teksto;
+	my $fname = "$xml_dir/".$gist->{id}.".xml";
+    #$shangho = $shangh; # memoru por poste
+    #$shangho =~ s/[\200-\377]/?/g; # forigu ne-askiajn signojn
+	print "redakto: $shangho\n" if ($debug);
 
+	$teksto = read_file("$fname");
     # uniksajn linirompojn!
     $teksto =~ s/\r\n/\n/sg;
-
-    # aldonu finon, kiun Netskapo foje fortranchas
-    $teksto =~ s/<\/vortaro>?$/<\/vortaro>\n/s;
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
     $teksto =~ /(<art[^>]*>)/s;
@@ -440,24 +439,63 @@ sub cmd_redakt {
     #$id =~ /^\044Id: ([^ ,\.]+)\.xml,v\s+([0-9\.]+)/;
     $art = extract_article($id);
 
-
     unless ($art =~ /^[a-z0-9_]+$/i) {
-		report("ERARO   : Ne valida artikolmarko $art. Ghi povas enhavi nur "
+		report("ERARO   : Ne valida artikolmarko $art. Ĝi povas enhavi nur "
 	      ."literojn, ciferojn kaj substrekon.\n");
 		return;
     }
 
+    if (checkxml($gist,$fname,$teksto)) {
+		checkin($gist,$art,$id,$shangho,$fname);
+    }
+}
+
+# nova artikolo
+sub cmd_aldon {
+    my ($art,$teksto) = @_;
+    my $id,$err,$teksto;
+
+    # kio estu la nomo de la nova artikolo
+    $art =~ s/^\s+//s;
+    $art =~ s/\s+$//s;
+    
+    unless ($art =~ /^[a-z0-9_]+$/s) {
+	report("ERARO   : Ne valida nomo por artikolo. \"$art\".\n"
+	       ."Ghi konsistu nur el minuskloj, substrekoj kaj ciferoj.\n");
+	return;
+    }
+    $shangho = $art; # memoru por poste
+
+    # uniksajn linirompojn!
+	$teksto = read_file("$xml_dir/".$gist->{id}.".xml");
+    $teksto =~ s/\r\n/\n/sg;
+
+    # la marko estu "\044Id\044"
+    $teksto =~ s/<art[^>]*>/<art mrk="\044Id\044">/s;
+    print "nova artikolo: $art\n" if ($verbose);
+
+    # bezonighas article_id en kazo de eraro
+    $article_id = "\044Id: $art.xml,v\044";
+
+    # kontrolu, chu la dosiernomo estas ankorau uzebla
+    if (-e "$xml_dir/$art.xml") {
+	report ("ERARO   : Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
+	    ."Bv. elekti alian nomon por la nova artikolo.\n");
+	return;
+    }
+
+    # kontroli la sintakson
     if (checkxml($teksto)) {
-		checkin($art,$id);
+		checkinnew($art);
     }
 }
 
 sub checkxml {
-    my $teksto = shift;
-    my $err;
+    my ($gist,$fname,$teksto) = @_;
+	my $lname = "$xml_temp/".$gist->{id}.".log";
 
     # aldonu dtd symlink se ankoraŭ mankas
-    symlink("$dtd_dir","$xml_temp/../dtd") ;
+    #symlink("$dtd_dir","$xml_temp/../dtd") ;
 #	|| warn "Ne povis ligi de $dtd_dir al $xml_temp/../dtd\n";
 
     # enmetu Log se ankorau mankas...
@@ -468,9 +506,9 @@ sub checkxml {
     # mallongigu Log al 20 linioj
     $teksto =~ s/(<!--\s+\044Log(?:[^\n]*\n){20})(?:[^\n]*\n)*(-->)/$1$2/s;
 
-    # skribu la dosieron provizore al tmp
-    unless (open XML,">$xml_temp/xml.xml") {
-		warn "Ne povis malfermi $xml_temp/xml.xml: $!\n";
+    # reskribu la dosieron
+    unless (open XML,">$fname") {
+		warn "Ne povis skribi al $fname: $!\n";
 		return;
     }
 
@@ -478,20 +516,18 @@ sub checkxml {
     close XML;
 
     # kontrolu la sintakson de la XML-teksto
-    `$xmlcheck $xml_temp/xml.xml 2> $xml_temp/xml.err`;
+    `$xmlcheck $fname 2> $lname`;
 
     # legu la erarojn
-    open ERR,"$xml_temp/xml.err";
-    $err=join('',<ERR>);
-    close ERR;
-    unlink("$xml_temp/xml.err");
+    my $err = read_file($lname);
+    # unlink("$lname");
 
     if ($err) {
-		$err .= "\nkunteksto:\n".xml_context($err,"$xml_temp/xml.xml");
+		$err .= "\nkunteksto:\n".xml_context($err,"$fname");
 		print "XML-eraroj:\n$err" if ($verbose);
 
 		report("ERARO   : La XML-dosiero enhavas la sekvajn "
-			."sintakserarojn:\n$err","$xml_temp/xml.xml");
+			."sintakserarojn:\n$err","$fname");
 		return;
     } else {
 		print "XML: en ordo\n" if ($debug);
@@ -500,13 +536,13 @@ sub checkxml {
 }
 
 sub checkin {
-    my ($art,$id) = @_;
-    my ($log,$err,$edtr,$teksto);
+    my ($gist,$art,$id,$shangho,$fname) = @_;
+    my ($log,$err,$edtr);
 
     # kontrolu chu ekzistas shangh-priskribo
     unless ($shangho) {
-	  report("ERARO   : Vi fogesis indiki, kiujn shanghojn vi faris "
-	    ."en la dosiero.\n","$tmp/xml.xml");
+	  report("ERARO   : Vi fogesis indiki, kiujn ŝanĝojn vi faris "
+	    ."en la dosiero.\n","$fname");
         return;
     } 
     print "shanghoj: $shangho\n" if ($verbose);
@@ -521,15 +557,16 @@ sub checkin {
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
     my $ark_id = get_archive_version($art);
-    if ($ark_id ne $id) {
 
-	# versiokonflikto
-	report("ERARO   : La de vi sendita artikolo\n"
-	       ."ne bazighas sur la aktuala arkiva versio\n"
+    # eble tro strikta: if ($ark_id ne $id) {
+ 	if (substr($ark_id,0,-19) ne substr($id,0,-19)) {
+		# versiokonflikto
+		report("ERARO   : La de vi sendita artikolo\n"
+	       ."ne baziĝas sur la aktuala arkiva versio\n"
 	       ."($ark_id)\n"
 	       ."Bonvolu preni aktualan version el la TTT-ejo. "
-	       ."($vokomail_url?art=$art)\n","$xml_temp/xml.xml");
-	return;
+	       ."($vokomail_url?art=$art)\n","$fname");
+		return;
     }
 
 #    # checkin in CSV
@@ -540,10 +577,11 @@ sub checkin {
 #	checkin_csv($xmlfile);
 
 	# checkin in Git
-    `mv $xml_temp/xml.xml $git_dir/$xmlfile`;
+	print "cp ${fname} ${git_dir}/${art}.xml" if ($verbose);
+    `cp ${fname} ${git_dir}/${art}.xml`;
 
 	chdir($git_dir);
-	checkin_git($xmlfile,$edtr);
+###	checkin_git($xmlfile,$edtr);
 
 	unlink("$tmp/shanghoj.msg");
 }
@@ -664,43 +702,7 @@ sub git_push {
 }
 
 
-sub cmd_aldon {
-    my ($art,$teksto) = @_;
-    my $id,$err;
 
-    # kio estu la nomo de la nova artikolo
-    $art =~ s/^\s+//s;
-    $art =~ s/\s+$//s;
-    
-    unless ($art =~ /^[a-z0-9_]+$/s) {
-	report("ERARO   : Ne valida nomo por artikolo. \"$art\".\n"
-	       ."Ghi konsistu nur el minuskloj, substrekoj kaj ciferoj.\n");
-	return;
-    }
-    $shangho = $art; # memoru por poste
-
-    # uniksajn linirompojn!
-    $teksto =~ s/\r\n/\n/sg;
-
-    # la marko estu "\044Id\044"
-    $teksto =~ s/<art[^>]*>/<art mrk="\044Id\044">/s;
-    print "nova artikolo: $art\n" if ($verbose);
-
-    # bezonighas article_id en kazo de eraro
-    $article_id = "\044Id: $art.xml,v\044";
-
-    # kontrolu, chu la dosiernomo estas ankorau uzebla
-    if (-e "$xml_dir/$art.xml") {
-	report ("ERARO   : Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
-	    ."Bv. elekti alian nomon por la nova artikolo.\n");
-	return;
-    }
-
-    # kontroli la sintakson
-    if (checkxml($teksto)) {
-		checkinnew($art);
-    }
-}
 
 sub checkinnew {
     my ($art) = @_;
