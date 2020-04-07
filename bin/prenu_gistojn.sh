@@ -11,6 +11,9 @@
 # https://stackoverflow.com/questions/7285059/hmac-sha1-in-bash
 # https://willhaley.com/blog/generate-jwt-with-bash/
 
+# httpd mock
+# https://gist.github.com/willurd/5720255
+
 api=https://api.github.com
 owner=reta-vortaro
 # dosierujoj

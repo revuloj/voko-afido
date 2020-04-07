@@ -2,33 +2,33 @@
 set -x
 
 dict=/home/afido/dict
-#chown -R afido.users /home/afido
+
+mkdir -p $dict/xml
+chown -R afido.users ${dict}
 
 #if [ ! -e ${dict}/xml ]; then 
-if [ ! "$(ls -A ${dict}/xml)" ]; then
-  echo "Elverŝante aktualajn XML-dosierojn al xml/..."
-  mkdir -p ${dict}/xml
-  #CVSROOT=$(pwd)/cvsroot 
-  cvs co -A -d ${dict}/xml revo 
-  chown -R afido.users ${dict}
-fi
+##if [ ! "$(ls -A ${dict}/xml)" ]; then
+##  echo "Elverŝante aktualajn XML-dosierojn al xml/..."
+##  mkdir -p ${dict}/xml
+##  #CVSROOT=$(pwd)/cvsroot 
+##  cvs co -A -d ${dict}/xml revo 
+##  chown -R afido.users ${dict}
+##fi
 
-if [ ! "$(ls -A ${dict}/revo-fonto)" ]; then
-  echo "Elverŝante aktualajn XML-dosierojn per Git al revo-fonto/..."
-
-  git clone -q git@github.com:revuloj/revo-fonto.git ${dict}/revo-fonto
-  chown -R afido.users ${dict}/revo-fonto
-fi
-
-if [ ! -s /home/afido/.ssh/known_hosts ]; then
-  gh_rsa=$(ssh-keyscan -t rsa github.com)
-  gh_fp=$(echo -e "${gh_rsa}" | ssh-keygen -lf -)
-  if [[ "${gh_fp}" == *"2048 SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8 github.com (RSA)"* ]]; then
-    echo -e "${gh_rsa}" >> /home/afido/.ssh/known_hosts
-
-    chown afido.users /home/afido/.ssh/known_hosts
-    chmod 600 /home/afido/.ssh/known_hosts
-  fi  
+cd ${dict}
+su afido
+if [[ ! $(ls -A ${dict}/revo-fonto) ]]; then
+    # vi povas antaŭdifini ekz.:
+    # GIT_REPO_REVO=https://github.com/revuloj/revo-fonto-testo.git
+    # por preni la fontojn el Git-arĥivo
+    echo "Elverŝante aktualajn XML-dosierojn el git@github.com:$GIT_REPO_REVO al revo-fonto/..."
+    if [[ ! -z "$GIT_REPO_REVO" ]]; then
+        #?? git clone --progress $GIT_REPO_REVO revo-fonto
+        # cd $dict
+        #git clone -q ssh://git@github.com/$GIT_REPO_REVO ${dict}/revo-fonto
+        git clone -q git@github.com:$GIT_REPO_REVO ${dict}/revo-fonto
+        #chown -R afido.users ${dict}/revo-fonto
+    fi
 fi
 
 if [ ! "$(git config --global user.email)" ]; then
