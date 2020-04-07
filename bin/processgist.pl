@@ -98,11 +98,7 @@ $json_parser = JSON->new->allow_nonref;
 $fe=read_json_file($editor_file);
 %editors = map { $_->{red_id} => $_	} @{$fe};
 
-#opendir my $GISTS, $gist_dir or die "Ne povis legi gistojn el $gist_dir: $!\n";
-
 foreach my $file (glob "$gist_dir/*") {
-#while (my $file = readdir($GISTS)) {
-	#next unless (-f $file); # ignoru dosierujojn
 
     print '-' x 50, "\n" if ($verbose);
 
@@ -130,12 +126,9 @@ foreach my $file (glob "$gist_dir/*") {
     process_gist($gist);
 }
 
-exit;
-
-#closedir $GISTS;
 
 # sendu raportojn
-##># send_reports();
+send_reports();
 #send_newarts_report();
 ##># git_push();
 
@@ -156,6 +149,9 @@ exit;
 #    print "shovas $mail_send al $prc_mail/$filename\n" if ($verbose);
 #    `mv $mail_send $prc_mail/$filename`;
 #}  
+
+exit;
+
 
 ###################### analizado de la mesaghoj ################
 
@@ -234,7 +230,7 @@ sub komando_lau_priskribo {
 	
     } else {
 	 	warn "La priskribo ne konformas kun la konvencio: '$desc'\n";
-		report("ERARO   : nekonata komando en la redakto");
+		#report("ERARO   : nekonata komando en la redakto");
 
 		# kelkaj pseudaj variabloj necesaj
 		$article_id = "???.xml";
@@ -242,7 +238,7 @@ sub komando_lau_priskribo {
 		$shangho = "???";
 
 		# raportu eraron
-		report("ERARO   : nekonata komando en la redakto","$desc");
+		report("ERARO   : nekonata komando en la redakto: '$desc'");
 		return;
     }
 }
@@ -290,9 +286,9 @@ sub report {
 		return;
     }
 
-    print SMAIL "sendinto: $editor\n";
+    print SMAIL "sendinto: ".$editor->{red_nomo}." <".$editor->{retadr}[0].">\n";
     print SMAIL "dosieroj: $file\n" if ($file);
-    print SMAIL "senddato: $mail_date\n";
+    print SMAIL "senddato: ".$gist->{updated_at}."\n";
     print SMAIL "artikolo: $article_id\n";
     print SMAIL "shanghoj: $shangho\n" if ($shangho);
     print SMAIL "$msg\n";
@@ -309,88 +305,88 @@ sub send_reports {
 
     # legu la respondojn el $mail_send
     if (-e $mail_send) {
-	
-	$/ = $separator;
-	unless (open SMAIL, $mail_send) {
-	    warn "Ne povis malfermi $mail_send: $!\n";
-	    return;
-	}
+		
+		$/ = $separator;
+		unless (open SMAIL, $mail_send) {
+			warn "Ne povis malfermi $mail_send: $!\n";
+			return;
+		}
 
-	while (<SMAIL>) {
-	    # elprenu la sendinton
-		if (s/^sendinto: *([^\n]+)\n//) {
-			$mail_addr = $1;
-			# chu dosierojn sendu?
-			if (s/^dosieroj: *([^\n\s]+)\n//) {
-				$dos = $1;
-				if ($_ =~ /artikolo: *([^\n]+)\n/s) { $art_id = $1; }
-				
-				$dosieroj{$mail_addr} .= "$dos $art_id|";
+		while (<SMAIL>) {
+			# elprenu la sendinton
+			if (s/^sendinto: *([^\n]+)\n//) {
+				$mail_addr = $1;
+				# chu dosierojn sendu?
+				if (s/^dosieroj: *([^\n\s]+)\n//) {
+					$dos = $1;
+					if ($_ =~ /artikolo: *([^\n]+)\n/s) { $art_id = $1; }
+					
+					$dosieroj{$mail_addr} .= "$dos $art_id|";
+				}
+				$reports{$mail_addr} .= $_;
+			} else {
+				warn "Ne povis elpreni sendinton el $_\n";
+				next;
 			}
-			$reports{$mail_addr} .= $_;
-	    } else {
-			warn "Ne povis elpreni sendinton el $_\n";
-			next;
-	    }
-	}
-	close SMAIL;
-	$/ = $newline;
+		}
+		close SMAIL;
+		$/ = $newline;
 
-	# forsendu la raportojn
-	while (($mail_addr,$message) = each %reports) {
-	    $dos = $dosieroj{$mail_addr};
-	    $mail_addr =~ s/.*<([a-z\.\_\-@]+)>.*/$1/;
-	    
-	    # preparu mesaghon
-	    $message = "Saluton!\n"
-		."Jen raporto pri via(j) sendita(j) artikolo(j).\n\n"
-		    .$separator.$message."\n".$signature;
-	    
-	    $mail_handle = build MIME::Entity(Type=>"multipart/mixed",
-					      From=>$revo_from,
-					      To=>"$mail_addr",
-					      Subject=>"$revoservo - raporto");
-	    
-	    $mail_handle->attach(Type=>"text/plain",
-				 Encoding=>"quoted-printable",
-				 Data=>$message);
-	    
-	    # alpendigu dosierojn
-		if ($dos) {
-			for $file (split (/\|/,$dos)) {
-				if ($file =~ /^\s*([^\s]+)\s+(.+?)\s*$/) {
-					$file = $1;
-					$art_id = $2;
+		# forsendu la raportojn
+		while (($mail_addr,$message) = each %reports) {
+			$dos = $dosieroj{$mail_addr};
+			$mail_addr =~ s/.*<([a-z\.\_\-@]+)>.*/$1/;
+			
+			# preparu mesaghon
+			$message = "Saluton!\n"
+			."Jen raporto pri via(j) sendita(j) artikolo(j).\n\n"
+				.$separator.$message."\n".$signature;
+			
+			$mail_handle = build MIME::Entity(Type=>"multipart/mixed",
+							From=>$revo_from,
+							To=>"$mail_addr",
+							Subject=>"$revoservo - raporto");
+			
+			$mail_handle->attach(Type=>"text/plain",
+					Encoding=>"quoted-printable",
+					Data=>$message);
+			
+			# alpendigu dosierojn
+			if ($dos) {
+				for $file (split (/\|/,$dos)) {
+					if ($file =~ /^\s*([^\s]+)\s+(.+?)\s*$/) {
+						$file = $1;
+						$art_id = $2;
 
-					if ($art_id =~ /^\044([^\044]+)\044$/) {
-						$art_id = $1;
-						$art_id =~ /^Id: ([^ ,\.]+\.xml),v/;
-						$marko = $1;
-					} else {
-						$marko=$art_id;
+						if ($art_id =~ /^\044([^\044]+)\044$/) {
+							$art_id = $1;
+							$art_id =~ /^Id: ([^ ,\.]+\.xml),v/;
+							$marko = $1;
+						} else {
+							$marko=$art_id;
+						}
+					} else { $art_id = $file; $marko=$file; }
+					
+					print "attach: $file\n" if ($debug);
+					if (-e $file) {
+						$mail_handle->attach(Path=>$file,
+								Type=>'text/plain',
+								Encoding=>'quoted-printable',
+								Disposition=>'attachment',
+								Filename=>$marko,
+								Description=>$art_id);
 					}
-				} else { $art_id = $file; $marko=$file; }
-				
-				print "attach: $file\n" if ($debug);
-				if (-e $file) {
-					$mail_handle->attach(Path=>$file,
-							Type=>'text/plain',
-							Encoding=>'quoted-printable',
-							Disposition=>'attachment',
-							Filename=>$marko,
-							Description=>$art_id);
 				}
 			}
-	    }
-	    
-	    # forsendu
-	    unless (open SENDMAIL, "|$sendmail $mail_addr") {
-		warn "Ne povas dukti al $sendmail: $!\n";
-		next;
-	    }
-	    $mail_handle->print(\*SENDMAIL);
-	    close SENDMAIL;
-	}
+			
+			# forsendu
+			unless (open SENDMAIL, "|$sendmail $mail_addr") {
+			warn "Ne povas dukti al $sendmail: $!\n";
+			next;
+			}
+			$mail_handle->print(\*SENDMAIL);
+			close SENDMAIL;
+		}
 
 	# forigu $mail_send
 	# unlink($mail_send);
