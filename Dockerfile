@@ -4,7 +4,7 @@ MAINTAINER <diestel@steloj.de>
 # https://packages.debian.org/stretch/perl/
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    openssh-server ca-certificates openssl rxp git cvs curl unzip patch ssmtp libmime-tools-perl \
+    openssh-server ca-certificates openssl rxp git cvs curl unzip patch jq ssmtp libmime-tools-perl \
     libjson-perl \
 	&& mkdir -p /var/run/sshd && rm -rf /var/lib/apt/lists/*
 
@@ -13,12 +13,14 @@ COPY bin/* /usr/local/bin/
 
 RUN useradd -ms /bin/bash -u 1074 afido && mkdir -p /home/afido/.ssh
 WORKDIR /home/afido
-COPY ssh/* .ssh
+COPY --chown=afido:afido ssh/* .ssh/
+COPY --chown=afido:afido etc/* etc/
 
 ###USER afido:users
 
 RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/master.zip \
-  && unzip master.zip voko-grundo-master/dtd/* && rm master.zip && mkdir dict && ln -s voko-grundo-master/dtd dict/dtd
+  && unzip master.zip voko-grundo-master/dtd/* && rm master.zip && mkdir dict \
+  && ln -s /home/afido/voko-grundo-master/dtd dict/dtd
 
 # farenda:
 #
@@ -49,7 +51,7 @@ RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/master.zip \
 # echo "M14P$svort0" > ~/etc/secrets/voko-afido.smtp_password -
 # echo "pop3.provizanto.org" > ~/etc/secrets/voko-afido.pop3_server -
 # echo "redaktoservo@provizanto.org" > ~/etc/secrets/voko-afido.pop3_user -
-# echo "M14P$svort0" > ~/etc/secrets/voko-afido.pop3_password -
+# echo "M14P4$svort0" > ~/etc/secrets/voko-afido.pop3_password -
 # sudo chmod 400 ~/etc/secrets/voko-afido* && chown 1074 ~/etc/secrets/voko-afido*
 #
 # docker run -it -v ~/etc/secrets:/run/secrets voko-afido bash
