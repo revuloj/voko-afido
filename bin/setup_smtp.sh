@@ -3,13 +3,23 @@ set -x # trace
 # set -e # exit on erros in pipe
 
 ssmtpconf=/etc/ssmtp/ssmtp.conf
+mailsenderconf=/etc/mailsender.conf
 
 #if [ ! -e ${ssmtpconf} ]; then
 SMTP_SERVER=$(cat /run/secrets/voko-afido.smtp_server)
 SMTP_USER=$(cat /run/secrets/voko-afido.smtp_user)
 SMTP_PASSWORD=$(cat /run/secrets/voko-afido.smtp_password)
-# 25 neĉifrita, ĉifritaj pordoj 465 aŭ 587, sed ni ja uzos lokan servon voko-tomocero
-SMTP_PORT=25
+# 25 neĉifrita, ĉifritaj pordoj 465 aŭ 587
+SMTP_PORT=465 #25
+
+cat <<EOC > ${mailsenderconf}
+{
+    "server": "${SMTP_SERVER}",
+    "user": "${SMTP_USER}",
+    "password": "${SMTP_PASSWORD}",
+    "port:" "${SMPT_PORT}"
+}
+EOC
 
 cat <<EOT > ${ssmtpconf}
 # The user that gets all the mails (UID < 1000, usually the admin)

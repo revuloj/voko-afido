@@ -12,6 +12,10 @@ use JSON;
 use MIME::Entity;
 use Digest::SHA qw(hmac_sha256_hex);
 
+use lib("/usr/local/bin");
+#use lib("./bin");
+use mailsender;
+
 use Data::Dumper;
 
 ######################### agorda parto ##################
@@ -23,7 +27,7 @@ $debug        = 1;
 # FARENDA: legu tiujn el /docker swarm config/
 # baza agordo
 $afido_dir    = "/var/afido"; # tmp, log
-$dict_home    = $ENV{'PWD'}; #$ENV{"HOME"};
+$dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
 $dict_base    = "$dict_home/dict"; # xml, dok, dtd
 $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
 $vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
@@ -63,7 +67,7 @@ $gist_dir     = "$dict_base/gists";
 $json_dir     = "$dict_base/json";
 $xml_dir      = "$dict_base/xml";
 $git_repo     = $ENV{"GIT_REPO_REVO"} || "revo-fonto";
-$git_dir      = "$dict_base/$git_repo";
+$git_dir      = "$dict_base/revo-fonto";
 #$dok_dir      = "$dict_base/dok";
 
 $editor_file  = "$dict_etc/redaktantoj.json"; #"$dict_etc/voko.redaktantoj";
@@ -130,7 +134,7 @@ foreach my $file (glob "$gist_dir/*") {
 # sendu raportojn
 send_reports();
 #send_newarts_report();
-##># git_push();
+git_push();
 
 #$filename = `date +%Y%m%d_%H%M%S`;    
 #
@@ -312,6 +316,8 @@ sub send_reports {
 			return;
 		}
 
+		my $mailer = mailsender::smtp_connect;
+
 		while (<SMAIL>) {
 			# elprenu la sendinton
 			if (s/^sendinto: *([^\n]+)\n//) {
@@ -380,16 +386,16 @@ sub send_reports {
 			}
 			
 			# forsendu
-			unless (open SENDMAIL, "|$sendmail $mail_addr") {
-			warn "Ne povas dukti al $sendmail: $!\n";
-			next;
+			unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
+				warn "Ne povas forsendi retpoŝtan raporton!\n";
+				next;
 			}
-			$mail_handle->print(\*SENDMAIL);
-			close SENDMAIL;
 		}
 
-	# forigu $mail_send
-	# unlink($mail_send);
+		# forigu $mail_send
+		# unlink($mail_send);
+
+		mailsender::smpt_quit($mailer);
     }
 }
 
