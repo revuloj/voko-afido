@@ -1,12 +1,45 @@
-FROM perl:slim
-MAINTAINER <diestel@steloj.de>
+FROM ubuntu:18.04
+#FROM perl:5.24-slim-threaded
+#FROM perl:slim
+LABEL Maintainer="<diestel@steloj.de>"
 
 # https://packages.debian.org/stretch/perl/
 
+## https://hub.docker.com/r/jjmerelo/perl-io-socket-ssl/dockerfile
+#FROM perl:5.24-slim-threaded
+#LABEL version="1.0" maintainer="JJ Merelo <jjmerelo@GMail.com>" perl5version="5.24"
+#
+## Set up dir and download modules
+#RUN chmod o+r /etc/resolv.conf
+#RUN mkdir /test && apt-get update && apt-get install -y git curl libio-socket-ssl-perl libnet-ssleay-perl
+#RUN perl --version
+#
+## Will run this
+#ENTRYPOINT ["perl", "-I/usr/local/lib -I/usr/share/perl5 -I/usr/lib/x86_64-linux-gnu/perl5/5.24/"] 
+
+#RUN chmod o+r /etc/resolv.conf
+#RUN mkdir /test && apt-get update && apt-get install -y git curl libio-socket-ssl-perl libnet-ssleay-perl
+#RUN perl --version
+
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    openssh-server ca-certificates openssl rxp git cvs curl unzip patch jq ssmtp libmime-tools-perl \
-    libjson-perl \
-	&& mkdir -p /var/run/sshd && rm -rf /var/lib/apt/lists/*
+    openssh-server ca-certificates openssl rxp git cvs curl unzip patch jq \
+    libjson-perl libmime-tools-perl \
+    libnet-ssleay-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libauthen-sasl-perl \
+    libauthen-sasl-saslprep-perl libnet-smtp-tls-perl\
+  && rm -rf /var/lib/apt/lists/* \
+	&& mkdir -p /var/run/sshd 
+
+
+#  && cpanm install MIME::Entity Authen::SASL::Perl \
+
+# https://rt.cpan.org/Public/Bug/Display.html?id=128717
+
+# ssmtp
+# ??   libauthen-sasl-saslprep-perl libnet-smtp-tls-perl libgssapi-perl
+# perl -MAuthen::SASL::Perl -e1
+# cpan -i Authen::SASL::Perlsudo 
+# dh-make-perl –install –cpan Foo::Bar
+# https://serverfault.com/questions/815649/how-to-do-an-unattended-silent-cpan-install-setup
 
 COPY bin/* /usr/local/bin/
 #ENV PATH "$PATH:/usr/local/bin"
