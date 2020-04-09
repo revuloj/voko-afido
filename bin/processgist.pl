@@ -79,7 +79,7 @@ $separator    = "=" x 50 . "\n";
 
 ################ la precipa masho de la programo ##############
 
-$| = 1;
+###$| = 1;
 #$the_mail   = '';
 $editor     = '';
 $article_id = '';
@@ -88,6 +88,7 @@ $shangho    = '';
 $komando    = '';
 $file_no    = 0;
 #@newarts    = ();
+
 
 # certigu, ke provizoraj dosierujoj ekzistu
 mkdir($tmp); 
@@ -132,9 +133,16 @@ foreach my $file (glob "$gist_dir/*") {
 
 
 # sendu raportojn
+# provizore jam nun konektur al SMTP, por trovi eraron en ->auth
+#$IO::Socket::SSL::DEBUG=3;
+my $mailer = mailsender::smtp_connect;
 send_reports();
+mailsender::smtp_quit($mailer);
+
 #send_newarts_report();
-git_push();
+#git_push();
+git_cmd("$git push origin master");
+
 
 #$filename = `date +%Y%m%d_%H%M%S`;    
 #
@@ -189,7 +197,7 @@ sub process_gist {
 		return;
 	}    
 	
-    print "redaktanto: ",Dumper($editor) if ($debug);
+    # print "redaktanto: ",Dumper($editor) if ($debug);
 	unless($info->{red_nomo} eq $editor->{red_nomo}) {
 		warn "Nomo de la redaktanto ".$info->{red_id}." (".$info->{red_nomo}.") devias "
 		 	."de la registrita nomo (".$editor->{red_nomo}.")!\n"
@@ -316,7 +324,7 @@ sub send_reports {
 			return;
 		}
 
-		my $mailer = mailsender::smtp_connect;
+		#my $mailer = mailsender::smtp_connect;
 
 		while (<SMAIL>) {
 			# elprenu la sendinton
@@ -395,7 +403,7 @@ sub send_reports {
 		# forigu $mail_send
 		# unlink($mail_send);
 
-		mailsender::smpt_quit($mailer);
+		#mailsender::smtp_quit($mailer);
     }
 }
 
@@ -589,10 +597,9 @@ sub checkin {
 #	checkin_csv($xmlfile);
 
 	# checkin in Git
-	print "cp ${fname} $repo_art_file" if ($verbose);
+	print "cp ${fname} $repo_art_file\n" if ($verbose);
     `cp ${fname} $repo_art_file`;
 
-	chdir($git_dir);
 	checkin_git($repo_art_file,$edtr);
 
 	unlink("$tmp/shanghoj.msg");
@@ -604,19 +611,10 @@ sub checkin_git {
 
 	incr_ver("$xmlfile");
 
-	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
-	`$git commit -F $tmp/shanghoj.msg $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+	my ($log1,$err1) = git_cmd("$git add $xmlfile");
+	my ($log2,$err2) = git_cmd("$git commit -F $tmp/shanghoj.msg");
 
 	# chu 'commit' sukcesis?
-	$log = read_file("$tmp/git.log");
-    print "git-log:\n$log\n" if ($debug);
-
-    open ERR,"$tmp/git.err";
-    $err = read_file("$tmp/git.err");
-    print "git-err:\n$err\n" if ($debug);
-  
-    unlink("$tmp/git.log");
-	unlink("$tmp/git.err");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco
@@ -634,14 +632,14 @@ sub checkin_git {
     # se log enhavas 'nothing to commit', la dosiero ne estas shanghita   
 
     # raportu erarojn
-    if ($log =~ /nothing\sto\scommit/s) {
+    if ($log2 =~ /nothing\sto\scommit/s) {
 # ni ne bezonas dum ni arĥivas unue en CVS:		
 #		report("ERARO   : La sendita artikolo shajne ne diferencas de "
 #			."la aktuala versio.");
 		return;
-    } elsif ($err !~ /^\s*$/s) {
+    } elsif ($err2 !~ /^\s*$/s) {
 		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
-			."$log\n$err","$tmp/xml.xml");
+			."$log1\n$lo2\n$err1\n$err2\n","$xmlfile");
 		return;
     }
 
@@ -668,10 +666,9 @@ sub checkinnew {
 	my $repo_art_file = git_art_path($info,$art);
 
 	# checkin in Git
-    print "cp $fname $repo_art_file" if ($debug);
+    print "cp $fname $repo_art_file\n" if ($debug);
     `cp $fname $repo_art_file`;
 
-	chdir($git_dir);
 	checkinnew_git($repo_art_file,$edtr);
 
 	unlink("$tmp/shanghoj.msg");
@@ -683,19 +680,8 @@ sub checkinnew_git {
 
 	init_ver("$xmlfile");
 
-	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
-	`$git add $xmlfile`;
-	`$git commit -F $tmp/shanghoj.msg $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
-
-	# chu 'commit' sukcesis?
-    $log = read_file("$tmp/git.log");
-    print "git-log:\n$log\n" if ($debug);
-
-    $err = read_file("$tmp/git.err");
-    print "git-err:\n$err\n" if ($debug);
-  
-    unlink("$tmp/git.log");
-	unlink("$tmp/git.err");
+	($log1,$err1) = git_cmd("$git add $xmlfile");
+	($log2,$err2) = git_cmd("$git commit -F $tmp/shanghoj.msg");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco
@@ -713,14 +699,14 @@ sub checkinnew_git {
     # se log enhavas 'nothing to commit', la dosiero ne estas shanghita   
 
     # raportu erarojn
-    if ($log =~ /nothing\sto\scommit/s) {
+    if ($log2 =~ /nothing\sto\scommit/s) {
 # ni ne bezonas dum ni arĥivas unue en CVS:		
 #		report("ERARO   : La sendita artikolo shajne ne diferencas de "
 #			."la aktuala versio.");
 		return;
-    } elsif ($err !~ /^\s*$/s) {
+    } elsif ($err2 !~ /^\s*$/s) {
 		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
-			."$log\n$err","$tmp/xml.xml");
+			."$log1\n$log2\n$err1\n$err2\n","$xmlfile");
 		return;
     }
 
@@ -765,23 +751,6 @@ sub log_incr {
 
 	return "\$Log: $fn.xml,v \$\nversio $ver\n".$shg."\n$log\n-->";
 }
-
-sub git_push {
-	chdir($git_dir);
-	`$git push origin master 1> $tmp/git.log 2> $tmp/git.err`;
-
-	# chu 'push' sukcesis?
-    $log = read_file("$tmp/git.log");
-    print "git-log:\n$log\n" if ($debug);
-
-    $err = read_file("$tmp/git.err");
-	warn "git-err:\n$err\n" if ($err);
-  
-    unlink("$tmp/git.log");
-	unlink("$tmp/git.err");
-}
-
-
 
 
 sub init_ver {
@@ -922,4 +891,26 @@ sub read_json_file {
 		return;
 	}
 	return $parsed;	  
+}
+
+sub git_cmd {
+	my $git_cmd = shift;
+
+	chdir($git_dir);
+	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+	print "$git_cmd\n" if ($verbose);
+	`$git_cmd 1> $tmp/git.log 2> $tmp/git.err`;
+
+	# chu 'commit' sukcesis?
+	$log = read_file("$tmp/git.log");
+    print "git-out:\n$log\n" if ($log || $debug);
+
+    $err = read_file("$tmp/git.err");
+    print "git-err:\n$err\n" if ($err || $debug);
+  
+    unlink("$tmp/git.log");
+	unlink("$tmp/git.err");
+	chdir($dict_base);
+
+	return ($log,$err);
 }
