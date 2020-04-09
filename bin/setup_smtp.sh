@@ -10,14 +10,14 @@ SMTP_SERVER=$(cat /run/secrets/voko-afido.smtp_server)
 SMTP_USER=$(cat /run/secrets/voko-afido.smtp_user)
 SMTP_PASSWORD=$(cat /run/secrets/voko-afido.smtp_password)
 # 25 neĉifrita, ĉifritaj pordoj 465 aŭ 587
-SMTP_PORT=465 #25
+SMTP_PORT=587
 
 cat <<EOC > ${mailsenderconf}
 {
     "server": "${SMTP_SERVER}",
     "user": "${SMTP_USER}",
     "password": "${SMTP_PASSWORD}",
-    "port:" "${SMPT_PORT}"
+    "port": "${SMTP_PORT}"
 }
 EOC
 
