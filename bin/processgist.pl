@@ -317,6 +317,8 @@ sub send_reports {
 
     # legu la respondojn el $mail_send
     if (-e $mail_send) {
+
+		print "sendas raportojn al redaktintoj...\n" if ($verbose);
 		
 		$/ = $separator;
 		unless (open SMAIL, $mail_send) {
@@ -897,6 +899,7 @@ sub git_cmd {
 	my $git_cmd = shift;
 
 	chdir($git_dir);
+	print "------------------------------\n" if ($verbose);
 	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
 	print "$git_cmd\n" if ($verbose);
 	`$git_cmd 1> $tmp/git.log 2> $tmp/git.err`;
@@ -907,7 +910,8 @@ sub git_cmd {
 
     $err = read_file("$tmp/git.err");
     print "git-err:\n$err\n" if ($err || $debug);
-  
+	print "------------------------------\n" if ($verbose);
+
     unlink("$tmp/git.log");
 	unlink("$tmp/git.err");
 	chdir($dict_base);
