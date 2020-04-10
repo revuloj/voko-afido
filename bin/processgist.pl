@@ -43,6 +43,8 @@ $revo_from    = "Reta Vortaro <$revo_mailaddr>";
 $signature    = "--\nRevo-Servo $revo_mailaddr\n"
     ."retposhta servo por redaktantoj de Reta Vortaro.\n";
 
+$sigelilo_file = "/run/secrets/voko-afido.sigelilo";
+
 # programoj
 $xmlcheck     = '/usr/bin/rxp -V -s';
 $git          = '/usr/bin/git';
@@ -102,6 +104,8 @@ $json_parser = JSON->new->allow_nonref;
 # trovi ilin facile laŭ numero (red_id)
 $fe=read_json_file($editor_file);
 %editors = map { $_->{red_id} => $_	} @{$fe};
+
+$sigelio = read_file("$sigelilo_file");
 
 foreach my $file (glob "$gist_dir/*") {
 
@@ -201,6 +205,13 @@ sub process_gist {
 	unless($info->{red_nomo} eq $editor->{red_nomo}) {
 		warn "Nomo de la redaktanto ".$info->{red_id}." (".$info->{red_nomo}.") devias "
 		 	."de la registrita nomo (".$editor->{red_nomo}.")!\n"
+		# nur avertu, sed akceptu devion		
+	}
+
+	# kontrolu sigelon
+	unless(check_signature_valid($gist,$editor,$info)) {
+		warn "La sigelo por gisto ".$gist->{id}." (".$info->{sigelo}.") ne pruviĝis valida.\n";
+		return;
 	}
 
 	# traktu priskribon redakt/aldon..., XML...
@@ -502,6 +513,20 @@ sub cmd_aldon {
     if (checkxml($gist,$fname,1)) {
 		checkinnew($gist,$info,$art,$article_id,$shangho,$fname);
     }
+}
+
+sub check_signature_valid {
+	my ($gist,$editor,$info) = @_;
+
+	my $fname = "$xml_dir/".$gist->{id}.".xml";
+	my $retadr = $editor->{retadr}[0];
+
+	$text = "$retadr\n".read_file($fname);
+	$digest = hmac_sha256_hex($text, $sigelilo);
+
+	print "digest: $digest\n" if ($verbose);
+
+	return ($digest eq $info->{sigelo})
 }
 
 sub checkxml {
