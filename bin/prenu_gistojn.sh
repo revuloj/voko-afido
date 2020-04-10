@@ -20,7 +20,7 @@ json=dict/json
 
 if [ -z "$REVO_TOKEN" ]; then
   echo "Vi devas difini la medio-variablon REVO_TOKEN, kiun ni bezonas por saluti al Github."
-  return 1
+  exit 1
 fi
 
 

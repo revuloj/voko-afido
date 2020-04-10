@@ -19,19 +19,23 @@ owner=reta-vortaro
 
 if [ $# -eq 0 ]; then
   echo "Vi devas doni XML-dosieron kiel argumento."
-  return 1
+  exit 1
 fi
 
 if [ -z "$REVO_TOKEN" ]; then
   echo "Vi devas difini la medio-variablon REVO_TOKEN, kiun ni bezonas por saluti al Github."
-  return 1
+  exit 1
+fi
+
+if [ -z "$SIGELILO" ]; then
+  echo "Vi devas difini la medio-variablon SIGELILO, kiun ni bezonas por sigeli la dosieron."
+  exit 1
 fi
 
 if [ -z "$RETADRESO" ]; then
   echo "Vi devas difini la medio-variablon RETADRESO, kiun ni bezonas por identigi la redaktanton."
-  return 1
+  exit 1
 fi
-
 
 file=$1
 fname=$(basename $file)
@@ -40,9 +44,8 @@ xml=${xml//\"/\\\"}
 xml=${xml//$'\n'/\\n}
 #echo "\"${xml}\""
 
-sigelilo="asefawq3485wef2354awemfpwej"
 # elkalkulu HMAC
-HMAC=$((echo ${RETADRESO} && cat $file) | openssl dgst -sha256 -hmac "${sigelilo}"); HMAC=${HMAC#*= }
+HMAC=$((echo ${RETADRESO} && cat $file) | openssl dgst -sha256 -hmac "${SIGELILO}"); HMAC=${HMAC#*= }
 
 info="{\n\"red_id\":\"1\",\n\"red_nomo\":\"Testa Redaktanto\",\n\"sigelo\":\"${HMAC}\",\n\"celo\":\"revo-fonto-testo/revo\"\n}"
 info=${info//\"/\\\"}
