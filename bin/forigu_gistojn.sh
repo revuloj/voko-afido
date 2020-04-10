@@ -12,14 +12,15 @@ api=https://api.github.com
 owner=reta-vortaro
 
 # dosierujoj
+pretaj=dict/pretaj
 #gists=dict/gists
 #xml=dict/xml
 #json=dict/json
 
-if [ $# -eq 0 ]; then
-  echo "Vi devas doni la liston de forigendaj gistoj kiel argumentoj."
-  return 1
-fi
+#if [ $# -eq 0 ]; then
+#  echo "Vi devas doni la liston de forigendaj gistoj kiel argumentoj."
+#  return 1
+#fi
 
 if [ -z "$REVO_TOKEN" ]; then
   echo "Vi devas difini la medio-variablon REVO_TOKEN, kiun ni bezonas por saluti al Github."
@@ -29,8 +30,9 @@ fi
 # ekstraktu la unuan dosieron el ĉiuj gistoj...
 echo "## forigi ${api}/gists... $@"
 
-for gist in $@
+for file in ${pretaj}/*
 do
+  gist=$(basename ${file})
   status=$(curl -H "Authorization: token ${REVO_TOKEN}" -I -X DELETE ${api}/gists/${gist} | \
     grep "^Status:")
   echo "$gist: $status"
