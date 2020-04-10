@@ -66,6 +66,7 @@ $xml_temp     = "$tmp/xml";
 $prc_gist     = "$log/prcgist";
 
 $gist_dir     = "$dict_base/gists";
+$pretaj_dir     = "$dict_base/pretaj";
 $json_dir     = "$dict_base/json";
 $xml_dir      = "$dict_base/xml";
 $git_repo     = $ENV{"GIT_REPO_REVO"} || "revo-fonto";
@@ -96,6 +97,7 @@ $file_no    = 0;
 mkdir($tmp); 
 mkdir($log);
 mkdir($xml_temp);
+mkdir($pretaj_dir); 
 
 $json_parser = JSON->new->allow_nonref;
 #$json_parser->allow_tags(true);
@@ -148,7 +150,7 @@ mailsender::smtp_quit($mailer);
 git_cmd("$git push origin master");
 
 
-#$filename = `date +%Y%m%d_%H%M%S`;    
+$filename = "mail_sent_".`date +%Y%m%d_%H%M%S`;    
 #
 ## arkivu la poshtdosieron
 #if ($mail_file eq $mail_local) {
@@ -161,10 +163,10 @@ git_cmd("$git push origin master");
 #    `mv $mail_error $err_mail/$filename`;
 #}
 
-#if (-e $mail_send) {
-#    print "shovas $mail_send al $prc_mail/$filename\n" if ($verbose);
-#    `mv $mail_send $prc_mail/$filename`;
-#}  
+if (-e $mail_send) {
+    print "shovas $mail_send al $log/$filename\n" if ($verbose);
+    `mv $mail_send $log/$filename`;
+}  
 
 exit;
 
@@ -215,7 +217,10 @@ sub process_gist {
 	}
 
 	# traktu priskribon redakt/aldon..., XML...
-	komando_lau_priskribo($gist, $info)
+	if (komando_lau_priskribo($gist, $info)) {
+		print "Ŝovas $gist->{id} al $pretaj_dir" if ($verbose)
+		`mv $gist_dir/.$gist->{id} $pretaj_dir/`
+	}
 }
 
 sub is_editor {
