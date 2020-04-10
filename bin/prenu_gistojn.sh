@@ -11,15 +11,18 @@
 # https://stackoverflow.com/questions/7285059/hmac-sha1-in-bash
 # https://willhaley.com/blog/generate-jwt-with-bash/
 
-# httpd mock
-# https://gist.github.com/willurd/5720255
-
 api=https://api.github.com
 owner=reta-vortaro
 # dosierujoj
 gists=dict/gists
 xml=dict/xml
 json=dict/json
+
+if [ -z "$REVO_TOKEN" ]; then
+  echo "Vi devas difini la medio-variablon REVO_TOKEN, kiun ni bezonas por saluti al Github."
+  return 1
+fi
+
 
 unquote () {
   str=$1
