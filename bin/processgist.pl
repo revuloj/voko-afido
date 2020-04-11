@@ -11,6 +11,7 @@
 use JSON;
 use MIME::Entity;
 use Digest::SHA qw(hmac_sha256_hex);
+use experimental 'smartmatch';
 
 use lib("/usr/local/bin");
 #use lib("./bin");
@@ -55,7 +56,7 @@ $sendmail     = '/usr/lib/sendmail -i';
 
 # dosierujoj
 $tmp          = "$dict_base/tmp";
-$log          = "$dict_base/log";
+$log_dir      = "$dict_base/log";
 $dtd_dir      = "$dict_base/dtd";
 
 #$mail_error   = "$tmp/mailerr";
@@ -63,7 +64,7 @@ $mail_send    = "$tmp/mailsend";
 $xml_temp     = "$tmp/xml";
 #$dtd_temp     = "$tmp/dtd";
 
-$prc_gist     = "$log/prcgist";
+$prc_gist     = "$log_dir/prcgist";
 
 $gist_dir     = "$dict_base/gists";
 $pretaj_dir     = "$dict_base/pretaj";
@@ -95,7 +96,7 @@ $file_no    = 0;
 
 # certigu, ke provizoraj dosierujoj ekzistu
 mkdir($tmp); 
-mkdir($log);
+mkdir($log_dir);
 mkdir($xml_temp);
 mkdir($pretaj_dir); 
 
@@ -105,7 +106,7 @@ $json_parser = JSON->new->allow_nonref;
 # legu redaktantoj el JSON-dosiero kaj transformu al HASH por 
 # trovi ilin facile laŭ numero (red_id)
 $fe=read_json_file($editor_file);
-%editors = map { $_->{red_id} => $_	} @{$fe};
+%editors = map { $_->{retadr}[0] => $_	} @{$fe};
 
 $sigelio = read_file("$sigelilo_file");
 
@@ -141,16 +142,17 @@ foreach my $file (glob "$gist_dir/*") {
 # sendu raportojn
 # provizore jam nun konektur al SMTP, por trovi eraron en ->auth
 #$IO::Socket::SSL::DEBUG=3;
-my $mailer = mailsender::smtp_connect;
-send_reports();
-mailsender::smtp_quit($mailer);
+if (-e $mail_send) {
+	my $mailer = mailsender::smtp_connect;
+	send_reports($mailer);
+	mailsender::smtp_quit($mailer);
+}
 
 #send_newarts_report();
 #git_push();
 git_cmd("$git push origin master");
 
 
-$filename = "mail_sent_".`date +%Y%m%d_%H%M%S`;    
 #
 ## arkivu la poshtdosieron
 #if ($mail_file eq $mail_local) {
@@ -164,8 +166,9 @@ $filename = "mail_sent_".`date +%Y%m%d_%H%M%S`;
 #}
 
 if (-e $mail_send) {
-    print "shovas $mail_send al $log/$filename\n" if ($verbose);
-    `mv $mail_send $log/$filename`;
+	$filename = "mail_sent_".`date +%Y%m%d_%H%M%S`;    
+    print "ŝovas $mail_send al $log_dir/$filename\n" if ($verbose);
+    `mv $mail_send $log_dir/$filename`;
 }  
 
 exit;
@@ -192,23 +195,28 @@ sub process_gist {
 	my ($repo,@path) = split('/',$info->{celo});
 	print ("gist-repo: $repo =? git_repo: $git_repo\n") if ($debug);
 	unless ($git_repo eq $repo) {
-		warn "Ni ne traktas gistojn por '$repo'. Do ni ignoras giston: ".$gist->{id};
+		warn "Ni ne traktas gistojn por '$repo'. Do ni ignoras giston: ".$gist->{id}."\n";
 		return;
 	}
     
+	unless ($info->{red_adr}) {
+		warn "Mankas indiko pri la redaktanto en: ".$gist->{id}."\n";
+		return;
+	}
     # kontrolu, ĉu temas pri registrita redaktoro 
-    unless ($editor = is_editor($info->{red_id})) 
+	$editor = is_editor($info->{red_adr});
+    unless ($editor) 
     { 
-		warn "Ne registrita redaktanto: ".$info->{red_id}."(".$info->{red_nomo}.")";
+		warn "Ne registrita redaktanto: ".$info->{red_adr};
 		return;
 	}    
 	
     # print "redaktanto: ",Dumper($editor) if ($debug);
-	unless($info->{red_nomo} eq $editor->{red_nomo}) {
-		warn "Nomo de la redaktanto ".$info->{red_id}." (".$info->{red_nomo}.") devias "
-		 	."de la registrita nomo (".$editor->{red_nomo}.")!\n"
-		# nur avertu, sed akceptu devion		
-	}
+	#unless($info->{red_nomo} eq $editor->{red_nomo}) {
+	#	warn "Nomo de la redaktanto ".$info->{red_id}." (".$info->{red_nomo}.") devias "
+	#	 	."de la registrita nomo (".$editor->{red_nomo}.")!\n"
+	#	# nur avertu, sed akceptu devion		
+	#}
 
 	# kontrolu sigelon
 	unless(check_signature_valid($gist,$editor,$info)) {
@@ -218,18 +226,30 @@ sub process_gist {
 
 	# traktu priskribon redakt/aldon..., XML...
 	if (komando_lau_priskribo($gist, $info)) {
-		print "Ŝovas $gist->{id} al $pretaj_dir" if ($verbose)
-		`mv $gist_dir/.$gist->{id} $pretaj_dir/`
+		print "Ŝovas $gist->{id} al $pretaj_dir\n" if ($verbose);
+		`mv $gist_dir/$gist->{id} $pretaj_dir/`
 	}
 }
 
 sub is_editor {
-    my $red_id = shift;
+    my $red_adr = shift;
 
-    # trovu laŭ red-id
-	my $ed = %editors{$red_id};
+    # trovu laŭ unua retadreso
+	my $ed = %editors{$red_adr};
 	
-    return $ed;
+	if ($ed) {
+		return $ed;
+	}
+
+	# se ne troviĝis, provu alternativajn retadresojn de la listo
+	while ((my $unua, $ed) = each (%editors)) {
+		my @adrj = $ed->{retadr};
+		if ( $red_adr ~~ @adrj ) {
+			return $ed;
+		}
+	}
+
+	return;
 }
 
 sub komando_lau_priskribo {
@@ -326,6 +346,8 @@ sub report {
 }
 
 sub send_reports {
+	my $mailer = shift;
+	
     my $newline = $/;
     my %reports = ();
     my %dosieroj = ();
@@ -777,7 +799,7 @@ sub log_incr {
 
 	# mallongigu je maks. 10 linioj
 	my @lines = split(/\n/,$log);
-	$log = join("\n",splice(@lines,0,20));
+	my $log = join("\n",splice(@lines,0,20));
 
 	my $shg = read_file("$tmp/shanghoj.msg");
 
@@ -935,10 +957,10 @@ sub git_cmd {
 	`$git_cmd 1> $tmp/git.log 2> $tmp/git.err`;
 
 	# chu 'commit' sukcesis?
-	$log = read_file("$tmp/git.log");
+	my $log = read_file("$tmp/git.log");
     print "git-out:\n$log\n" if ($log || $debug);
 
-    $err = read_file("$tmp/git.err");
+    my $err = read_file("$tmp/git.err");
     print "git-err:\n$err\n" if ($err || $debug);
 	print "------------------------------\n" if ($verbose);
 

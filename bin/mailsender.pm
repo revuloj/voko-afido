@@ -9,7 +9,7 @@ use JSON;
 use Data::Dumper;
 
 my $mailsenderconf="/etc/mailsender.conf";
-my $debug = 0; # 1
+my $debug = 1; # 0
 
 if ($debug) {
     $IO::Socket::SSL::DEBUG=3;
@@ -66,6 +66,8 @@ sub smtp_send {
     $smtps->data();
     $smtps->datasend($mailhandle->as_string());
     $smtps->dataend();
+
+    return 1;
 }
 
 sub read_conf {

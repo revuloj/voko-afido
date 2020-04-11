@@ -40,7 +40,7 @@ rm -f ${gists}/*
 
 #jq -c '.[] | { id, description, updated_at } + [ (.files[]|values) ][0]' | \
 
-# ekstraktu la unuan dosieron el ĉiuj gistoj...
+# ekstraktu id kaj XML-dosiernomon el ĉiuj gistoj...
 echo "## preni ${api}/gists..."
 curl -H "Authorization: token ${REVO_TOKEN}" -X GET --progress-bar ${api}/gists | \
     jq -c '.[] | { id, description, updated_at, files }' | \
@@ -57,6 +57,7 @@ for gist in ${gists}/*; do
   id=$(cat ${gist} | jq -r '.id')
   files=$(cat ${gist} | jq -r '.files | keys | @sh')
 
+  # elŝutu dosierojn de la tipo XML kaj JSON, rifuzu aliajn aŭ tro grandajn
   for file in ${files}; do
     # echo "DEBUG (file): $(unquote ${file})"
     fjson=$(cat ${gist} | jq -r --arg f $(unquote ${file}) '.files[$f]')
