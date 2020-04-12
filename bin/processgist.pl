@@ -79,7 +79,7 @@ $editor_file  = "$dict_etc/redaktantoj.json"; #"$dict_etc/voko.redaktantoj";
 # diversaj
 #$possible_keys= 'komando|teksto|shangho';
 $commands     = 'redakt[oui]|aldon[oui]'; # .'|dokumento|artikolo|historio|propono'
-$separator    = "=" x 50 . "\n";
+$separator    = "=" x 80 . "\n";
 
 ################ la precipa masho de la programo ##############
 
@@ -109,14 +109,14 @@ $fe=read_json_file($editor_file);
 %editors = map { $_->{retadr}[0] => $_	} @{$fe};
 
 $sigelilo = $ENV{"SIGELILO"} || read_file("$sigelilo_file");
-
+$sigelilo =~ s/^\s+|\s+$//g;
 unless ($sigelilo) {
 	die "Mankas sigelilo. Sen ĝi ni ne povas kontroli la sigelojn de redaktoj."
 }
 
 foreach my $file (glob "$gist_dir/*") {
 
-    print '=' x 50, "\n" if ($verbose);
+    print $separator if ($verbose);
 
     # preparu por la nova mesagho
     $editor = '';
@@ -142,7 +142,7 @@ foreach my $file (glob "$gist_dir/*") {
     process_gist($gist);
 }
 
-print '=' x 50, "\n" if ($verbose);
+print $separator if ($verbose);
 
 # sendu raportojn
 # provizore jam nun konektur al SMTP, por trovi eraron en ->auth
@@ -153,13 +153,13 @@ if (-e $mail_send) {
 	mailsender::smtp_quit($mailer);
 }
 
-print '=' x 50, "\n" if ($verbose);
+print $separator if ($verbose);
 
 #send_newarts_report();
 #git_push();
 git_cmd("$git push origin master");
 
-print '=' x 50, "\n" if ($verbose);
+print $separator if ($verbose);
 
 #
 ## arkivu la poshtdosieron
@@ -179,7 +179,7 @@ if (-e $mail_send) {
     `mv $mail_send $log_dir/$filename`;
 }  
 
-print '=' x 50, "\n" if ($verbose);
+print $separator if ($verbose);
 
 exit;
 
@@ -265,7 +265,7 @@ sub is_editor {
 
 sub komando_lau_priskribo {
     my ($gist, $info) = @_;
-    my ($cmd,$arg);
+    my ($cmd, $arg);
 
 	my $desc = $gist->{description};
     if ($desc =~ s/^[\s\n]*($commands)[ \t]*:[ \t]*(.*)//si) {
@@ -305,7 +305,7 @@ sub komando_lau_priskribo {
 ######################### respondoj al sendintoj ###################
 
 sub report {
-    my ($msg,$file) = @_;
+    my ($msg,$file,$article_id) = @_;
     my ($attachment,$text);
     
     print "$msg\n" if ($verbose);
@@ -507,7 +507,7 @@ sub cmd_redakt {
 
     unless ($art =~ /^[a-z0-9_]+$/i) {
 		report("ERARO   : Ne valida artikolmarko $art. Ĝi povas enhavi nur "
-	      ."literojn, ciferojn kaj substrekon.\n");
+	      ."literojn, ciferojn kaj substrekon.\n",$fname,$article_id);
 		return;
     }
 
@@ -529,7 +529,7 @@ sub cmd_aldon {
     
     unless ($art =~ /^[a-z0-9_]+$/s) {
 		report("ERARO   : Ne valida nomo por artikolo. \"$art\".\n"
-	       	  ."Ĝi konsistu nur el minuskloj, substrekoj kaj ciferoj.\n");
+	       	  ."Ĝi konsistu nur el minuskloj, substrekoj kaj ciferoj.\n",$fname,$art);
 		return;
     }
     my $shangho = $art; # memoru por poste
@@ -542,7 +542,7 @@ sub cmd_aldon {
 	$xml_file = git_art_path($info, $art);
     if (-e "$xml_file") {
 		report ("ERARO   : Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
-			   ."Bv. elekti alian nomon por la nova artikolo.\n");
+			   ."Bv. elekti alian nomon por la nova artikolo.\n",$fname,$article_id);
 		return;
     }
 
@@ -564,6 +564,11 @@ sub check_signature_valid {
 
 	print "sigelo: $info->{sigelo}\n" if ($verbose);
 	print "digest: $digest\n" if ($verbose);
+
+	##if ($debug && ($digest ne $info->{sigelo})) {
+	##	print "<<<$sigelilo>>>\n";
+	##	print "[[[$text]]]\n";
+	##}
 
 	return ($digest eq $info->{sigelo})
 }
@@ -651,7 +656,7 @@ sub checkin {
 	       ."ne baziĝas sur la aktuala arkiva versio\n"
 	       ."($ark_id)\n"
 	       ."Bonvolu preni aktualan version el la TTT-ejo. "
-	       ."($vokomail_url?art=$art)\n","$fname");
+	       ."($vokomail_url?art=$art)\n","$fname",$id);
 		return;
     }
 
