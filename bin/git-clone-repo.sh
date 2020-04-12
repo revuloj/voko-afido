@@ -12,8 +12,11 @@ fi
 
 if [[ ! -z $GITHUB_TOKEN ]]; then
   git_credentials_prefix="https://x-access-token:${GITHUB_TOKEN}@github.com/"
+# se ni volas subteni ankaŭ DEPLOY-TOKEN...
+# elif [[ ! -z $GITHUB_DEPLOYKEY ]]  ...
+#    git_credentials_prefix=https://github.com/" 
 else
-  git_credentials_prefix="https://github.com/"
+  git_credentials_prefix=""
 fi
 
 # https://github.com/ad-m/github-push-action/blob/master/start.sh
