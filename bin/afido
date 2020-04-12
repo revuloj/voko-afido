@@ -1,3 +1,3 @@
 #!/bin/bash
 
-prenu_redaktantojn.sh && prenu_gistojn.sh && processgist.pl && forigu_gistojn.sh
+prenu_redaktantojn.sh && git-cline-repo.sh && prenu_gistojn.sh && processgist.pl && forigu_gistojn.sh

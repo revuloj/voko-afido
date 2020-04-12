@@ -1,5 +1,5 @@
 { 
-    "revo-fonto": "git@github.com:revuloj/revo-fonto.git",
-    "revo-fonto-testo": "git@github.com:revuloj/revo-fonto-testo.git",
+    "revo-fonto": "revuloj/revo-fonto.git",
+    "revo-fonto-testo": "revuloj/revo-fonto-testo.git",
     "test-repo": "/home/afido/test-repo"
 }

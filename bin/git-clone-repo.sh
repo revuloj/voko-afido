@@ -10,9 +10,20 @@ if [[ -z $GIT_REPO_REVO ]]; then
     exit 1
 fi
 
-repo_url=$(cat ${etc}/git_repos.json | jq -r --arg REPO "$GIT_REPO_REVO" '.[$REPO]')
+if [[ ! -z $GITHUB_TOKEN ]]; then
+  git_credentials_prefix="https://x-access-token:${GITHUB_TOKEN}@github.com/"
+else
+  git_credentials_prefix="https://github.com/"
+fi
 
-echo "Elŝutante ${repo_url} al revo-fonto..."
+# https://github.com/ad-m/github-push-action/blob/master/start.sh
+# "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${REPOSITORY}.git"
+# aŭ https://www.innoq.com/de/blog/github-actions-automation/
+# repo_uri="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+repo=$(cat ${etc}/git_repos.json | jq -r --arg REPO "$GIT_REPO_REVO" '.[$REPO]')
+repo_url="${git_credentials_prefix}${repo}"
+
+echo "Elŝutante ${repo} al revo-fonto..."
 git clone ${repo_url} ${dict}/revo-fonto
 
 if [ ! "$(git config --global user.email)" ]; then
