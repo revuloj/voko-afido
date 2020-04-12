@@ -33,13 +33,13 @@ $dict_base    = "$dict_home/dict"; # xml, dok, dtd
 $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
 $vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
 $revo_url     = "http://purl.oclc.org/NET/voko/revo";
-$mail_folder  = "/var/spool/mail/tomocero";
+#$mail_folder  = "/var/spool/mail/tomocero";
 
 # FARENDA: legu tiujn el sekreto(j)(?)
 $revoservo    = '[Revo-Servo]';
 $revo_mailaddr= 'revo@reta-vortaro.de';
-$redaktilo_from= 'revo@steloj.de';
-$revolist     = 'wolfram';
+$redaktilo_from= 'revo-servo@steloj.de';
+#$revolist     = 'wolfram';
 $revo_from    = "Reta Vortaro <$revo_mailaddr>";
 $signature    = "--\nRevo-Servo $revo_mailaddr\n"
     ."retposhta servo por redaktantoj de Reta Vortaro.\n";
@@ -52,7 +52,7 @@ $git          = '/usr/bin/git';
 
 # -t ne subtenata de ssmtp
 #$sendmail     = '/usr/lib/sendmail -t -i';
-$sendmail     = '/usr/lib/sendmail -i';
+#$sendmail     = '/usr/lib/sendmail -i';
 
 # dosierujoj
 $tmp          = "$dict_base/tmp";
@@ -108,7 +108,11 @@ $json_parser = JSON->new->allow_nonref;
 $fe=read_json_file($editor_file);
 %editors = map { $_->{retadr}[0] => $_	} @{$fe};
 
-$sigelio = read_file("$sigelilo_file");
+$sigelilo = $ENV{"SIGELILO"} || read_file("$sigelilo_file");
+
+unless ($sigelilo) {
+	die "Mankas sigelilo. Sen ĝi ni ne povas kontroli la sigelojn de redaktoj."
+}
 
 foreach my $file (glob "$gist_dir/*") {
 
@@ -347,7 +351,7 @@ sub report {
 
 sub send_reports {
 	my $mailer = shift;
-	
+
     my $newline = $/;
     my %reports = ();
     my %dosieroj = ();
