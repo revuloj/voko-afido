@@ -116,7 +116,7 @@ unless ($sigelilo) {
 
 foreach my $file (glob "$gist_dir/*") {
 
-    print '-' x 50, "\n" if ($verbose);
+    print '=' x 50, "\n" if ($verbose);
 
     # preparu por la nova mesagho
     $editor = '';
@@ -142,6 +142,7 @@ foreach my $file (glob "$gist_dir/*") {
     process_gist($gist);
 }
 
+print '=' x 50, "\n" if ($verbose);
 
 # sendu raportojn
 # provizore jam nun konektur al SMTP, por trovi eraron en ->auth
@@ -152,10 +153,13 @@ if (-e $mail_send) {
 	mailsender::smtp_quit($mailer);
 }
 
+print '=' x 50, "\n" if ($verbose);
+
 #send_newarts_report();
 #git_push();
 git_cmd("$git push origin master");
 
+print '=' x 50, "\n" if ($verbose);
 
 #
 ## arkivu la poshtdosieron
@@ -174,6 +178,8 @@ if (-e $mail_send) {
     print "ŝovas $mail_send al $log_dir/$filename\n" if ($verbose);
     `mv $mail_send $log_dir/$filename`;
 }  
+
+print '=' x 50, "\n" if ($verbose);
 
 exit;
 

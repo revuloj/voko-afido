@@ -6,7 +6,7 @@ package mailsender;
 use Net::SMTP;
 use Authen::SASL;
 use JSON;
-use Data::Dumper;
+#use Data::Dumper;
 
 my $mailsenderconf="/etc/mailsender.conf";
 my $debug = 1; # 0
@@ -44,10 +44,10 @@ sub smtp_connect {
             #$smtps->auth($setup->{user}, $setup->{password}) 
             my $authzd = $smtps->auth($sasl);
             unless ($authzd) {
-                print "SASL: ",Dumper($sasl);
+                #print "SASL: ",Dumper($sasl);
                 die "Saluto al retpoŝtilo malsukcesis!";
             }
-            print "SASL: ",Dumper($sasl) if ($debug);
+            #print "SASL: ",Dumper($sasl) if ($debug);
             return $smtps;
         }
     }
