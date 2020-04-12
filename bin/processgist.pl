@@ -196,6 +196,7 @@ sub process_gist {
 		warn "Mankas aldonaj informoj, ne eblas trakti giston: ".$gist->{id};
 		return;
 	}
+	print "info: ",Dumper($info) if ($verbose);
 
 	# kontrolu, ĉu la gisto estas celata al la aktiva Git-arĥivo
 	unless ($info->{celo}) {
@@ -274,12 +275,10 @@ sub komando_lau_priskribo {
 		print "cmd: $cmd, arg: $arg\n" if ($debug);
 
 		if ($cmd =~ /^redakt[oui]/i) {
-			cmd_redakt($gist, $info, $arg);
-			return 1;
+			return cmd_redakt($gist, $info, $arg);
 
 		} elsif ($cmd =~ /^aldon[oui]/i) {
-			cmd_aldon($gist, $info, $arg);
-			return 1;
+			return cmd_aldon($gist, $info, $arg);
 
 		} else {
 			report("ERARO   : nekonata komando $cmd");
@@ -514,8 +513,9 @@ sub cmd_redakt {
 
     # kontroli la sintakson kaj arĥivi
     if (checkxml($gist,$fname,0)) {
-		checkin($gist,$info,$art,$article_id,$shangho,$fname);
+		return checkin($gist,$info,$art,$article_id,$shangho,$fname);
     }
+	return;
 }
 
 # nova artikolo
@@ -548,8 +548,9 @@ sub cmd_aldon {
 
     # kontroli la sintakson kaj arĥivi
     if (checkxml($gist,$fname,1)) {
-		checkinnew($gist,$info,$art,$article_id,$shangho,$fname);
+		return checkinnew($gist,$info,$art,$article_id,$shangho,$fname);
     }
+	return;
 }
 
 sub check_signature_valid {
@@ -561,6 +562,7 @@ sub check_signature_valid {
 	$text = "$retadr\n".read_file($fname);
 	$digest = hmac_sha256_hex($text, $sigelilo);
 
+	print "sigelo: $info->{sigelo}\n" if ($verbose);
 	print "digest: $digest\n" if ($verbose);
 
 	return ($digest eq $info->{sigelo})
@@ -664,9 +666,11 @@ sub checkin {
 	print "cp ${fname} $repo_art_file\n" if ($verbose);
     `cp ${fname} $repo_art_file`;
 
-	checkin_git($repo_art_file,$edtr);
+	my $ok = checkin_git($repo_art_file,$edtr);
 
 	unlink("$tmp/shanghoj.msg");
+
+	return $ok;
 }
 
 
@@ -733,9 +737,11 @@ sub checkinnew {
     print "cp $fname $repo_art_file\n" if ($debug);
     `cp $fname $repo_art_file`;
 
-	checkinnew_git($repo_art_file,$edtr);
+	my $ok = checkinnew_git($repo_art_file,$edtr);
 
 	unlink("$tmp/shanghoj.msg");
+
+	return $ok;
 }
 
 
