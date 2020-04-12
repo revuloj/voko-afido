@@ -1,14 +1,23 @@
 #!/bin/bash
-set -x # trace
+# set -x # trace
 # set -e # exit on erros in pipe
 
 ssmtpconf=/etc/ssmtp/ssmtp.conf
 mailsenderconf=/etc/mailsender.conf
 
 #if [ ! -e ${ssmtpconf} ]; then
-SMTP_SERVER=$(cat /run/secrets/voko-afido.smtp_server)
-SMTP_USER=$(cat /run/secrets/voko-afido.smtp_user)
-SMTP_PASSWORD=$(cat /run/secrets/voko-afido.smtp_password)
+if [[ -z "$SMTP_SERVER" ]]; then
+    SMTP_SERVER=$(cat /run/secrets/voko-afido.smtp_server)
+fi
+
+if [[ -z "$SMTP_USER" ]]; then
+    SMTP_USER=$(cat /run/secrets/voko-afido.smtp_user)
+fi
+
+if [[ -z "$SMTP_PASSWORD" ]]; then
+    SMTP_PASSWORD=$(cat /run/secrets/voko-afido.smtp_password)
+fi
+
 # 25 neĉifrita, ĉifritaj pordoj 465 aŭ 587
 SMTP_PORT=587
 
