@@ -50,11 +50,11 @@ HMAC=$((echo ${RETADRESO} && cat $file) | openssl dgst -sha256 -hmac "${SIGELILO
 info="{\n\"red_id\":\"1\",\n\"red_nomo\":\"Testa Redaktanto\",\n\"sigelo\":\"${HMAC}\",\n\"celo\":\"revo-fonto-testo/revo\"\n}"
 info=${info//\"/\\\"}
 
-echo "$info"
+#echo "$info"
 
 IFS= read -r -d '' json <<EOJ
 {
-  "description": "testo",
+  "description": "redakto:testo",
   "files": {
     "${fname}": {
       "content": "${xml}"
@@ -67,9 +67,9 @@ IFS= read -r -d '' json <<EOJ
 EOJ
 
 
-#echo $json
+echo ${json} | jq '.'
 
-curl -H "Authorization: token ${REVO_TOKEN}" -i -X POST ${api}/gists -d "${json}"
+echo ${json} | curl -H "Authorization: token ${REVO_TOKEN}" -d '@-' -i -X POST ${api}/gists 
 
 
 
