@@ -38,14 +38,20 @@ do
   IFS= read -r -d '' data <<EOJ
   {
     "files": {
-      "filename": "rezulto.log",
-      "content": "${rez}"
+        "rezulto.log": {
+          "content": "${rez}"
+        }
     }
   }
 EOJ
-  status=$(curl -H "Authorization: token ${REVO_TOKEN}" -d "${data}" -i -X PATCH ${api}/gists/${gist} | \
+  echo "DATA:"
+  echo "${data}"
+
+  status=$(echo ${data} | curl -H "Authorization: token ${REVO_TOKEN}" -d '@-' -i -X PATCH ${api}/gists/${gist} | \
     grep "^Status:")
   echo "$gist: $status"
+
+  ##echo ${data} | curl -H "Authorization: token ${REVO_TOKEN}" -d '@-' -i -X PATCH ${api}/gists/${gist}
 done
     
 
