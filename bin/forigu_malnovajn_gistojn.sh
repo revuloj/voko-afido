@@ -12,14 +12,15 @@
 # https://willhaley.com/blog/generate-jwt-with-bash/
 
 api=https://api.github.com
-owner=reta-vortaro
+#owner=reta-vortaro
+maxage=6 # 14
 
 if [ -z "$REVO_TOKEN" ]; then
   echo "Vi devas difini la medio-variablon REVO_TOKEN, kiun ni bezonas por saluti al Github."
   exit 1
 fi
 
-datediff() {
+datediff () {
     dt=$(date -d "$1" +%s)
     today=$(date +%s)
     echo $(( (today - dt) / 86400 ))
@@ -30,15 +31,16 @@ echo "## preni ${api}/gists..."
 curl -H "Authorization: token ${REVO_TOKEN}" -X GET --progress-bar ${api}/gists | \
     jq -c '.[] | { id, updated_at, files }' | \
 while IFS=$"\n" read -r line; do
-    # echo "DEBUG (line): $line"
+    #echo "DEBUG (line): $line"
+
     id=$(echo $line | jq -r '.id')
     dt=$(echo $line | jq -r '.updated_at')
     lg=$(echo $line | jq -r '.files["rezulto.log"]')
     # ignoru jam traktitajn...
     if [[ "$lg" != "null" ]]; then
-      age = $( datediff "$dt" )
-      echo "aĝo: $age tagoj"
-      if [[ $age > 14 ]]; then
+      age=$( datediff "$dt" )
+      echo "gist: ${id}, aĝo: ${age} tagoj"
+      if [[ "$age" > "$maxage" ]]; then
         echo "# forigas ${gists}/${id}..."
         status=$(curl -H "Authorization: token ${REVO_TOKEN}" -i -X DELETE ${api}/gists/${gist} | \
           grep "^Status:")
