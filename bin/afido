@@ -1,3 +1,4 @@
 #!/bin/bash
 
-prenu_redaktantojn.sh && git-clone-repo.sh && prenu_gistojn.sh && processgist.pl && forigu_gistojn.sh
+prenu_redaktantojn.sh && git-clone-repo.sh && prenu_gistojn.sh && processgist.pl \
+  && aktualigu_gistojn.sh && forigu_malnovajn_gistojn.sh

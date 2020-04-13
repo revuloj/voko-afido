@@ -12,7 +12,7 @@ api=https://api.github.com
 owner=reta-vortaro
 
 # dosierujoj
-pretaj=dict/pretaj
+rezultoj=dict/rez
 #gists=dict/gists
 #xml=dict/xml
 #json=dict/json
@@ -28,15 +28,24 @@ if [ -z "$REVO_TOKEN" ]; then
 fi
 
 # ekstraktu la unuan dosieron el ĉiuj gistoj...
-echo "## forigi ${api}/gists... $@"
+echo "## aktualigi ${api}/gists... $@"
 
-for file in ${pretaj}/*
+for file in ${rezultoj}/*
 do
   gist=$(basename ${file})
-  status=$(curl -H "Authorization: token ${REVO_TOKEN}" -I -X DELETE ${api}/gists/${gist} | \
+  rez=$(cat "$file"); rez=${rez//\"/\\\"}; rez=${rez//$'\n'/\\n}
+
+  IFS= read -r -d '' data <<EOJ
+  {
+    "files": {
+      "filename": "rezulto.log",
+      "content": "${rez}"
+    }
+  }
+EOJ
+  status=$(curl -H "Authorization: token ${REVO_TOKEN}" -d "${data}" -i -X PATCH ${api}/gists/${gist} | \
     grep "^Status:")
   echo "$gist: $status"
 done
     
-#<script src="https://gist.github.com/reta-vortaro/5a57af79efb47e5139cd56a21d676eb9.js"></script>    
 

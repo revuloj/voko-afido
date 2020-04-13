@@ -67,7 +67,7 @@ $xml_temp     = "$tmp/xml";
 $prc_gist     = "$log_dir/prcgist";
 
 $gist_dir     = "$dict_base/gists";
-$pretaj_dir     = "$dict_base/pretaj";
+$rez_dir      = "$dict_base/rez";
 $json_dir     = "$dict_base/json";
 $xml_dir      = "$dict_base/xml";
 $git_repo     = $ENV{"GIT_REPO_REVO"} || "revo-fonto";
@@ -98,7 +98,7 @@ $file_no    = 0;
 mkdir($tmp); 
 mkdir($log_dir);
 mkdir($xml_temp);
-mkdir($pretaj_dir); 
+mkdir($rez_dir); 
 
 $json_parser = JSON->new->allow_nonref;
 #$json_parser->allow_tags(true);
@@ -236,10 +236,11 @@ sub process_gist {
 	}
 
 	# traktu priskribon redakt/aldon..., XML...
-	if (komando_lau_priskribo($gist, $info)) {
-		print "Ŝovas $gist->{id} al $pretaj_dir\n" if ($verbose);
-		`mv $gist_dir/$gist->{id} $pretaj_dir/`
-	}
+	komando_lau_priskribo($gist, $info);
+	#if (komando_lau_priskribo($gist, $info)) {
+	#	print "Ŝovas $gist->{id} al $pretaj_dir\n" if ($verbose);
+	#	`mv $gist_dir/$gist->{id} $pretaj_dir/`
+	#}
 }
 
 sub is_editor {
@@ -281,7 +282,7 @@ sub komando_lau_priskribo {
 			return cmd_aldon($gist, $info, $arg);
 
 		} else {
-			report("ERARO   : nekonata komando $cmd");
+			report($gist,"ERARO   : nekonata komando $cmd");
 			return;
 		}
 	
@@ -295,7 +296,7 @@ sub komando_lau_priskribo {
 		$shangho = "???";
 
 		# raportu eraron
-		report("ERARO   : nekonata komando en la redakto: '$desc'");
+		report($gist,"ERARO   : La priskribo ne konformas kun la konvencio: '$desc'");
 		return;
     }
 }
@@ -305,7 +306,7 @@ sub komando_lau_priskribo {
 ######################### respondoj al sendintoj ###################
 
 sub report {
-    my ($msg,$file,$article_id) = @_;
+    my ($gist,$msg,$file,$article_id) = @_;
     my ($attachment,$text);
     
     print "$msg\n" if ($verbose);
@@ -336,6 +337,23 @@ sub report {
 #		$attachment = "$attachments$file_no";
 #		`mv $file $attachment`;
 #    }
+
+    # skribu informon en rezulto-dosieron por alpendigi poste al gisto ĉe gists.github.com
+    unless (open GIST, ">>$rez_dir/$gist->{id}") {
+		warn "Ne povis malfermi $rez_dir/$gist->{id}: $!\n";
+		return;
+    }
+
+    #print GIST "sendinto: ".$editor->{red_nomo}." <".$editor->{retadr}[0].">\n";
+    print GIST "dosieroj: $file\n" if ($file);
+    print GIST "senddato: ".$gist->{updated_at}."\n";
+    print GIST "artikolo: $article_id\n";
+    print GIST "shanghoj: $shangho\n" if ($shangho);
+    print GIST "$msg\n";
+    #print GIST $separator;
+
+    close GIST;
+
 
     # skribu informon en $mail_send por poste sendi raporton al $editor
     unless (open SMAIL, ">>$mail_send") {
@@ -506,7 +524,7 @@ sub cmd_redakt {
     my $art = extract_article($article_id);
 
     unless ($art =~ /^[a-z0-9_]+$/i) {
-		report("ERARO   : Ne valida artikolmarko $art. Ĝi povas enhavi nur "
+		report($gist,"ERARO   : Ne valida artikolmarko $art. Ĝi povas enhavi nur "
 	      ."literojn, ciferojn kaj substrekon.\n",$fname,$article_id);
 		return;
     }
@@ -528,7 +546,7 @@ sub cmd_aldon {
     $art =~ s/\s+$//s;
     
     unless ($art =~ /^[a-z0-9_]+$/s) {
-		report("ERARO   : Ne valida nomo por artikolo. \"$art\".\n"
+		report($gist,"ERARO   : Ne valida nomo por artikolo. \"$art\".\n"
 	       	  ."Ĝi konsistu nur el minuskloj, substrekoj kaj ciferoj.\n",$fname,$art);
 		return;
     }
@@ -541,7 +559,7 @@ sub cmd_aldon {
     # kontrolu, ĉu la dosiernomo estas ankoraŭ uzebla
 	$xml_file = git_art_path($info, $art);
     if (-e "$xml_file") {
-		report ("ERARO   : Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
+		report ($gist,"ERARO   : Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
 			   ."Bv. elekti alian nomon por la nova artikolo.\n",$fname,$article_id);
 		return;
     }
@@ -616,7 +634,7 @@ sub checkxml {
 		$err .= "\nkunteksto:\n".xml_context($err,"$fname");
 		print "XML-eraroj:\n$err" if ($verbose);
 
-		report("ERARO   : La XML-dosiero enhavas la sekvajn "
+		report($gist,"ERARO   : La XML-dosiero enhavas la sekvajn "
 			."sintakserarojn:\n$err","$fname");
 		return;
     } else {
@@ -631,7 +649,7 @@ sub checkin {
 
     # kontrolu chu ekzistas shangh-priskribo
     unless ($shangho) {
-	  report("ERARO   : Vi forgesis indiki, kiujn ŝanĝojn vi faris "
+	  report($gist,"ERARO   : Vi forgesis indiki, kiujn ŝanĝojn vi faris "
 	    ."en la dosiero.\n","$fname");
         return;
     } 
@@ -652,7 +670,7 @@ sub checkin {
     # eble tro strikta: if ($ark_id ne $id) {
  	if (substr($ark_id,0,-19) ne substr($id,0,-19)) {
 		# versiokonflikto
-		report("ERARO   : La de vi sendita artikolo\n"
+		report($gist,"ERARO   : La de vi sendita artikolo\n"
 	       ."ne baziĝas sur la aktuala arkiva versio\n"
 	       ."($ark_id)\n"
 	       ."Bonvolu preni aktualan version el la TTT-ejo. "
@@ -671,7 +689,7 @@ sub checkin {
 	print "cp ${fname} $repo_art_file\n" if ($verbose);
     `cp ${fname} $repo_art_file`;
 
-	my $ok = checkin_git($repo_art_file,$edtr);
+	my $ok = checkin_git($gist,$repo_art_file,$edtr);
 
 	unlink("$tmp/shanghoj.msg");
 
@@ -680,7 +698,7 @@ sub checkin {
 
 
 sub checkin_git {
-	my ($xmlfile,$edtr,$shangho) = @_;
+	my ($gist,$xmlfile,$edtr,$shangho) = @_;
 
 	incr_ver("$xmlfile");
 
@@ -711,14 +729,13 @@ sub checkin_git {
 #			."la aktuala versio.");
 		return;
     } elsif ($err2 !~ /^\s*$/s) {
-		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
+		report($gist,"ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
 			."$log1\n$lo2\n$err1\n$err2\n","$xmlfile");
 		return;
     }
 
     # raportu sukceson 
-# ni ne bezonas dum ni arĥivas unue en CVS:		
-#    report("KONFIRMO: $log");
+    report($gist,"KONFIRMO: $log2");
 	return 1;
 }
 
@@ -742,7 +759,7 @@ sub checkinnew {
     print "cp $fname $repo_art_file\n" if ($debug);
     `cp $fname $repo_art_file`;
 
-	my $ok = checkinnew_git($repo_art_file,$edtr);
+	my $ok = checkinnew_git($gist,$repo_art_file,$edtr);
 
 	unlink("$tmp/shanghoj.msg");
 
@@ -751,7 +768,7 @@ sub checkinnew {
 
 
 sub checkinnew_git {
-	my ($xmlfile,$edtr) = @_;
+	my ($gist,$xmlfile,$edtr) = @_;
 
 	init_ver("$xmlfile");
 
@@ -780,14 +797,13 @@ sub checkinnew_git {
 #			."la aktuala versio.");
 		return;
     } elsif ($err2 !~ /^\s*$/s) {
-		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
+		report($gist,"ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
 			."$log1\n$log2\n$err1\n$err2\n","$xmlfile");
 		return;
     }
 
     # raportu sukceson 
-# ni ne bezonas dum ni arĥivas unue en CVS:		
-#    report("KONFIRMO: $log");
+    report($gist,"KONFIRMO: $log2");
 	return 1;
 }
 

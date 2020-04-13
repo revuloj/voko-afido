@@ -69,7 +69,7 @@ EOJ
 
 #echo $json
 
-curl -H "Authorization: token ${REVO_TOKEN}" -X POST ${api}/gists -d "${json}"
+curl -H "Authorization: token ${REVO_TOKEN}" -i -X POST ${api}/gists -d "${json}"
 
 
 

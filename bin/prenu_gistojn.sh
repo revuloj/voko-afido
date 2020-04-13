@@ -31,7 +31,6 @@ unquote () {
   echo "$s2"
 }
 
-
 mkdir -p ${gists}
 mkdir -p ${xml}
 mkdir -p ${json}
@@ -40,7 +39,8 @@ rm -f ${gists}/*
 
 #jq -c '.[] | { id, description, updated_at } + [ (.files[]|values) ][0]' | \
 
-# ekstraktu id kaj XML-dosiernomon el ĉiuj gistoj...
+# ekstraktu id, description, updated_at kaj XML-dosiernomon el ĉiuj gistoj
+# kaj skribu tiujn informojn por ĉiu gisto en apartan dosieron sub gists/
 echo "## preni ${api}/gists..."
 curl -H "Authorization: token ${REVO_TOKEN}" -X GET --progress-bar ${api}/gists | \
     jq -c '.[] | { id, description, updated_at, files }' | \
@@ -48,11 +48,15 @@ while IFS=$"\n" read -r line; do
     # echo "DEBUG (line): $line"
     id=$(echo $line | jq -r '.id')
     fn=$(echo $line | jq -r '.files[] | select(.type=="application/xml") | .filename')
-    echo "# gisto \"${fn}\" -> ${gists}/${id}"
-    echo $line | jq '.' > ${gists}/${id}
+    lg=$(echo $line | jq -r '.files["rezulto.log"]')
+    # ignoru jam traktitajn...
+    if [[ "$lg" == "null" || -z "$lg" ]]; then
+      echo "# gisto \"${fn}\" -> ${gists}/${id}"
+      echo $line | jq '.' > ${gists}/${id}
+    fi
 done
 
-# elŝutu ĉiujn dosierojn laŭ la gisto-listo
+# elŝutu ĉiujn dosierojn (XML kaj JSON) laŭ la gisto-listo
 for gist in ${gists}/*; do
   id=$(cat ${gist} | jq -r '.id')
   files=$(cat ${gist} | jq -r '.files | keys | @sh')
