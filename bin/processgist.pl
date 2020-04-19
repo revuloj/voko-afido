@@ -350,7 +350,7 @@ sub send_reports {
 
 	print "sendas raportojn al redaktintoj...\n" if ($verbose);
 
-	# kolektu raportojn laŭ sendinto (retadreso)
+	# kolektu raportojn laŭ retadreso
 	my $reps = read_json_file($mail_send);
 	for my $rep (@$reps) {
 		
@@ -359,7 +359,7 @@ sub send_reports {
 			
 			# chu dosierojn sendu?
 			if ($rep->{dosiero}) {
-				$dosieroj{$mail_addr} .= [$rep->{dosiero},$rep->{artikolo}]
+				push(@{$dosieroj{$mail_addr}},[$rep->{dosiero},$rep->{artikolo}])
 			}
 			push(@{$reports{$mail_addr}},$rep);
 
@@ -369,19 +369,23 @@ sub send_reports {
 		}
 	}
 
+	# print "dosieroj: ",Dumper(%dosieroj) if ($debug);
+
 	# forsendu la raportojn
-	while (($mail_addr,$report) = each %reports) {
-		$mail_addr =~ s/.*<([a-z\.\_\-@]+)>.*/$1/;
+	while (my ($maddr,$report) = each %reports) {
 
 		$message = "Saluton!\nJen raporto pri via(j) sendita(j) artikolo(j).\n\n";
 		for (@$report) {
 			$message .= $separator. rep_str($_);
 		}
-		$message .= $separator.$signature;
+		$message .= $separator."\n\n".$signature;
 		
+		my $to = $maddr;
+		$to =~ s/.*<([a-z\.\_\-@]+)>.*/$1/;
+
 		$mail_handle = build MIME::Entity(Type=>"multipart/mixed",
 						From=>$revo_from,
-						To=>"$mail_addr",
+						To=>$to,
 						Subject=>"$revoservo - raporto");
 		
 		$mail_handle->attach(Type=>"text/plain",
@@ -389,9 +393,10 @@ sub send_reports {
 				Data=>$message);
 		
 		# alpendigu dosierojn
-		for $dos ($dosieroj{$mail_addr}) {
+		print "dosieroj{maddr}: ",Dumper(@{$dosieroj{$maddr}}) if ($debug);
+		for $dos (@{$dosieroj{$maddr}}) {
 			$file = $dos->[0];
-			$art_id = $dos[1];
+			$art_id = $dos->[1];
 
 			if ($art_id) {
 				if ($art_id =~ /^\044([^\044]+)\044$/) {
@@ -415,7 +420,7 @@ sub send_reports {
 		}
 		
 		# forsendu
-		unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
+		unless (mailsender::smtp_send($mailer,$revo_from,$to,$mail_handle)) {
 			warn "Ne povas forsendi retpoŝtan raporton!\n";
 			next;
 		}
