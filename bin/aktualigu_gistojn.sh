@@ -33,12 +33,12 @@ echo "## aktualigi ${api}/gists... $@"
 for file in ${rezultoj}/*
 do
   gist=$(basename ${file})
-  rez=$(cat "$file"); rez=${rez//\"/\\\"}; rez=${rez//$'\n'/\\n}
+  rez=$(cat "$file" | jq '.'); rez=${rez//\"/\\\"}; rez=${rez//$'\n'/\\n}
 
   IFS= read -r -d '' data <<EOJ
   {
     "files": {
-        "rezulto.log": {
+        "rezulto.json": {
           "content": "${rez}"
         }
     }
