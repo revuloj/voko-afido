@@ -949,7 +949,11 @@ sub write_file {
 sub read_json_file {
 	my $file = shift;
   	my $j = read_file($file);
+
+	print "json file: $file\n" if ($debug);
     print substr($j,0,20),"...\n" if ($debug);
+
+	# https://stackoverflow.com/questions/7809740/how-can-i-catch-a-failed-to-decode-json-error-message-in-perl
 
 	unless ($j) {
 		warn "Malplena aŭ mankanta JSON-dosiero '$file'";
