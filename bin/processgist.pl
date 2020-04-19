@@ -116,7 +116,7 @@ unless ($sigelilo) {
 	die "Mankas sigelilo. Sen ĝi ni ne povas kontroli la sigelojn de redaktoj."
 }
 
-write_file(">", $mail_send,"[\n");
+write_file(">", $mail_send,"[\n"); my $mail_send_sep = '';
 
 foreach my $file (glob "$gist_dir/*") {
 
@@ -291,6 +291,7 @@ sub komando_lau_priskribo {
 		} else {
 			report($gist, {
 				"eraro"=>1,
+				"artikolo"=>'???',
 				"mesagho"=> "nekonata komando $cmd"
 			});
 			return;
@@ -327,7 +328,8 @@ sub report {
 	write_json_file(">","$rez_dir/$gist->{id}", $detaloj);
 
 	$detaloj->{sendinto} = $editor->{red_nomo}." <".$editor->{retadr}[0].">";
-	write_json_file(">>",$mail_send, $detaloj);
+	write_json_file(">>",$mail_send, $detaloj, $mail_send_sep);
+	$mail_send_sep = ',';
 }
 
 sub rep_str {
@@ -456,7 +458,7 @@ sub cmd_redakt {
     }
 
     # kontroli la sintakson kaj arĥivi
-    if (checkxml($gist,$fname,0)) {
+    if (checkxml($gist,$fname,$article_id,0)) {
 		return checkin($gist,$info,$art,$article_id,$shangho,$fname);
     }
 	return;
@@ -501,7 +503,7 @@ sub cmd_aldon {
     }
 
     # kontroli la sintakson kaj arĥivi
-    if (checkxml($gist,$fname,1)) {
+    if (checkxml($gist,$fname,$article_id,1)) {
 		return checkinnew($gist,$info,$art,$article_id,$shangho,$fname);
     }
 	return;
@@ -528,7 +530,7 @@ sub check_signature_valid {
 }
 
 sub checkxml {
-    my ($gist,$fname,$nova) = @_;
+    my ($gist,$fname,$article_id,$nova) = @_;
 	my $lname = "$xml_temp/".$gist->{id}.".log";
 
     # aldonu dtd symlink se ankoraŭ mankas
@@ -568,6 +570,7 @@ sub checkxml {
 			"eraro" => 1,
 			"mesagho" => "La XML-dosiero enhavas la sekvajn "
 						."sintakserarojn:\n$err",
+			"artikolo" => $article_id,
 			"dosiero" => $fname
 		});
 		return;
@@ -587,6 +590,7 @@ sub checkin {
 		  	"eraro" => 1,
 		  	"mesagho" => "Vi forgesis indiki, kiujn ŝanĝojn vi faris "
 	    				."en la dosiero.",
+			"artikolo" => $id,
 			"dosiero" => $fname
 	  	});
       	return;
@@ -610,6 +614,7 @@ sub checkin {
 	       				."Se jes, sendu kun indiko \"aldono:\". Se ne, bv.\n"
 						."serĉu la artikolon kun la ĝusta nomo kaj versio en la TTT-ejo. "
 	       				."($revo_url)",
+			"shangho" => $shangho,
 			"dosiero" => $fname,
 			"artikolo" => $id
 		});
@@ -628,6 +633,7 @@ sub checkin {
 	       				."($ark_id)\n"
 	       				."Bonvolu preni aktualan version el la TTT-ejo. "
 	       				."($vokomail_url?art=$art)",
+			"shangho" => $shangho,
 			"dosiero" => $fname,
 			"artikolo" => $id
 		});
@@ -645,7 +651,7 @@ sub checkin {
 	print "cp ${fname} $repo_art_file\n" if ($verbose);
     `cp ${fname} $repo_art_file`;
 
-	my $ok = checkin_git($gist,$repo_art_file,$edtr);
+	my $ok = checkin_git($gist,$repo_art_file,$edtr,$id);
 
 	unlink("$tmp/shanghoj.msg");
 
@@ -654,7 +660,7 @@ sub checkin {
 
 
 sub checkin_git {
-	my ($gist,$xmlfile,$edtr,$shangho) = @_;
+	my ($gist,$xmlfile,$edtr,$shangho,$id) = @_;
 
 	incr_ver("$xmlfile");
 
@@ -689,6 +695,8 @@ sub checkin_git {
 			"eraro" => 1,
 			"mesagho" => "Eraro dum arkivado de la nova artikolversio:\n"
 						."$log1\n$log2\n$err1\n$err2\n",
+			"shangho" => $shangho,
+			"artikolo" => $id,
 			"dosiero" => $xmlfile
 		});
 		return;
@@ -697,6 +705,8 @@ sub checkin_git {
     # raportu sukceson 
     report($gist, {
 		"eraro" => 0,
+ 		"artikolo" => $id,
+		"shangho" => $shangho,
 		"mesagho" => $log2
 	});
 	return 1;
@@ -720,7 +730,7 @@ sub checkinnew {
     print "cp $fname $repo_art_file\n" if ($debug);
     `cp $fname $repo_art_file`;
 
-	my $ok = checkinnew_git($gist,$repo_art_file,$edtr);
+	my $ok = checkinnew_git($gist,$repo_art_file,$edtr,$id);
 
 	unlink("$tmp/shanghoj.msg");
 
@@ -729,7 +739,7 @@ sub checkinnew {
 
 
 sub checkinnew_git {
-	my ($gist,$xmlfile,$edtr) = @_;
+	my ($gist,$xmlfile,$edtr,$id) = @_;
 
 	init_ver("$xmlfile");
 
@@ -762,6 +772,7 @@ sub checkinnew_git {
 			"eraro" => 1,
 			"mesagho" => "Eraro dum arkivado de la nova artikolversio:\n"
 						."$log1\n$log2\n$err1\n$err2\n",
+			"artikolo" => $id,
 			"dosiero" => $xmlfile
 		});
 		return;
@@ -770,6 +781,7 @@ sub checkinnew_git {
     # raportu sukceson 
     report($gist, {
 		"eraro" => 0,
+		"artikolo" => $id,
 		"mesagho" => $log2
 	});
 	return 1;
@@ -953,7 +965,7 @@ sub read_json_file {
 }
 
 sub write_json_file {
-	my ($mode,$file,$content) = @_;
+	my ($mode,$file,$content,$sep) = @_;
     my $json = $json_parser->encode($content);
 
     unless (open JSN, $mode, $file) {
@@ -961,6 +973,7 @@ sub write_json_file {
 		return;
     }
 
+	print JSN $sep if ($sep);
 	print JSN $json;
 	close JSN;  
 }
