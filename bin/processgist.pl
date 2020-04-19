@@ -8,6 +8,8 @@
 # voku:
 #  processgist.pl
 
+use warnings;
+
 use JSON;
 use MIME::Entity;
 use Digest::SHA qw(hmac_sha256_hex);
@@ -27,7 +29,7 @@ $debug        = 1;
 
 # FARENDA: legu tiujn el /docker swarm config/
 # baza agordo
-$afido_dir    = "/var/afido"; # tmp, log
+#$afido_dir    = "/var/afido"; # tmp, log
 $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
 $dict_base    = "$dict_home/dict"; # xml, dok, dtd
 $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
@@ -38,7 +40,7 @@ $revo_url     = "http://purl.oclc.org/NET/voko/revo";
 # FARENDA: legu tiujn el sekreto(j)(?)
 $revoservo    = '[Revo-Servo]';
 $revo_mailaddr= 'revo@reta-vortaro.de';
-$redaktilo_from= 'revo-servo@steloj.de';
+#$redaktilo_from= 'revo-servo@steloj.de';
 #$revolist     = 'wolfram';
 $revo_from    = "Reta Vortaro <$revo_mailaddr>";
 $signature    = "--\nRevo-Servo $revo_mailaddr\n"
@@ -57,14 +59,14 @@ $git          = '/usr/bin/git';
 # dosierujoj
 $tmp          = "$dict_base/tmp";
 $log_dir      = "$dict_base/log";
-$dtd_dir      = "$dict_base/dtd";
+#$dtd_dir      = "$dict_base/dtd";
 
 #$mail_error   = "$tmp/mailerr";
 $mail_send    = "$tmp/mailsend";
 $xml_temp     = "$tmp/xml";
 #$dtd_temp     = "$tmp/dtd";
 
-$prc_gist     = "$log_dir/prcgist";
+#$prc_gist     = "$log_dir/prcgist";
 
 $gist_dir     = "$dict_base/gists";
 $rez_dir      = "$dict_base/rez";
@@ -90,7 +92,7 @@ $article_id = '';
 #$mail_date  = '';
 $shangho    = '';
 $komando    = '';
-$file_no    = 0;
+#$file_no    = 0;
 #@newarts    = ();
 
 
@@ -113,6 +115,8 @@ $sigelilo =~ s/^\s+|\s+$//g;
 unless ($sigelilo) {
 	die "Mankas sigelilo. Sen ĝi ni ne povas kontroli la sigelojn de redaktoj."
 }
+
+write_file(">", $mail_send,"[\n");
 
 foreach my $file (glob "$gist_dir/*") {
 
@@ -142,12 +146,15 @@ foreach my $file (glob "$gist_dir/*") {
     process_gist($gist);
 }
 
+write_file(">>",$mail_send,"\n]\n");
+
+
 print $separator if ($verbose);
 
 # sendu raportojn
 # provizore jam nun konektur al SMTP, por trovi eraron en ->auth
 #$IO::Socket::SSL::DEBUG=3;
-if (-e $mail_send) {
+if (-s $mail_send > 10) {
 	my $mailer = mailsender::smtp_connect;
 	send_reports($mailer);
 	mailsender::smtp_quit($mailer);
@@ -173,7 +180,7 @@ print $separator if ($verbose);
 #    `mv $mail_error $err_mail/$filename`;
 #}
 
-if (-e $mail_send) {
+if (-s $mail_send > 10) {
 	$filename = "mail_sent_".`date +%Y%m%d_%H%M%S`;    
     print "ŝovas $mail_send al $log_dir/$filename\n" if ($verbose);
     `mv $mail_send $log_dir/$filename`;
@@ -247,7 +254,7 @@ sub is_editor {
     my $red_adr = shift;
 
     # trovu laŭ unua retadreso
-	my $ed = %editors{$red_adr};
+	my $ed = $editors{$red_adr};
 	
 	if ($ed) {
 		return $ed;
@@ -282,7 +289,10 @@ sub komando_lau_priskribo {
 			return cmd_aldon($gist, $info, $arg);
 
 		} else {
-			report($gist,"ERARO   : nekonata komando $cmd");
+			report($gist, {
+				"eraro"=>1,
+				"mesagho"=> "nekonata komando $cmd"
+			});
 			return;
 		}
 	
@@ -296,7 +306,10 @@ sub komando_lau_priskribo {
 		$shangho = "???";
 
 		# raportu eraron
-		report($gist,"ERARO   : La priskribo ne konformas kun la konvencio: '$desc'");
+		report($gist, {
+			"eraro" => 1,
+			"mesagho" => "La priskribo ne konformas kun la konvencio: '$desc'"
+		});
 		return;
     }
 }
@@ -306,208 +319,110 @@ sub komando_lau_priskribo {
 ######################### respondoj al sendintoj ###################
 
 sub report {
-    my ($gist,$msg,$file,$article_id) = @_;
-    my ($attachment,$text);
+    my ($gist, $detaloj) = @_;
     
-    print "$msg\n" if ($verbose);
+    print $detaloj->{mesagho}."\n" if ($verbose);
 
-#    # donu provizoran nomon al kunsendajho
-#    if ($file) {
-#
-#		# enmetu "redakto: $shanghoj" komence
-#		if ($file =~ /\.xml$/) {
-#			unless (open FILE, $file) {
-#				warn "Ne povis malfermi $file: $!\n";
-#				goto "MOVE_FILE";
-#			}
-#			$text = join('',<FILE>);
-#			close FILE;
-#			unless (open FILE, ">$file") {
-#				warn "Ne povis malfermi $file: $!\n";
-#				goto "MOVE_FILE";
-#			}
-#			print FILE "$komando: $shangho\n\n";
-#			print FILE $text;
-#			close FILE;
-#		}
-		
-#MOVE_FILE:
-#		# donu provizoran nomon al la dosiero
-#		$file_no++;
-#		$attachment = "$attachments$file_no";
-#		`mv $file $attachment`;
-#    }
+    $detaloj->{senddato} = $gist->{updated_at};
+	write_json_file(">","$rez_dir/$gist->{id}", $detaloj);
 
-    # skribu informon en rezulto-dosieron por alpendigi poste al gisto ĉe gists.github.com
-    unless (open GIST, ">>$rez_dir/$gist->{id}") {
-		warn "Ne povis malfermi $rez_dir/$gist->{id}: $!\n";
-		return;
-    }
+	$detaloj->{sendinto} = $editor->{red_nomo}." <".$editor->{retadr}[0].">";
+	write_json_file(">>",$mail_send, $detaloj);
+}
 
-    #print GIST "sendinto: ".$editor->{red_nomo}." <".$editor->{retadr}[0].">\n";
-    print GIST "dosieroj: $file\n" if ($file);
-    print GIST "senddato: ".$gist->{updated_at}."\n";
-    print GIST "artikolo: $article_id\n";
-    print GIST "shanghoj: $shangho\n" if ($shangho);
-    print GIST "$msg\n";
-    #print GIST $separator;
-
-    close GIST;
-
-
-    # skribu informon en $mail_send por poste sendi raporton al $editor
-    unless (open SMAIL, ">>$mail_send") {
-		warn "Ne povis malfermi $mail_send: $!\n";
-		return;
-    }
-
-    print SMAIL "sendinto: ".$editor->{red_nomo}." <".$editor->{retadr}[0].">\n";
-    print SMAIL "dosieroj: $file\n" if ($file);
-    print SMAIL "senddato: ".$gist->{updated_at}."\n";
-    print SMAIL "artikolo: $article_id\n";
-    print SMAIL "shanghoj: $shangho\n" if ($shangho);
-    print SMAIL "$msg\n";
-    print SMAIL $separator;
-
-    close SMAIL;
+sub rep_str {
+	my $rep = shift;
+	
+	my $msg = 
+		"senddato: $rep->{senddato}\n"
+		."artikolo: $rep->{artikolo}\n"
+		.($rep->{eraro}? "ERARO: ": "KONFIRMO:")	
+		.$rep->{mesagho}."\n";	
+	return $msg;
 }
 
 sub send_reports {
 	my $mailer = shift;
 
-    my $newline = $/;
     my %reports = ();
     my %dosieroj = ();
-    my ($mail_addr,$message,$mail_handle,$file,$art_id,$marko,$dos);
+    my $mail_addr;
 
-    # legu la respondojn el $mail_send
-    if (-e $mail_send) {
+	print "sendas raportojn al redaktintoj...\n" if ($verbose);
 
-		print "sendas raportojn al redaktintoj...\n" if ($verbose);
+	# kolektu raportojn laŭ sendinto (retadreso)
+	my $reps = read_json_file($mail_send);
+	for my $rep (@$reps) {
 		
-		$/ = $separator;
-		unless (open SMAIL, $mail_send) {
-			warn "Ne povis malfermi $mail_send: $!\n";
-			return;
+		if ($rep->{sendinto}) {
+			$mail_addr = $rep->{sendinto};
+			
+			# chu dosierojn sendu?
+			if ($rep->{dosiero}) {
+				$dosieroj{$mail_addr} .= [$rep->{dosiero},$rep->{artikolo}]
+			}
+			push(@{$reports{$mail_addr}},$rep);
+
+		} else {
+			warn "Ne povis elpreni sendinton el $_\n";
+			next;
 		}
+	}
 
-		#my $mailer = mailsender::smtp_connect;
+	# forsendu la raportojn
+	while (($mail_addr,$report) = each %reports) {
+		$mail_addr =~ s/.*<([a-z\.\_\-@]+)>.*/$1/;
 
-		while (<SMAIL>) {
-			# elprenu la sendinton
-			if (s/^sendinto: *([^\n]+)\n//) {
-				$mail_addr = $1;
-				# chu dosierojn sendu?
-				if (s/^dosieroj: *([^\n\s]+)\n//) {
-					$dos = $1;
-					if ($_ =~ /artikolo: *([^\n]+)\n/s) { $art_id = $1; }
-					
-					$dosieroj{$mail_addr} .= "$dos $art_id|";
+		$message = "Saluton!\nJen raporto pri via(j) sendita(j) artikolo(j).\n\n";
+		for (@$report) {
+			$message .= $separator. rep_str($_);
+		}
+		$message .= $separator.$signature;
+		
+		$mail_handle = build MIME::Entity(Type=>"multipart/mixed",
+						From=>$revo_from,
+						To=>"$mail_addr",
+						Subject=>"$revoservo - raporto");
+		
+		$mail_handle->attach(Type=>"text/plain",
+				Encoding=>"quoted-printable",
+				Data=>$message);
+		
+		# alpendigu dosierojn
+		for $dos ($dosieroj{$mail_addr}) {
+			$file = $dos->[0];
+			$art_id = $dos[1];
+
+			if ($art_id) {
+				if ($art_id =~ /^\044([^\044]+)\044$/) {
+					$art_id = $1;
+					$art_id =~ /^Id: ([^ ,\.]+\.xml),v/;
+					$marko = $1;
+				} else {
+					$marko=$art_id;
 				}
-				$reports{$mail_addr} .= $_;
-			} else {
-				warn "Ne povis elpreni sendinton el $_\n";
-				next;
-			}
+			} else { $art_id = $file; $marko=$file; }
+				
+			print "attach: $file\n" if ($debug);
+			if (-e $file) {
+				$mail_handle->attach(Path=>$file,
+						Type=>'text/plain',
+						Encoding=>'quoted-printable',
+						Disposition=>'attachment',
+						Filename=>$marko,
+						Description=>$art_id);
+			}		
 		}
-		close SMAIL;
-		$/ = $newline;
-
-		# forsendu la raportojn
-		while (($mail_addr,$message) = each %reports) {
-			$dos = $dosieroj{$mail_addr};
-			$mail_addr =~ s/.*<([a-z\.\_\-@]+)>.*/$1/;
-			
-			# preparu mesaghon
-			$message = "Saluton!\n"
-			."Jen raporto pri via(j) sendita(j) artikolo(j).\n\n"
-				.$separator.$message."\n".$signature;
-			
-			$mail_handle = build MIME::Entity(Type=>"multipart/mixed",
-							From=>$revo_from,
-							To=>"$mail_addr",
-							Subject=>"$revoservo - raporto");
-			
-			$mail_handle->attach(Type=>"text/plain",
-					Encoding=>"quoted-printable",
-					Data=>$message);
-			
-			# alpendigu dosierojn
-			if ($dos) {
-				for $file (split (/\|/,$dos)) {
-					if ($file =~ /^\s*([^\s]+)\s+(.+?)\s*$/) {
-						$file = $1;
-						$art_id = $2;
-
-						if ($art_id =~ /^\044([^\044]+)\044$/) {
-							$art_id = $1;
-							$art_id =~ /^Id: ([^ ,\.]+\.xml),v/;
-							$marko = $1;
-						} else {
-							$marko=$art_id;
-						}
-					} else { $art_id = $file; $marko=$file; }
-					
-					print "attach: $file\n" if ($debug);
-					if (-e $file) {
-						$mail_handle->attach(Path=>$file,
-								Type=>'text/plain',
-								Encoding=>'quoted-printable',
-								Disposition=>'attachment',
-								Filename=>$marko,
-								Description=>$art_id);
-					}
-				}
-			}
-			
-			# forsendu
-			unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
-				warn "Ne povas forsendi retpoŝtan raporton!\n";
-				next;
-			}
+		
+		# forsendu
+		unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
+			warn "Ne povas forsendi retpoŝtan raporton!\n";
+			next;
 		}
+	}
 
-		# forigu $mail_send
-		# unlink($mail_send);
-
-		#mailsender::smtp_quit($mailer);
-    }
+	#mailsender::smtp_quit($mailer);
 }
-
-#sub send_newarts_report {
-#    my ($message,$mail_handle);
-#
-#    # legu la respondojn el $mail_send
-#    if (@newarts) {
-#
-#	print "Informo pri novaj artikoloj al <$revolist>:\n",
-#	    join ("\n",@newarts), "\n" if ($debug);
-#	
-#	# preparu mesaghon
-#	$message = "Saluton!\nAldonighis " . ($#newarts+1)
-#	    . " nova(j) artikolo(j)...\n\n";
-#	foreach $entry (@newarts) {
-#	    $message .= "$entry\n";
-#	}
-#	$message .= "\n$signature";
-#	    
-#	$mail_handle = build MIME::Entity(Type=>"text/plain",
-#					  From=>$revo_from,
-#					  To=>"$revolist",
-#					  Subject=>"novaj artikoloj",
-#					  Data=>$message);
-#	    
-#	# forsendu
-#	unless (open SENDMAIL, "|$sendmail $revolist") {
-#	    warn "Ne povas dukti al $sendmail: $!\n";
-#	    return;
-#	}
-#	$mail_handle->print(\*SENDMAIL);
-#	close SENDMAIL;
-#    }
-#}
-
-
 
 ###################### komandoj kaj helpfunkcioj ##############
 
@@ -521,11 +436,17 @@ sub cmd_redakt {
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
 	my $article_id = get_art_id($fname);
-    my $art = extract_article($article_id);
+    my $art = extract_article($gist,$article_id);
 
     unless ($art =~ /^[a-z0-9_]+$/i) {
-		report($gist,"ERARO   : Ne valida artikolmarko $art. Ĝi povas enhavi nur "
-	      ."literojn, ciferojn kaj substrekon.\n",$fname,$article_id);
+		report($gist,
+			{
+				"eraro" => 1,
+				"mesagho" => "Ne valida artikolmarko $art. Ĝi povas enhavi nur "
+	      				."literojn, ciferojn kaj substrekon.",
+				"dosiero" => $fname,
+				"artikolo" => $article_id
+			});
 		return;
     }
 
@@ -546,8 +467,13 @@ sub cmd_aldon {
     $art =~ s/\s+$//s;
     
     unless ($art =~ /^[a-z0-9_]+$/s) {
-		report($gist,"ERARO   : Ne valida nomo por artikolo. \"$art\".\n"
-	       	  ."Ĝi konsistu nur el minuskloj, substrekoj kaj ciferoj.\n",$fname,$art);
+		report($gist, { 
+			"eraro" => 1,
+			"mesagho" => "Ne valida nomo por artikolo. \"$art\".\n"
+	       	  			."Ĝi konsistu nur el minuskloj, substrekoj kaj ciferoj.",
+			"dosiero" => $fname,
+			"artikolo" => $art
+		});
 		return;
     }
     my $shangho = $art; # memoru por poste
@@ -559,8 +485,13 @@ sub cmd_aldon {
     # kontrolu, ĉu la dosiernomo estas ankoraŭ uzebla
 	$xml_file = git_art_path($info, $art);
     if (-e "$xml_file") {
-		report ($gist,"ERARO   : Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
-			   ."Bv. elekti alian nomon por la nova artikolo.\n",$fname,$article_id);
+		report($gist, {
+			"eraro" => 1,
+			"mesagho" => "Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
+			   			."Bv. elekti alian nomon por la nova artikolo.",
+			"dosiero" => $fname,
+			"artikolo" => $article_id
+		});
 		return;
     }
 
@@ -615,13 +546,7 @@ sub checkxml {
     $teksto =~ s/(<!--\s+\044Log(?:[^\n]*\n){20})(?:[^\n]*\n)*(-->)/$1$2/s;
 
     # reskribu la dosieron
-    unless (open XML,">$fname") {
-		warn "Ne povis skribi al $fname: $!\n";
-		return;
-    }
-
-    print XML $teksto;
-    close XML;
+    unless (write_file(">",$fname,$teksto)) { return; }
 
     # kontrolu la sintakson de la XML-teksto
     `$xmlcheck $fname 2> $lname`;
@@ -634,8 +559,12 @@ sub checkxml {
 		$err .= "\nkunteksto:\n".xml_context($err,"$fname");
 		print "XML-eraroj:\n$err" if ($verbose);
 
-		report($gist,"ERARO   : La XML-dosiero enhavas la sekvajn "
-			."sintakserarojn:\n$err","$fname");
+		report($gist, {
+			"eraro" => 1,
+			"mesagho" => "La XML-dosiero enhavas la sekvajn "
+						."sintakserarojn:\n$err",
+			"dosiero" => $fname
+		});
 		return;
     } else {
 		print "XML: en ordo\n" if ($debug);
@@ -649,9 +578,13 @@ sub checkin {
 
     # kontrolu chu ekzistas shangh-priskribo
     unless ($shangho) {
-	  report($gist,"ERARO   : Vi forgesis indiki, kiujn ŝanĝojn vi faris "
-	    ."en la dosiero.\n","$fname");
-        return;
+	  	report($gist, {
+		  	"eraro" => 1,
+		  	"mesagho" => "Vi forgesis indiki, kiujn ŝanĝojn vi faris "
+	    				."en la dosiero.",
+			"dosiero" => $fname
+	  	});
+      	return;
     } 
     print "ŝanĝoj: $shangho\n" if ($verbose);
 
@@ -659,22 +592,40 @@ sub checkin {
     $edtr = $editor->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
-    open MSG,">$tmp/shanghoj.msg";
-    print MSG "$edtr: $shangho";
-    close MSG;
+	write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
 	my $repo_art_file = git_art_path($info,$art);
+
+	unless (-e $repo_art_file) {
+		report($gist, {
+			"eraro" => 1,
+			"mesagho" => "En la arĥivo ne troviĝis la artikolo\n"
+	       		 		."kiun vi redaktis ($art), ĉu temas pri nova?\n"
+	       				."Se jes, sendu kun indiko \"aldono:\". Se ne, bv.\n"
+						."serĉu la artikolon kun la ĝusta nomo kaj versio en la TTT-ejo. "
+	       				."($revo_url)",
+			"dosiero" => $fname,
+			"artikolo" => $id
+		});
+		return;
+	}
+
     my $ark_id = get_art_id($repo_art_file);
 
     # eble tro strikta: if ($ark_id ne $id) {
  	if (substr($ark_id,0,-19) ne substr($id,0,-19)) {
 		# versiokonflikto
-		report($gist,"ERARO   : La de vi sendita artikolo\n"
-	       ."ne baziĝas sur la aktuala arkiva versio\n"
-	       ."($ark_id)\n"
-	       ."Bonvolu preni aktualan version el la TTT-ejo. "
-	       ."($vokomail_url?art=$art)\n","$fname",$id);
+		report($gist, {
+			"eraro" => 1,
+			"mesagho" => "La de vi sendita artikolo\n"
+	       		 		."ne baziĝas sur la aktuala arkiva versio\n"
+	       				."($ark_id)\n"
+	       				."Bonvolu preni aktualan version el la TTT-ejo. "
+	       				."($vokomail_url?art=$art)",
+			"dosiero" => $fname,
+			"artikolo" => $id
+		});
 		return;
     }
 
@@ -729,13 +680,20 @@ sub checkin_git {
 #			."la aktuala versio.");
 		return;
     } elsif ($err2 !~ /^\s*$/s) {
-		report($gist,"ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
-			."$log1\n$lo2\n$err1\n$err2\n","$xmlfile");
+		report($gist, {
+			"eraro" => 1,
+			"mesagho" => "Eraro dum arkivado de la nova artikolversio:\n"
+						."$log1\n$log2\n$err1\n$err2\n",
+			"dosiero" => $xmlfile
+		});
 		return;
     }
 
     # raportu sukceson 
-    report($gist,"KONFIRMO: $log2");
+    report($gist, {
+		"eraro" => 0,
+		"mesagho" => $log2
+	});
 	return 1;
 }
 
@@ -749,9 +707,7 @@ sub checkinnew {
     my $edtr = $editor->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
-    open MSG,">$tmp/shanghoj.msg";
-    print MSG "$edtr: $shangho";
-    close MSG;
+    write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
 
 	my $repo_art_file = git_art_path($info,$art);
 
@@ -797,13 +753,20 @@ sub checkinnew_git {
 #			."la aktuala versio.");
 		return;
     } elsif ($err2 !~ /^\s*$/s) {
-		report($gist,"ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
-			."$log1\n$log2\n$err1\n$err2\n","$xmlfile");
+		report($gist, {
+			"eraro" => 1,
+			"mesagho" => "Eraro dum arkivado de la nova artikolversio:\n"
+						."$log1\n$log2\n$err1\n$err2\n",
+			"dosiero" => $xmlfile
+		});
 		return;
     }
 
     # raportu sukceson 
-    report($gist,"KONFIRMO: $log2");
+    report($gist, {
+		"eraro" => 0,
+		"mesagho" => $log2
+	});
 	return 1;
 }
 
@@ -819,9 +782,7 @@ sub incr_ver {
 	$art =~ s/\$Id:[^\$]+\$/$id/;
 	$art =~ s/\$Log:\s+([^\.]+)\.xml,v\s+\$(.*?)-->/log_incr($1,$2,$ver)/se;
 
-	open ART,">$artfile" or die "Ne povas skribi dosieron '$artfile': $!\n";
-	print ART $art;
-	close ART;
+	write_file(">",$artfile,$art);
 }
 
 sub id_incr {
@@ -836,7 +797,7 @@ sub log_incr {
 
 	# mallongigu je maks. 10 linioj
 	my @lines = split(/\n/,$log);
-	my $log = join("\n",splice(@lines,0,20));
+	$log = join("\n",splice(@lines,0,20));
 
 	my $shg = read_file("$tmp/shanghoj.msg");
 
@@ -861,9 +822,7 @@ sub init_ver {
 	$art =~ s/\$Id:[^\$]*\$/$id/;
 	$art =~ s/<\/vortaro>/$log<\/vortaro>/s;
 
-	open ART,">$artfile";
-	print ART $art;
-	close ART;
+	write_file(">",$artfile,$art);
 }
 
 sub xml_context {
@@ -932,23 +891,15 @@ sub get_art_id {
 	}
 }
 
-sub extract_version {
-    my $id = shift;
-    # ekstraktu version el $Id: ...
-    unless ($id =~ /^\044Id: [^ ,\.]+\.xml,v\s+([0-9\.]+)/) {
-		report ("ERARO   : Artikol-marko havas malghustan sintakson\n");
-		warn "$id ne enhavas version\n";
-		return '???';
-    } else {
-		return $1;
-    }
-}
-
 sub extract_article {
-    my $id = shift;
+    my ($gist,$id) = @_;
     # ekstraktu dosiernomon el $Id: ...
     unless ($id =~ /^\044Id: ([^ ,\.]+)\.xml,v\s+[0-9\.]+/) {
-		report ("ERARO   : Artikol-marko havas malghustan sintakson\n");
+		report($gist, {
+			"eraro" => 1,
+			"mesagho" => "Artikol-marko havas malĝustan sintakson",
+			"artikolo" => $id
+		});
 		warn "$id ne enhavas dosiernomon\n";
 		return '???';
     } else {
@@ -960,10 +911,22 @@ sub read_file {
 	my $file = shift;
 	unless (open FILE, $file) {
 		warn "Ne povis malfermi '$file': $!\n";
+		return;
 	}
 	my $text = join('',<FILE>);
 	close FILE;
 	return $text;
+}
+
+sub write_file {
+	my ($mode, $file, $text) = @_;
+
+	unless (open FILE, $mode, $file) {
+		warn "Ne povis malfermi '$file': $!\n";
+		return;
+	}
+	print FILE $text;
+	close FILE;
 }
 
 sub read_json_file {
@@ -982,6 +945,19 @@ sub read_json_file {
 		return;
 	}
 	return $parsed;	  
+}
+
+sub write_json_file {
+	my ($mode,$file,$content) = @_;
+    my $json = $json_parser->encode($content);
+
+    unless (open JSN, $mode, $file) {
+		warn "Ne povis malfermi $file: $!\n";
+		return;
+    }
+
+	print JSN $json;
+	close JSN;  
 }
 
 sub git_cmd {
