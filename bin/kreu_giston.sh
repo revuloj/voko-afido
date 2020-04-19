@@ -69,7 +69,7 @@ EOJ
 
 echo ${json} | jq '.'
 
-echo ${json} | curl -H "Authorization: token ${REVO_TOKEN}" -d '@-' -i -X POST ${api}/gists 
+echo ${json} | curl -H "Content-Type: application/json" -H "Authorization: token ${REVO_TOKEN}" -d '@-' -i -X POST ${api}/gists 
 
 
 
