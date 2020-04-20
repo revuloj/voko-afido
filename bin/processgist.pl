@@ -12,7 +12,7 @@ use warnings;
 
 use JSON;
 use MIME::Entity;
-use Digest::SHA qw(hmac_sha256_hex);
+use Digest::SHA qw(hmac_sha256_hex sha1_hex);
 use experimental 'smartmatch';
 
 use lib("/usr/local/bin");
@@ -107,8 +107,9 @@ $json_parser = JSON->new->allow_nonref;
 
 # legu redaktantoj el JSON-dosiero kaj transformu al HASH por 
 # trovi ilin facile laŭ numero (red_id)
-$fe=read_json_file($editor_file);
-%editors = map { $_->{retadr}[0] => $_	} @{$fe};
+$editors=read_json_file($editor_file);
+$ed_hashs=();
+# %editors = map { $_->{retadr}[0] => $_	} @{$fe};
 
 $sigelilo = $ENV{"SIGELILO"} || read_file("$sigelilo_file");
 $sigelilo =~ s/^\s+|\s+$//g;
@@ -216,16 +217,19 @@ sub process_gist {
 		warn "Ni ne traktas gistojn por '$repo'. Do ni ignoras giston: ".$gist->{id}."\n";
 		return;
 	}
-    
-	unless ($info->{red_adr}) {
-		warn "Mankas indiko pri la redaktanto en: ".$gist->{id}."\n";
+
+	unless ($gist->{description}) {
+		warn "Mankas priskribo en: ".$gist->{id}."\n";
 		return;
 	}
+
+	my @desc = $gist->{description}.split(':');
+    
     # kontrolu, ĉu temas pri registrita redaktoro 
-	$editor = is_editor($info->{red_adr});
+	$editor = is_editor(@desc[0]);
     unless ($editor) 
     { 
-		warn "Ne registrita redaktanto: ".$info->{red_adr};
+		warn "Ne registrita redaktanto: ".@desc[0];
 		return;
 	}    
 	
@@ -243,76 +247,43 @@ sub process_gist {
 	}
 
 	# traktu priskribon redakt/aldon..., XML...
-	komando_lau_priskribo($gist, $info);
-	#if (komando_lau_priskribo($gist, $info)) {
-	#	print "Ŝovas $gist->{id} al $pretaj_dir\n" if ($verbose);
-	#	`mv $gist_dir/$gist->{id} $pretaj_dir/`
-	#}
+
+	if (@desc[2] =~ /^\s*redakt[oui]\s*$/i) {
+		return cmd_redakt($gist, $info, @desc[2]);
+
+	} elsif ($cmd =~ /^\s*aldon[oui]\s*$/i) {
+		return cmd_aldon($gist, $info, @desc[2]);
+
+	} else {
+		report($gist, {
+			"rezulto"=>"eraro",
+			"artikolo"=>'???',
+			"mesagho"=> "priskribo ne obeas la konvencion ".$gist->{description}
+		});
+		return;
+	}
 }
 
 sub is_editor {
-    my $red_adr = shift;
+    my $red7 = shift;
 
-    # trovu laŭ unua retadreso
-	my $ed = $editors{$red_adr};
+    # trovu laŭ jam kalkulitaj Sha
+	my $ed = $ed_hashs{$red7};
 	
 	if ($ed) {
 		return $ed;
 	}
 
-	# se ne troviĝis, provu alternativajn retadresojn de la listo
-	while ((my $unua, $ed) = each (%editors)) {
-		my @adrj = $ed->{retadr};
-		if ( $red_adr ~~ @adrj ) {
-			return $ed;
-		}
+	# se ne troviĝis, trairu la liston kaj kalkulu dume la Sha-ojn
+	for $ed (@$editors) {
+		my $hash = substr(sha_hex($ed->{retadr}),0,7);
+		$ed_hashs{$hash} = $ed;
+
+		return $ed if ($red7 eq $hash);
 	}
 
+	# ne trovita
 	return;
-}
-
-sub komando_lau_priskribo {
-    my ($gist, $info) = @_;
-    my ($cmd, $arg);
-
-	my $desc = $gist->{description};
-    if ($desc =~ s/^[\s\n]*($commands)[ \t]*:[ \t]*(.*)//si) {
-		$cmd = $1;
-		$arg = $2;
-
-		print "cmd: $cmd, arg: $arg\n" if ($debug);
-
-		if ($cmd =~ /^redakt[oui]/i) {
-			return cmd_redakt($gist, $info, $arg);
-
-		} elsif ($cmd =~ /^aldon[oui]/i) {
-			return cmd_aldon($gist, $info, $arg);
-
-		} else {
-			report($gist, {
-				"rezulto"=>"eraro",
-				"artikolo"=>'???',
-				"mesagho"=> "nekonata komando $cmd"
-			});
-			return;
-		}
-	
-    } else {
-	 	warn "La priskribo ne konformas kun la konvencio: '$desc'\n";
-		#report("ERARO   : nekonata komando en la redakto");
-
-		# kelkaj pseudaj variabloj necesaj
-		$article_id = "???.xml";
-		$komando = "???";
-		$shangho = "???";
-
-		# raportu eraron
-		report($gist, {
-			"rezulto="=>"eraro",
-			"mesagho" => "La priskribo ne konformas kun la konvencio: '$desc'"
-		});
-		return;
-    }
 }
 
 
