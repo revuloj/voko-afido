@@ -290,7 +290,7 @@ sub komando_lau_priskribo {
 
 		} else {
 			report($gist, {
-				"eraro"=>1,
+				"rezulto"=>"eraro",
 				"artikolo"=>'???',
 				"mesagho"=> "nekonata komando $cmd"
 			});
@@ -308,7 +308,7 @@ sub komando_lau_priskribo {
 
 		# raportu eraron
 		report($gist, {
-			"eraro" => 1,
+			"rezulto="=>"eraro",
 			"mesagho" => "La priskribo ne konformas kun la konvencio: '$desc'"
 		});
 		return;
@@ -338,7 +338,7 @@ sub rep_str {
 	my $msg = 
 		"senddato: $rep->{senddato}\n"
 		."artikolo: $rep->{artikolo}\n"
-		.($rep->{eraro}? "ERARO: ": "KONFIRMO:")	
+		.uc($rep->{rezulto}).": "	
 		.$rep->{mesagho}."\n";	
 	return $msg;
 }
@@ -448,7 +448,7 @@ sub cmd_redakt {
     unless ($art =~ /^[a-z0-9_]+$/i) {
 		report($gist,
 			{
-				"eraro" => 1,
+				"rezulto"=>"eraro",
 				"mesagho" => "Ne valida artikolmarko $art. Ĝi povas enhavi nur "
 	      				."literojn, ciferojn kaj substrekon.",
 				"dosiero" => $fname,
@@ -475,7 +475,7 @@ sub cmd_aldon {
     
     unless ($art =~ /^[a-z0-9_]+$/s) {
 		report($gist, { 
-			"eraro" => 1,
+			"rezulto"=>"eraro",
 			"mesagho" => "Ne valida nomo por artikolo. \"$art\".\n"
 	       	  			."Ĝi konsistu nur el minuskloj, substrekoj kaj ciferoj.",
 			"dosiero" => $fname,
@@ -493,7 +493,7 @@ sub cmd_aldon {
 	$xml_file = git_art_path($info, $art);
     if (-e "$xml_file") {
 		report($gist, {
-			"eraro" => 1,
+			"rezulto"=>"eraro",
 			"mesagho" => "Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
 			   			."Bv. elekti alian nomon por la nova artikolo.",
 			"dosiero" => $fname,
@@ -567,7 +567,7 @@ sub checkxml {
 		print "XML-eraroj:\n$err" if ($verbose);
 
 		report($gist, {
-			"eraro" => 1,
+			"rezulto" => "eraro",
 			"mesagho" => "La XML-dosiero enhavas la sekvajn "
 						."sintakserarojn:\n$err",
 			"artikolo" => $article_id,
@@ -587,7 +587,7 @@ sub checkin {
     # kontrolu chu ekzistas shangh-priskribo
     unless ($shangho) {
 	  	report($gist, {
-		  	"eraro" => 1,
+		  	"rezulto" => "eraro",
 		  	"mesagho" => "Vi forgesis indiki, kiujn ŝanĝojn vi faris "
 	    				."en la dosiero.",
 			"artikolo" => $id,
@@ -608,7 +608,7 @@ sub checkin {
 
 	unless (-e $repo_art_file) {
 		report($gist, {
-			"eraro" => 1,
+			"rezulto" => "eraro",
 			"mesagho" => "En la arĥivo ne troviĝis la artikolo\n"
 	       		 		."kiun vi redaktis ($art), ĉu temas pri nova?\n"
 	       				."Se jes, sendu kun indiko \"aldono:\". Se ne, bv.\n"
@@ -627,7 +627,7 @@ sub checkin {
  	if (substr($ark_id,0,-19) ne substr($id,0,-19)) {
 		# versiokonflikto
 		report($gist, {
-			"eraro" => 1,
+			"rezulto" => "eraro",
 			"mesagho" => "La de vi sendita artikolo\n"
 	       		 		."ne baziĝas sur la aktuala arkiva versio\n"
 	       				."($ark_id)\n"
@@ -692,7 +692,7 @@ sub checkin_git {
 		return;
     } elsif ($err2 !~ /^\s*$/s) {
 		report($gist, {
-			"eraro" => 1,
+			"rezulto" => "eraro",
 			"mesagho" => "Eraro dum arkivado de la nova artikolversio:\n"
 						."$log1\n$log2\n$err1\n$err2\n",
 			"shangho" => $shangho,
@@ -704,7 +704,7 @@ sub checkin_git {
 
     # raportu sukceson 
     report($gist, {
-		"eraro" => 0,
+		"rezulto" => "konfirmo",
  		"artikolo" => $id,
 		"shangho" => $shangho,
 		"mesagho" => $log2
@@ -769,7 +769,7 @@ sub checkinnew_git {
 		return;
     } elsif ($err2 !~ /^\s*$/s) {
 		report($gist, {
-			"eraro" => 1,
+			"rezulto" => "eraro",
 			"mesagho" => "Eraro dum arkivado de la nova artikolversio:\n"
 						."$log1\n$log2\n$err1\n$err2\n",
 			"artikolo" => $id,
@@ -780,7 +780,7 @@ sub checkinnew_git {
 
     # raportu sukceson 
     report($gist, {
-		"eraro" => 0,
+		"rezulto" => "konfirmo",
 		"artikolo" => $id,
 		"mesagho" => $log2
 	});
@@ -913,7 +913,7 @@ sub extract_article {
     # ekstraktu dosiernomon el $Id: ...
     unless ($id =~ /^\044Id: ([^ ,\.]+)\.xml,v\s+[0-9\.]+/) {
 		report($gist, {
-			"eraro" => 1,
+			"rezulto" => "eraro",
 			"mesagho" => "Artikol-marko havas malĝustan sintakson",
 			"artikolo" => $id
 		});
