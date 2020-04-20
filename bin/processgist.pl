@@ -80,7 +80,7 @@ $editor_file  = "$dict_etc/redaktantoj.json"; #"$dict_etc/voko.redaktantoj";
 
 # diversaj
 #$possible_keys= 'komando|teksto|shangho';
-$commands     = 'redakt[oui]|aldon[oui]'; # .'|dokumento|artikolo|historio|propono'
+#$commands     = 'redakt[oui]|aldon[oui]'; # .'|dokumento|artikolo|historio|propono'
 $separator    = "=" x 80 . "\n";
 
 ################ la precipa masho de la programo ##############
@@ -91,7 +91,7 @@ $editor     = '';
 $article_id = '';
 #$mail_date  = '';
 $shangho    = '';
-$komando    = '';
+#$komando    = '';
 #$file_no    = 0;
 #@newarts    = ();
 
@@ -223,13 +223,13 @@ sub process_gist {
 		return;
 	}
 
-	my @desc = $gist->{description}.split(':');
+	my @desc = split(':',$gist->{description});
     
     # kontrolu, ĉu temas pri registrita redaktoro 
-	$editor = is_editor(@desc[0]);
+	$editor = is_editor($desc[0]);
     unless ($editor) 
     { 
-		warn "Ne registrita redaktanto: ".@desc[0];
+		warn "Ne registrita redaktanto: ".$desc[0];
 		return;
 	}    
 	
@@ -248,11 +248,11 @@ sub process_gist {
 
 	# traktu priskribon redakt/aldon..., XML...
 
-	if (@desc[2] =~ /^\s*redakt[oui]\s*$/i) {
-		return cmd_redakt($gist, $info, @desc[2]);
+	if ($desc[2] =~ /^\s*redakt[oui]\s*$/i) {
+		return cmd_redakt($gist, $info, $desc[2]);
 
-	} elsif ($cmd =~ /^\s*aldon[oui]\s*$/i) {
-		return cmd_aldon($gist, $info, @desc[2]);
+	} elsif ($desc[2] =~ /^\s*aldon[oui]\s*$/i) {
+		return cmd_aldon($gist, $info, $desc[2]);
 
 	} else {
 		report($gist, {
@@ -276,7 +276,7 @@ sub is_editor {
 
 	# se ne troviĝis, trairu la liston kaj kalkulu dume la Sha-ojn
 	for $ed (@$editors) {
-		my $hash = substr(sha_hex($ed->{retadr}),0,7);
+		my $hash = substr(sha1_hex($ed->{retadr}),0,7);
 		$ed_hashs{$hash} = $ed;
 
 		return $ed if ($red7 eq $hash);
