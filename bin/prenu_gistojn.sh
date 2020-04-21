@@ -48,7 +48,7 @@ while IFS=$"\n" read -r line; do
     # echo "DEBUG (line): $line"
     id=$(echo $line | jq -r '.id')
     fn=$(echo $line | jq -r '.files[] | select(.type=="application/xml") | .filename')
-    lg=$(echo $line | jq -r '.files["rezulto.log"]')
+    lg=$(echo $line | jq -r '.files["rezulto.json","konfirmo.json","eraro.json"]')
     # ignoru jam traktitajn...
     if [[ "$lg" == "null" || -z "$lg" ]]; then
       echo "# gisto \"${fn}\" -> ${gists}/${id}"
