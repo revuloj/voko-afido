@@ -27,7 +27,6 @@ use Data::Dumper;
 $verbose      = 1;
 $debug        = 1;
 
-# FARENDA: legu tiujn el /docker swarm config/
 # baza agordo
 #$afido_dir    = "/var/afido"; # tmp, log
 $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
@@ -37,11 +36,9 @@ $vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
 $revo_url     = "http://purl.oclc.org/NET/voko/revo";
 #$mail_folder  = "/var/spool/mail/tomocero";
 
-# FARENDA: legu tiujn el sekreto(j)(?)
 $revoservo    = '[Revo-Servo]';
 $revo_mailaddr= 'revo@reta-vortaro.de';
 #$redaktilo_from= 'revo-servo@steloj.de';
-#$revolist     = 'wolfram';
 $revo_from    = "Reta Vortaro <$revo_mailaddr>";
 $signature    = "--\nRevo-Servo $revo_mailaddr\n"
     ."retposhta servo por redaktantoj de Reta Vortaro.\n";
@@ -52,21 +49,12 @@ $sigelilo_file = "/run/secrets/voko-afido.sigelilo";
 $xmlcheck     = '/usr/bin/rxp -V -s';
 $git          = '/usr/bin/git';
 
-# -t ne subtenata de ssmtp
-#$sendmail     = '/usr/lib/sendmail -t -i';
-#$sendmail     = '/usr/lib/sendmail -i';
-
 # dosierujoj
 $tmp          = "$dict_base/tmp";
 $log_dir      = "$dict_base/log";
-#$dtd_dir      = "$dict_base/dtd";
 
-#$mail_error   = "$tmp/mailerr";
 $mail_send    = "$tmp/mailsend";
 $xml_temp     = "$tmp/xml";
-#$dtd_temp     = "$tmp/dtd";
-
-#$prc_gist     = "$log_dir/prcgist";
 
 $gist_dir     = "$dict_base/gists";
 $rez_dir      = "$dict_base/rez";
@@ -74,27 +62,16 @@ $json_dir     = "$dict_base/json";
 $xml_dir      = "$dict_base/xml";
 $git_repo     = $ENV{"GIT_REPO_REVO"} || "revo-fonto";
 $git_dir      = "$dict_base/revo-fonto";
-#$dok_dir      = "$dict_base/dok";
 
 $editor_file  = "$dict_etc/redaktantoj.json"; #"$dict_etc/voko.redaktantoj";
 
-# diversaj
-#$possible_keys= 'komando|teksto|shangho';
-#$commands     = 'redakt[oui]|aldon[oui]'; # .'|dokumento|artikolo|historio|propono'
 $separator    = "=" x 80 . "\n";
 
 ################ la precipa masho de la programo ##############
 
-###$| = 1;
-#$the_mail   = '';
 $editor     = '';
 $article_id = '';
-#$mail_date  = '';
 $shangho    = '';
-#$komando    = '';
-#$file_no    = 0;
-#@newarts    = ();
-
 
 # certigu, ke provizoraj dosierujoj ekzistu
 mkdir($tmp); 
