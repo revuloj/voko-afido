@@ -248,10 +248,10 @@ sub process_gist {
 
 	# traktu priskribon redakt/aldon..., XML...
 
-	if ($desc[2] =~ /^\s*redakt[oui]\s*$/i) {
+	if ($desc[1] =~ /^\s*redakt[oui]\s*$/i) {
 		return cmd_redakt($gist, $info, $desc[2]);
 
-	} elsif ($desc[2] =~ /^\s*aldon[oui]\s*$/i) {
+	} elsif ($desc[1] =~ /^\s*aldon[oui]\s*$/i) {
 		return cmd_aldon($gist, $info, $desc[2]);
 
 	} else {
@@ -276,10 +276,12 @@ sub is_editor {
 
 	# se ne troviĝis, trairu la liston kaj kalkulu dume la Sha-ojn
 	for $ed (@$editors) {
-		my $hash = substr(sha1_hex($ed->{retadr}),0,7);
-		$ed_hashs{$hash} = $ed;
+		for my $ra (@{$ed->{retadr}}) {
+			my $hash = substr(sha1_hex($ra),0,7);
+			$ed_hashs{$hash} = $ed;
 
-		return $ed if ($red7 eq $hash);
+			return $ed if ($red7 eq $hash);
+		}
 	}
 
 	# ne trovita
