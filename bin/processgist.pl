@@ -538,7 +538,6 @@ sub checkxml {
 
 sub checkin {
     my ($gist,$info,$art,$id,$shangho,$fname) = @_;
-    my ($log,$err,$edtr);
 
     # kontrolu chu ekzistas shangh-priskribo
     unless ($shangho) {
@@ -554,7 +553,7 @@ sub checkin {
     $log->info("ŝanĝoj: $shangho\n");
 
     # skribu la shanghojn en dosieron
-    $edtr = $editor->{red_nomo};
+    my $edtr = $editor->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
 	write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
@@ -766,15 +765,15 @@ sub id_incr {
 }
 
 sub log_incr {
-	my ($fn,$log,$ver) = @_;
+	my ($fn,$alog,$ver) = @_;
 
 	# mallongigu je maks. 10 linioj
-	my @lines = split(/\n/,$log);
-	$log = join("\n",splice(@lines,0,20));
+	my @lines = split(/\n/,$alog);
+	$alog = join("\n",splice(@lines,0,20));
 
 	my $shg = read_file("$tmp/shanghoj.msg");
 
-	return "\$Log: $fn.xml,v \$\nversio $ver\n".$shg."\n$log\n-->";
+	return "\$Log: $fn.xml,v \$\nversio $ver\n".$shg."\n$alog\n-->";
 }
 
 
@@ -790,10 +789,10 @@ sub init_ver {
 	my $fn = $1;
 	my $ver = id_incr("1","0");
 	my $id = '$Id: '.$fn.',v '.$ver.' afido Exp $';
-	my $log = "\n<!--\n\$Log: $fn,v \$\nversio $ver\n$shg\n-->\n";
+	my $alog = "\n<!--\n\$Log: $fn,v \$\nversio $ver\n$shg\n-->\n";
 
 	$art =~ s/\$Id:[^\$]*\$/$id/;
-	$art =~ s/<\/vortaro>/$log<\/vortaro>/s;
+	$art =~ s/<\/vortaro>/$alog<\/vortaro>/s;
 
 	write_file(">",$artfile,$art);
 }
