@@ -184,14 +184,14 @@ sub process_gist {
 	# legu aldonajn informojn pri la gisto
 	my $info = read_json_file("$json_dir/".$gist->{id}.".json");
     unless ($info) {
-		$log->warn("Mankas aldonaj informoj, ne eblas trakti giston: ".$gist->{id});
+		$log->warn("Mankas aldonaj informoj, ne eblas trakti giston: ".$gist->{id}."\n");
 		return;
 	}
 	$log->info(Dumper($info));
 
 	# kontrolu, ĉu la gisto estas celata al la aktiva Git-arĥivo
 	unless ($info->{celo}) {
-		$log->warn("Mankas celo en la aldonaj informoj, ni do ignoras tiun giston: ".$gist->{id});
+		$log->warn("Mankas celo en la aldonaj informoj, ni do ignoras tiun giston: ".$gist->{id}."\n");
 		return;
 	}
 	my ($repo,@path) = split('/',$info->{celo});
@@ -906,14 +906,12 @@ sub read_json_file {
   	my $j = read_file($file);
 
 	$log->debug("json file: $file\n");
-    $log->debug(substr($j,0,20),"...\n");
-
-	# https://stackoverflow.com/questions/7809740/how-can-i-catch-a-failed-to-decode-json-error-message-in-perl
 
 	unless ($j) {
-		$log->warn("Malplena aŭ mankanta JSON-dosiero '$file'");
+		$log->warn("Malplena aŭ mankanta JSON-dosiero '$file'\n");
 		return;
 	}
+    $log->debug(substr($j,0,20)."...\n");
 
     my $parsed;
 	eval {
