@@ -954,10 +954,10 @@ sub git_cmd {
 
 	# chu 'commit' sukcesis?
 	my $git_log = read_file("$tmp/git.log");
-    $log->debug("git-out:\n$git_log\n") if ($git_log);
+    $log->info("git-out:\n$git_log\n") if ($git_log);
 
     my $git_err = read_file("$tmp/git.err");
-    $log->debug("git-err:\n$git_err\n") if ($git_err);
+    $log->error("git-err:\n$git_err\n") if ($git_err);
 	$log->info("------------------------------\n");
 
     unlink("$tmp/git.log");
