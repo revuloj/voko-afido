@@ -7,7 +7,6 @@
 # JQ en bash-skriptoj
 # https://stackoverflow.com/questions/43192556/using-jq-with-bash-to-run-command-for-each-object-in-array
 
-
 api=https://api.github.com
 owner=reta-vortaro
 
@@ -31,6 +30,7 @@ fi
 
 # ekstraktu la unuan dosieron el ĉiuj gistoj...
 echo "## aktualigi ${api}/gists... $@"
+shopt -s nullglob
 
 for file in ${rezultoj}/*
 do
@@ -60,3 +60,4 @@ EOJ
 done
     
 echo "####### Fino de aktualigado ########"
+echo
