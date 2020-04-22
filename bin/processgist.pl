@@ -13,10 +13,11 @@ use warnings;
 use JSON;
 use MIME::Entity;
 use Digest::SHA qw(hmac_sha256_hex sha1_hex);
-use experimental 'smartmatch';
+#use experimental 'smartmatch';
+use Log::Dispatch;
 
 use lib("/usr/local/bin");
-#use lib("./bin");
+use lib("./bin");
 use mailsender;
 
 use Data::Dumper;
@@ -24,8 +25,8 @@ use Data::Dumper;
 ######################### agorda parto ##################
 
 # kiom da informoj
-$verbose      = 1;
-$debug        = 1;
+#$verbose      = 1;
+#$debug        = 1;
 
 # baza agordo
 #$afido_dir    = "/var/afido"; # tmp, log
@@ -67,6 +68,14 @@ $editor_file  = "$dict_etc/redaktantoj.json"; #"$dict_etc/voko.redaktantoj";
 
 $separator    = "=" x 80 . "\n";
 
+# preparu protokolon
+my $log = Log::Dispatch->new(
+    outputs => [
+        #[ 'File',   min_level => 'debug', filename => 'logfile' ],
+        [ 'Screen', min_level => 'info' ],
+    ],
+);
+
 ################ la precipa masho de la programo ##############
 
 $editor     = '';
@@ -98,7 +107,7 @@ write_file(">", $mail_send,"[\n"); my $mail_send_sep = '';
 
 foreach my $file (glob "$gist_dir/*") {
 
-    print $separator if ($verbose);
+    $log->info($separator);
 
     # preparu por la nova mesagho
     $editor = '';
@@ -113,12 +122,10 @@ foreach my $file (glob "$gist_dir/*") {
     }
 
 	# eligu iom da informo pri la gisto
-	if ($verbose) {
-		print 
-			"id:",$gist->{"id"},"\n",
-			"date:",$gist->{"updated_at"},"\n",
-			"desc:",$gist->{"description"},"\n";
-	}
+	$log->info(
+		"id:".$gist->{"id"}."\n".
+		"date:",$gist->{"updated_at"}."\n".
+		"desc:",$gist->{"description"}."\n");
 
     # analizu la enhavon de la mesagho
     process_gist($gist);
@@ -126,8 +133,7 @@ foreach my $file (glob "$gist_dir/*") {
 
 write_file(">>",$mail_send,"\n]\n");
 
-
-print $separator if ($verbose);
+$log->info($separator);
 
 # sendu raportojn
 # provizore jam nun konektur al SMTP, por trovi eraron en ->auth
@@ -138,13 +144,13 @@ if (-s $mail_send > 10) {
 	mailsender::smtp_quit($mailer);
 }
 
-print $separator if ($verbose);
+$log->info($separator);
 
 #send_newarts_report();
 #git_push();
 git_cmd("$git push origin master");
 
-print $separator if ($verbose);
+$log->info($separator);
 
 #
 ## arkivu la poshtdosieron
@@ -160,11 +166,11 @@ print $separator if ($verbose);
 
 if (-s $mail_send > 10) {
 	$filename = "mail_sent_".`date +%Y%m%d_%H%M%S`;    
-    print "ŝovas $mail_send al $log_dir/$filename\n" if ($verbose);
+    $log->info("ŝovas $mail_send al $log_dir/$filename\n");
     `mv $mail_send $log_dir/$filename`;
 }  
 
-print $separator if ($verbose);
+$log->info($separator);
 
 exit;
 
@@ -178,25 +184,25 @@ sub process_gist {
 	# legu aldonajn informojn pri la gisto
 	my $info = read_json_file("$json_dir/".$gist->{id}.".json");
     unless ($info) {
-		warn "Mankas aldonaj informoj, ne eblas trakti giston: ".$gist->{id};
+		$log->warn("Mankas aldonaj informoj, ne eblas trakti giston: ".$gist->{id});
 		return;
 	}
-	print "info: ",Dumper($info) if ($verbose);
+	$log->info(Dumper($info));
 
 	# kontrolu, ĉu la gisto estas celata al la aktiva Git-arĥivo
 	unless ($info->{celo}) {
-		warn "Mankas celo en la aldonaj informoj, ni do ignoras tiun giston: ".$gist->{id};
+		$log->warn("Mankas celo en la aldonaj informoj, ni do ignoras tiun giston: ".$gist->{id});
 		return;
 	}
 	my ($repo,@path) = split('/',$info->{celo});
-	print ("gist-repo: $repo =? git_repo: $git_repo\n") if ($debug);
+	$log->debug("gist-repo: $repo =? git_repo: $git_repo\n");
 	unless ($git_repo eq $repo) {
-		warn "Ni ne traktas gistojn por '$repo'. Do ni ignoras giston: ".$gist->{id}."\n";
+		$log->warn("Ni ne traktas gistojn por '$repo'. Do ni ignoras giston: ".$gist->{id}."\n");
 		return;
 	}
 
 	unless ($gist->{description}) {
-		warn "Mankas priskribo en: ".$gist->{id}."\n";
+		$log->warn("Mankas priskribo en: ".$gist->{id}."\n");
 		return;
 	}
 
@@ -206,7 +212,7 @@ sub process_gist {
 	$editor = is_editor($desc[0]);
     unless ($editor) 
     { 
-		warn "Ne registrita redaktanto: ".$desc[0];
+		$log->warn("Ne registrita redaktanto: ".$desc[0]);
 		return;
 	}    
 	
@@ -219,7 +225,7 @@ sub process_gist {
 
 	# kontrolu sigelon
 	unless(check_signature_valid($gist,$editor,$info)) {
-		warn "La sigelo por gisto ".$gist->{id}." (".$info->{sigelo}.") ne pruviĝis valida.\n";
+		$log->warn("La sigelo por gisto ".$gist->{id}." (".$info->{sigelo}.") ne pruviĝis valida.\n");
 		return;
 	}
 
@@ -272,7 +278,7 @@ sub is_editor {
 sub report {
     my ($gist, $detaloj) = @_;
     
-    print $detaloj->{mesagho}."\n" if ($verbose);
+    $log->info($detaloj->{mesagho}."\n");
 
     $detaloj->{senddato} = $gist->{updated_at};
 	write_json_file(">","$rez_dir/$gist->{id}", $detaloj);
@@ -300,7 +306,7 @@ sub send_reports {
     my %dosieroj = ();
     my $mail_addr;
 
-	print "sendas raportojn al redaktintoj...\n" if ($verbose);
+	$log->info("sendas raportojn al redaktintoj...\n");
 
 	# kolektu raportojn laŭ retadreso
 	my $reps = read_json_file($mail_send);
@@ -316,7 +322,7 @@ sub send_reports {
 			push(@{$reports{$mail_addr}},$rep);
 
 		} else {
-			warn "Ne povis elpreni sendinton el $_\n";
+			$log->warn("Ne povis elpreni sendinton el $_\n");
 			next;
 		}
 	}
@@ -345,7 +351,7 @@ sub send_reports {
 				Data=>$message);
 		
 		# alpendigu dosierojn
-		print "dosieroj{maddr}: ",Dumper(@{$dosieroj{$maddr}}) if ($debug);
+		$log->debug("dosieroj{maddr}: ".Dumper(@{$dosieroj{$maddr}}));
 		for $dos (@{$dosieroj{$maddr}}) {
 			$file = $dos->[0];
 			$art_id = $dos->[1];
@@ -360,7 +366,7 @@ sub send_reports {
 				}
 			} else { $art_id = $file; $marko=$file; }
 				
-			print "attach: $file\n" if ($debug);
+			$log->debug("attach: $file\n");
 			if (-e $file) {
 				$mail_handle->attach(Path=>$file,
 						Type=>'text/plain',
@@ -373,7 +379,7 @@ sub send_reports {
 		
 		# forsendu
 		unless (mailsender::smtp_send($mailer,$revo_from,$to,$mail_handle)) {
-			warn "Ne povas forsendi retpoŝtan raporton!\n";
+			$log->warn("Ne povas forsendi retpoŝtan raporton!\n");
 			next;
 		}
 	}
@@ -389,7 +395,7 @@ sub cmd_redakt {
 	my $fname = "$xml_dir/".$gist->{id}.".xml";
     #$shangho = $shangh; # memoru por poste
     #$shangho =~ s/[\200-\377]/?/g; # forigu ne-askiajn signojn
-	print "redakto: $shangho\n" if ($debug);
+	$log->debug("redakto: $shangho\n");
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
 	my $article_id = get_art_id($fname);
@@ -434,7 +440,7 @@ sub cmd_aldon {
 		return;
     }
     my $shangho = $art; # memoru por poste
-    print "nova artikolo: $art\n" if ($verbose);
+    $log->info("nova artikolo: $art\n");
 
     # bezonighas article_id en kazo de eraro
     $article_id = "\044Id: $art.xml,v\044";
@@ -468,8 +474,8 @@ sub check_signature_valid {
 	$text = "$retadr\n".read_file($fname);
 	$digest = hmac_sha256_hex($text, $sigelilo);
 
-	print "sigelo: $info->{sigelo}\n" if ($verbose);
-	print "digest: $digest\n" if ($verbose);
+	$log->info("sigelo: $info->{sigelo}\n");
+	$log->info("digest: $digest\n");
 
 	##if ($debug && ($digest ne $info->{sigelo})) {
 	##	print "<<<$sigelilo>>>\n";
@@ -514,7 +520,7 @@ sub checkxml {
 
     if ($err) {
 		$err .= "\nkunteksto:\n".xml_context($err,"$fname");
-		print "XML-eraroj:\n$err" if ($verbose);
+		$log->info("XML-eraroj:\n$err");
 
 		report($gist, {
 			"rezulto" => "eraro",
@@ -525,7 +531,7 @@ sub checkxml {
 		});
 		return;
     } else {
-		print "XML: en ordo\n" if ($debug);
+		$log->debug("XML: en ordo\n");
 		return 1;
     }
 }
@@ -545,7 +551,7 @@ sub checkin {
 	  	});
       	return;
     } 
-    print "ŝanĝoj: $shangho\n" if ($verbose);
+    $log->info("ŝanĝoj: $shangho\n");
 
     # skribu la shanghojn en dosieron
     $edtr = $editor->{red_nomo};
@@ -598,7 +604,7 @@ sub checkin {
 #	checkin_csv($xmlfile);
 
 	# checkin in Git
-	print "cp ${fname} $repo_art_file\n" if ($verbose);
+	$log->info("cp ${fname} $repo_art_file\n");
     `cp ${fname} $repo_art_file`;
 
 	my $ok = checkin_git($gist,$repo_art_file,$edtr,$id);
@@ -666,7 +672,7 @@ sub checkinnew {
     my ($gist,$info,$art,$id,$shangho,$fname) = @_;
 
     $shangho = "nova artikolo";
-    print "shanghoj: $shangho\n" if ($verbose);
+    $log->info("shanghoj: $shangho\n");
 
     # skribu la shanghojn en dosieron
     my $edtr = $editor->{red_nomo};
@@ -677,7 +683,7 @@ sub checkinnew {
 	my $repo_art_file = git_art_path($info,$art);
 
 	# checkin in Git
-    print "cp $fname $repo_art_file\n" if ($debug);
+    $log->debug("cp $fname $repo_art_file\n");
     `cp $fname $repo_art_file`;
 
 	my $ok = checkinnew_git($gist,$repo_art_file,$edtr,$id);
@@ -801,7 +807,7 @@ sub xml_context {
 		$char = $2;
 
 		unless (open XML,$file) {
-			warn "Ne povis malfermi $file:$!\n";
+			$log->warn("Ne povis malfermi $file:$!\n");
 			return '';
 		}
 
@@ -834,7 +840,7 @@ sub git_art_path {
 	my @parts = split('/',$info->{celo});
 	my $path = join('/',splice(@parts,1));
 
-	print "path: $path\n" if ($debug);
+	$log->debug("path: $path\n");
 	return "$git_dir/$path/$art.xml";
 }	
 
@@ -849,7 +855,7 @@ sub get_art_id {
 		$xml =~ /(<art[^>]*>)/s;
 		$1 =~ /mrk="([^\"]*)"/s; 
 		my $id = $1;
-		print "Id: $id\n" if ($debug);  
+		$log->debug("Id: $id\n");  
 
 		return $id;
 
@@ -867,7 +873,7 @@ sub extract_article {
 			"mesagho" => "Artikol-marko havas malĝustan sintakson",
 			"artikolo" => $id
 		});
-		warn "$id ne enhavas dosiernomon\n";
+		$log->warn("$id ne enhavas dosiernomon\n");
 		return '???';
     } else {
 		return $1;
@@ -877,7 +883,7 @@ sub extract_article {
 sub read_file {
 	my $file = shift;
 	unless (open FILE, $file) {
-		warn "Ne povis malfermi '$file': $!\n";
+		$log->warn("Ne povis malfermi '$file': $!\n");
 		return;
 	}
 	my $text = join('',<FILE>);
@@ -889,7 +895,7 @@ sub write_file {
 	my ($mode, $file, $text) = @_;
 
 	unless (open FILE, $mode, $file) {
-		warn "Ne povis malfermi '$file': $!\n";
+		$log->warn("Ne povis malfermi '$file': $!\n");
 		return;
 	}
 	print FILE $text;
@@ -900,19 +906,19 @@ sub read_json_file {
 	my $file = shift;
   	my $j = read_file($file);
 
-	print "json file: $file\n" if ($debug);
-    print substr($j,0,20),"...\n" if ($debug);
+	$log->debug("json file: $file\n");
+    $log->debug(substr($j,0,20),"...\n");
 
 	# https://stackoverflow.com/questions/7809740/how-can-i-catch-a-failed-to-decode-json-error-message-in-perl
 
 	unless ($j) {
-		warn "Malplena aŭ mankanta JSON-dosiero '$file'";
+		$log->warn("Malplena aŭ mankanta JSON-dosiero '$file'");
 		return;
 	}
 
     my $parsed = $json_parser->decode($j);
 	unless ($parsed) {
-		warn "Ne eblis analizi enhavon de JSON-dosiero '$file'.\n";
+		$log->warn("Ne eblis analizi enhavon de JSON-dosiero '$file'.\n");
 		return;
 	}
 	return $parsed;	  
@@ -923,7 +929,7 @@ sub write_json_file {
     my $json = $json_parser->encode($content);
 
     unless (open JSN, $mode, $file) {
-		warn "Ne povis malfermi $file: $!\n";
+		$log->warn("Ne povis malfermi $file: $!\n");
 		return;
     }
 
@@ -936,22 +942,22 @@ sub git_cmd {
 	my $git_cmd = shift;
 
 	chdir($git_dir);
-	print "------------------------------\n" if ($verbose);
+	$log->info("------------------------------\n");
 	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
-	print "$git_cmd\n" if ($verbose);
+	$log->info("$git_cmd\n");
 	`$git_cmd 1> $tmp/git.log 2> $tmp/git.err`;
 
 	# chu 'commit' sukcesis?
-	my $log = read_file("$tmp/git.log");
-    print "git-out:\n$log\n" if ($log || $debug);
+	my $git_log = read_file("$tmp/git.log");
+    $log->debug("git-out:\n$git_log\n") if ($git_log);
 
-    my $err = read_file("$tmp/git.err");
-    print "git-err:\n$err\n" if ($err || $debug);
-	print "------------------------------\n" if ($verbose);
+    my $git_err = read_file("$tmp/git.err");
+    $log->debug("git-err:\n$git_err\n") if ($git_err);
+	$log->info("------------------------------\n");
 
     unlink("$tmp/git.log");
 	unlink("$tmp/git.err");
 	chdir($dict_base);
 
-	return ($log,$err);
+	return ($git_log,$git_err);
 }

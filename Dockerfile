@@ -23,7 +23,7 @@ LABEL Maintainer="<diestel@steloj.de>"
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     openssh-server ca-certificates openssl rxp git cvs curl unzip patch jq \
-    libjson-perl libmime-tools-perl \
+    libjson-perl libmime-tools-perl liblog-dispatch-perl \
     libnet-ssleay-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libauthen-sasl-perl \
     libauthen-sasl-saslprep-perl libnet-smtp-tls-perl\
   && rm -rf /var/lib/apt/lists/* \
