@@ -18,6 +18,9 @@ gists=dict/gists
 xml=dict/xml
 json=dict/json
 
+echo "####### Prenado de novaj, t.e. ne jam traktitaj redaktoj ########"
+
+
 if [ -z "$REVO_TOKEN" ]; then
   echo "Vi devas difini la medio-variablon REVO_TOKEN, kiun ni bezonas por saluti al Github."
   exit 1
@@ -88,3 +91,5 @@ for gist in ${gists}/*; do
   done
 
 done
+
+echo "####### Fino de prenado ########"

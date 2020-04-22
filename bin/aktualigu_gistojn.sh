@@ -22,6 +22,8 @@ rezultoj=dict/rez
 #  return 1
 #fi
 
+echo "####### Aktualigo de traktitaj redaktoj alpendigante rezultojn (konfirmo.json aŭ eraro.json) ########"
+
 if [ -z "$REVO_TOKEN" ]; then
   echo "Vi devas difini la medio-variablon REVO_TOKEN, kiun ni bezonas por saluti al Github."
   exit 1
@@ -57,4 +59,4 @@ EOJ
   ##echo ${data} | curl -H "Authorization: token ${REVO_TOKEN}" -d '@-' -i -X PATCH ${api}/gists/${gist}
 done
     
-
+echo "####### Fino de aktualigado ########"

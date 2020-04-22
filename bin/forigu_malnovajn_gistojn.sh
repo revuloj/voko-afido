@@ -15,6 +15,8 @@ api=https://api.github.com
 #owner=reta-vortaro
 maxage=6 # 14
 
+echo "####### Forigado de malnovaj jam traktitaj redaktoj ########"
+
 if [ -z "$REVO_TOKEN" ]; then
   echo "Vi devas difini la medio-variablon REVO_TOKEN, kiun ni bezonas por saluti al Github."
   exit 1
@@ -25,6 +27,7 @@ datediff () {
     today=$(date +%s)
     echo $(( (today - dt) / 86400 ))
 }
+
 
 # ekstraktu id, updated_at kaj dosiernomon 'rezulto.log' el ĉiuj gistoj
 echo "## preni ${api}/gists..."
@@ -48,4 +51,6 @@ while IFS=$"\n" read -r line; do
       fi
     fi
 done
+
+echo "####### Fino de forigado ########"
 
