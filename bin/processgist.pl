@@ -212,7 +212,7 @@ sub process_gist {
 	$editor = is_editor($desc[0]);
     unless ($editor) 
     { 
-		$log->warn("Ne registrita redaktanto: ".$desc[0]);
+		$log->warn("Ne registrita redaktanto: ".$desc[0]."\n");
 		return;
 	}    
 	
@@ -915,11 +915,17 @@ sub read_json_file {
 		return;
 	}
 
-    my $parsed = $json_parser->decode($j);
-	unless ($parsed) {
-		$log->warn("Ne eblis analizi enhavon de JSON-dosiero '$file'.\n");
+    my $parsed;
+	eval {
+    	$parsed = $json_parser->decode($j);
+    	1;
+	} or do {
+  		my $error = $@;
+		$log->error("Ne eblis analizi enhavon de JSON-dosiero '$file'.\n");
+  		$log->error("$error\n");
 		return;
-	}
+	};
+
 	return $parsed;	  
 }
 
