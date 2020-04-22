@@ -49,7 +49,8 @@ EOJ
   echo "DATA:"
   echo "${data}"
 
-  status=$(echo ${data} | curl -H "Authorization: token ${REVO_TOKEN}" -d '@-' -i -X PATCH ${api}/gists/${gist} | \
+  status=$(echo ${data} | curl -H "Authorization: token ${REVO_TOKEN}" -d '@-' \
+    --progress-bar -i -X PATCH ${api}/gists/${gist} | \
     grep "^Status:")
   echo "$gist: $status"
 

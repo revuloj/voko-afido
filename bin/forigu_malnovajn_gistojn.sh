@@ -35,16 +35,16 @@ while IFS=$"\n" read -r line; do
 
     id=$(echo $line | jq -r '.id')
     dt=$(echo $line | jq -r '.updated_at')
-    lg=$(echo $line | jq -r '.files["rezulto.log"]')
+    lg=$(echo $line | jq -r '[ .files["rezulto.json","konfirmo.json","eraro.json"] ]|any')
     # ignoru jam traktitajn...
-    if [[ "$lg" != "null" ]]; then
+    if [[ "$lg" == "true" ]]; then
       age=$( datediff "$dt" )
       echo "gist: ${id}, aĝo: ${age} tagoj"
       if [[ "$age" > "$maxage" ]]; then
-        echo "# forigas ${gists}/${id}..."
-        status=$(curl -H "Authorization: token ${REVO_TOKEN}" -i -X DELETE ${api}/gists/${gist} | \
+        echo "# forigas ${id}..."
+        status=$(curl -H "Authorization: token ${REVO_TOKEN}" --progress-bar -i -X DELETE ${api}/gists/${id} | \
           grep "^Status:")
-        echo "$gist: $status"
+        echo "$id: $status"
       fi
     fi
 done

@@ -45,13 +45,13 @@ echo "## preni ${api}/gists..."
 curl -H "Authorization: token ${REVO_TOKEN}" -X GET --progress-bar ${api}/gists | \
     jq -c '.[] | { id, description, updated_at, files }' | \
 while IFS=$"\n" read -r line; do
-    echo "DEBUG (line): $line"
+    #echo "DEBUG (line): $line"
     id=$(echo $line | jq -r '.id')
     fn=$(echo $line | jq -r '.files[] | select(.type=="application/xml") | .filename')
-    lg=$(echo $line | jq -r '[ .files["rezulto.json","konfirmo.json","eraro.json"] ]|add')
-    echo "DEBUG (lg): $lg"
+    lg=$(echo $line | jq -r '[ .files["rezulto.json","konfirmo.json","eraro.json"] ]|any')
+    #echo "DEBUG (lg): $lg"
     # ignoru jam traktitajn...
-    if [[ "$lg" == "null" || -z "$lg" ]]; then
+    if [[ "$lg" == "false" || -z "$lg" ]]; then
       echo "# gisto \"${fn}\" -> ${gists}/${id}"
       echo $line | jq '.' > ${gists}/${id}
     fi
