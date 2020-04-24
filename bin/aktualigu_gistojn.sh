@@ -37,7 +37,9 @@ do
   gist=$(basename ${file})
   rez=$(cat "$file" | jq '.'); 
   fname=$(echo "$rez" | jq -r -c '.rezulto')
-  esc=${rez//\"/\\\"}; esc=${esc//$'\n'/\\n}
+  esc=${rez//\\/\\\\}; 
+  esc=${esc//\"/\\\"}; 
+  esc=${esc//$'\n'/\\n}
 
   IFS= read -r -d '' data <<EOJ
   {
