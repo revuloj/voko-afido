@@ -37,7 +37,9 @@ do
   gist=$(basename ${file})
   rez=$(cat "$file" | jq '.'); 
   fname=$(echo "$rez" | jq -r -c '.rezulto')
-  esc=${rez//\\/\\\\}; 
+  esc=${rez//\\n/||};
+  #esc=${rez//\\n/\\u000a};
+  esc=${esc//\\/\\\\}; 
   esc=${esc//\"/\\\"}; 
   esc=${esc//$'\n'/\\n}
 
