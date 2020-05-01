@@ -752,7 +752,7 @@ sub incr_ver {
 	my $ver = id_incr($2,$3);
 	my $id = '$Id: '.$1.'.xml,v '.$ver.$4.'$';
 	$art =~ s/\$Id:[^\$]+\$/$id/;
-	$art =~ s/\$Log:\s+([^\.]+)\.xml,v\s+\$(.*?)-->/log_incr($1,$2,$ver)/se;
+	$art =~ s/\$Log\$(.*?)-->/log_incr($1,$2,$ver)/se;
 
 	write_file(">",$artfile,$art);
 }
@@ -773,7 +773,7 @@ sub log_incr {
 
 	my $shg = read_file("$tmp/shanghoj.msg");
 
-	return "\$Log: $fn.xml,v \$\nversio $ver\n".$shg."\n$alog\n-->";
+	return "\$Log\$\nversio $ver\n".$shg."\n$alog\n-->";
 }
 
 

@@ -999,7 +999,7 @@ sub incr_ver {
 	my $ver = id_incr($2,$3);
 	my $id = '$Id: '.$1.'.xml,v '.$ver.$4.'$';
 	$art =~ s/\$Id:[^\$]+\$/$id/;
-	$art =~ s/\$Log:\s+([^\.]+)\.xml,v\s+\$(.*?)-->/log_incr($1,$2,$ver)/se;
+	$art =~ s/\$Log\$(.*?)-->/log_incr($1,$2,$ver)/se;
 
 	open ART,">$artfile";
 	print ART $art;
@@ -1024,7 +1024,7 @@ sub log_incr {
 	my $shg = join('',<SHG>);
 	close SHG;
 
-	return "\$Log: $fn.xml,v \$\nversio $ver\n".$shg."\n$log\n-->";
+	return "\$Log\$\nversio $ver\n".$shg."\n$log\n-->";
 }
 
 sub git_pull {
