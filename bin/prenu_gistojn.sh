@@ -78,7 +78,7 @@ for gist in ${gists}/*; do
       echo "## ${xml}/${id}.xml <- ${url}..."
       curl -o "${xml}/${id}.xml" -H "Authorization: token ${REVO_TOKEN}" --progress-bar "${url}"
 
-    elif [[ "${tp}" == "application/json" && "${sz}" -lt 1000 ]]; then
+    elif [[ "${tp}" == "application/json" && "${sz}" -lt 20000 ]]; then
       url=$(echo ${fjson} | jq -r '.raw_url')
       echo "## ${json}/${id}.json <- ${url}..."
       curl -o "${json}/${id}.json" -H "Authorization: token ${REVO_TOKEN}" --progress-bar "${url}"
