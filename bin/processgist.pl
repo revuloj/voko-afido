@@ -752,7 +752,7 @@ sub incr_ver {
 	my $ver = id_incr($2,$3);
 	my $id = '$Id: '.$1.'.xml,v '.$ver.$4.'$';
 	$art =~ s/\$Id:[^\$]+\$/$id/;
-	$art =~ s/\$Log[^\$]*\$(.*?)-->/log_incr($1,$2,$ver)/se;
+	$art =~ s/\$Log[^\$]*\$(.*?)-->/log_incr($1,$ver)/se;
 
 	write_file(">",$artfile,$art);
 }
@@ -765,7 +765,7 @@ sub id_incr {
 }
 
 sub log_incr {
-	my ($fn,$alog,$ver) = @_;
+	my ($alog,$ver) = @_;
 
 	# mallongigu je maks. 10 linioj
 	my @lines = split(/\n/,$alog);
