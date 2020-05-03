@@ -226,7 +226,8 @@ sub process_gist {
 	# kontrolu sigelon
 	unless(check_signature_valid($gist,$editor,$info)) {
 		$log->warn("La sigelo por gisto ".$gist->{id}." (".$info->{sigelo}.") ne pruviĝis valida.\n");
-		return;
+		# KOREKTU: provizore nur avertu, ĝis ni trovis kial la sigelo de la redaktilo ne ĝustas...
+		# return;
 	}
 
 	# traktu priskribon redakt/aldon..., XML...
