@@ -206,7 +206,7 @@ sub process_gist {
 		return;
 	}
 
-	my @desc = split(':',$gist->{description});
+	my @desc = split(':',$gist->{description},3);
     
     # kontrolu, ĉu temas pri registrita redaktoro 
 	$editor = is_editor($desc[0]);
@@ -607,7 +607,7 @@ sub checkin {
 	$log->info("cp ${fname} $repo_art_file\n");
     `cp ${fname} $repo_art_file`;
 
-	my $ok = checkin_git($gist,$repo_art_file,$edtr,$id);
+	my $ok = checkin_git($gist,$repo_art_file,$edtr,$shangho,$id);
 
 	unlink("$tmp/shanghoj.msg");
 
