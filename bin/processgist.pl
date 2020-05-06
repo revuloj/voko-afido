@@ -963,5 +963,10 @@ sub git_cmd {
 	unlink("$tmp/git.err");
 	chdir($dict_base);
 
+	$git_log =~ s/\[master\s+/[/;
+	$git_log =~ s/file changed/dosiero/;
+	$git_log =~ s/insertions/enmetoj/;
+	$git_log =~ s/deletions+/forigoj/;
+
 	return ($git_log,$git_err);
 }
