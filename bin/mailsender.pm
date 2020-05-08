@@ -9,7 +9,7 @@ use JSON;
 #use Data::Dumper;
 
 my $mailsenderconf="/etc/mailsender.conf";
-my $debug = 1; # 0
+my $debug = 0;
 
 if ($debug) {
     $IO::Socket::SSL::DEBUG=3;
