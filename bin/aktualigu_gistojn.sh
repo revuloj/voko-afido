@@ -39,17 +39,17 @@ do
   fname=$(echo "$rez" | jq -r -c '.rezulto')
   esc=${rez//\\n/||};
   #esc=${rez//\\n/\\u000a};
-  #esc=${esc//\\/\\\\}; 
-  #esc=${esc//\"/\\\"}; 
-  #esc=${esc//$'\n'/\\n}
+  esc=${esc//\\/\\\\}; 
+  esc=${esc//\"/\\\"}; 
+  esc=${esc//$'\n'/\\n}
 
-  esc=${esc//\\/%5c}; 
-  esc=${esc//\"/%22}; 
-  esc=${esc//$'\n'/%0a}
-  esc=${esc//\{/%7b}; 
-  esc=${esc//\}/%7d}; 
-  esc=${esc//\[/%5b}; 
-  esc=${esc//\]/%5d};   
+  #esc=${esc//\\/%5c}; 
+  #esc=${esc//\"/%22}; 
+  #esc=${esc//$'\n'/%0a}
+  #esc=${esc//\{/%7b}; 
+  #esc=${esc//\}/%7d}; 
+  #esc=${esc//\[/%5b}; 
+  #esc=${esc//\]/%5d};   
 
   IFS= read -r -d '' data <<EOJ
   {
