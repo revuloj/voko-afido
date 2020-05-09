@@ -14,3 +14,5 @@ Estas du manieroj akcepti redaktojn:
    estas ankoraŭ listigeblaj.
 
 Pri la nomo: afidoj suĉas ĉe la plantoj kaj ekskrecias dolĉan sukon, kiun formikoj ŝatas melki...
+
+![afido.jpg](afido)
