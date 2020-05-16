@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Github API, Auth
+# https://developer.github.com/v3/gists/
 # https://developer.github.com/apps/building-github-apps/authenticating-with-github-apps/
 # https://developer.github.com/changes/2020-02-14-deprecating-password-auth/
 
@@ -45,7 +46,7 @@ rm -f ${gists}/*
 # ekstraktu id, description, updated_at kaj XML-dosiernomon el ĉiuj gistoj
 # kaj skribu tiujn informojn por ĉiu gisto en apartan dosieron sub gists/
 echo "## preni ${api}/gists..."
-curl -H "Authorization: token ${REVO_TOKEN}" -X GET --progress-bar ${api}/gists | \
+curl -H "Authorization: token ${REVO_TOKEN}" -X GET --progress-bar ${api}/gists?per_page=100 | \
     jq -c '.[] | { id, description, updated_at, files }' | \
 while IFS=$"\n" read -r line; do
     #echo "DEBUG (line): $line"

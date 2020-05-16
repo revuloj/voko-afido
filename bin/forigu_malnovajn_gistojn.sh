@@ -31,7 +31,7 @@ datediff () {
 
 # ekstraktu id, updated_at kaj dosiernomon 'rezulto.log' el ĉiuj gistoj
 echo "## preni ${api}/gists..."
-curl -H "Authorization: token ${REVO_TOKEN}" -X GET --progress-bar ${api}/gists | \
+curl -H "Authorization: token ${REVO_TOKEN}" -X GET --progress-bar ${api}/gists?per_page=100 | \
     jq -c '.[] | { id, updated_at, files }' | \
 while IFS=$"\n" read -r line; do
     #echo "DEBUG (line): $line"
