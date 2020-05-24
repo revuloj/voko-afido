@@ -44,7 +44,7 @@ while IFS=$"\n" read -r line; do
     if [[ "$lg" == "true" ]]; then
       age=$( datediff "$dt" )
       echo "gist: ${id}, aĝo: ${age} tagoj"
-      if [[ "$age" > "$maxage" ]]; then
+      if [[ "$age" -gt "$maxage" ]]; then
         echo "# forigas ${id}..."
         status=$(curl -H "Authorization: token ${REVO_TOKEN}" --progress-bar -i -X DELETE ${api}/gists/${id} | \
           grep "^Status:")
