@@ -134,6 +134,17 @@ foreach my $file (glob "$gist_dir/*") {
 write_file(">>",$mail_send,"\n]\n");
 
 $log->info($separator);
+#git_push();
+my ($lg,$err) = git_cmd("$git push origin master");
+
+if ($err =~ m/fatal/ || $err =~ m/error/) {
+	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
+	# kun eraro-stato, tio devus ankaŭ eviti la postan aldonon de konfirmoj/eraroj al
+	# gistoj kaj permesi refari la tutan procedon...
+	exit 1;
+}
+
+$log->info($separator);
 
 # sendu raportojn
 # provizore jam nun konektur al SMTP, por trovi eraron en ->auth
@@ -144,12 +155,7 @@ if (-s $mail_send > 10) {
 	mailsender::smtp_quit($mailer);
 }
 
-$log->info($separator);
-
 #send_newarts_report();
-#git_push();
-git_cmd("$git push origin master");
-
 $log->info($separator);
 
 #
