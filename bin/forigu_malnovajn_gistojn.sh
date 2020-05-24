@@ -13,7 +13,8 @@
 
 api=https://api.github.com
 #owner=reta-vortaro
-maxage=6 # 14
+# 6
+maxage=14
 
 echo "####### Forigado de malnovaj jam traktitaj redaktoj ########"
 
