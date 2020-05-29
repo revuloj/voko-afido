@@ -798,7 +798,7 @@ sub init_ver {
 	my $id = '$Id: '.$fn.',v '.$ver.' afido Exp $';
 	my $alog = "\n<!--\n\$Log: $fn,v \$\nversio $ver\n$shg\n-->\n";
 
-	$art =~ s/\$Id:[^\$]*\$/$id/;
+	$art =~ s/\$Id[^\$]*\$/$id/;
 	$art =~ s/<\/vortaro>/$alog<\/vortaro>/s;
 
 	write_file(">",$artfile,$art);
