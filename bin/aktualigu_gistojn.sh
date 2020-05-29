@@ -39,7 +39,7 @@ do
   fname=$(echo "$rez" | jq -r -c '.rezulto') 
   esc=${rez//\\n/||};  
 
-  esc=$cat "$esc" | jq -r '@json') 
+  esc=$(cat "$esc" | jq -r '@json') 
 #  esc=${esc//\\/\\\\}; 
 #  esc=${esc//\"/\\\"}; 
 #  esc=${esc//$'\n'/\\n}
