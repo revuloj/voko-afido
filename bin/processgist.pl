@@ -507,10 +507,10 @@ sub checkxml {
 	# ĉe nova artikolo, enŝovu Id, se mankas...
 	if ($nova) { $teksto =~ s/<art[^>]*>/<art mrk="\044Id\044">/s };
 
-    # enmetu Log se ankorau mankas...
-    unless ($teksto =~ /<!--\s+\044Log/s) {
-		$teksto =~ s/(<\/vortaro>)/\n<!--\n\044Log\044\n-->\n$1/s;
-    }
+    # enmetu Log se ankorau mankas... okazas en checkinnew_git anst.
+    # unless ($teksto =~ /<!--\s+\044Log/s) {
+	# 	$teksto =~ s/(<\/vortaro>)/\n<!--\n\044Log\044\n-->\n$1/s;
+    # }
 
     # mallongigu Log al 20 linioj
     $teksto =~ s/(<!--\s+\044Log(?:[^\n]*\n){20})(?:[^\n]*\n)*(-->)/$1$2/s;
