@@ -63,8 +63,10 @@ EOJ
   echo ${data} | jq '.'    
 
   status=$(echo ${data} | curl -H "Content-Type: application/json" -H "Authorization: token ${REVO_TOKEN}" -d '@-' \
-    --progress-bar -i -X PATCH ${api}/gists/${gist} | \
-    grep "^Status:")
+    --progress-bar -i -X PATCH ${api}/gists/${gist} )
+    
+#    | \
+#  grep "^Status:")
   echo "$gist: $status"
 
   ##echo ${data} | curl -H "Authorization: token ${REVO_TOKEN}" -d '@-' -i -X PATCH ${api}/gists/${gist}
