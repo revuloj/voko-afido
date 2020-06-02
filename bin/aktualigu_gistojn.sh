@@ -38,6 +38,8 @@ do
   rez=$(cat "$file" | jq '.'); 
   fname=$(echo "$rez" | jq -r -c '.rezulto') 
   esc=${rez//\\n/||};  
+  # debug
+  echo ${esc} | jq '.'    
 
   esc=$(echo "$esc" | jq '@json') 
 #  esc=${esc//\\/\\\\}; 
@@ -54,10 +56,13 @@ do
     }
   }
 EOJ
-  echo "DATA:"
-  echo "${data}"
 
-  status=$(echo ${data} | curl -H "Authorization: token ${REVO_TOKEN}" -d '@-' \
+  # debug
+  echo "DATA:"  
+  echo "${data}"
+  echo ${data} | jq '.'    
+
+  status=$(echo ${data} | curl -H "Content-Type: application/json" -H "Authorization: token ${REVO_TOKEN}" -d '@-' \
     --progress-bar -i -X PATCH ${api}/gists/${gist} | \
     grep "^Status:")
   echo "$gist: $status"
