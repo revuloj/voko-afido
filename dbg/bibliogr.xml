@@ -1,0 +1,33 @@
+<!DOCTYPE bibliografio [
+<!ELEMENT bibliografio (vrk)*>
+<!ELEMENT vrk (url?,aut*,trd?,tit?,ald?,eld*)>
+<!ATTLIST vrk mll ID #REQUIRED
+              tip (vortaro|leksikono|terminaro|beletro|rimajho|parolo|revuo) #IMPLIED> 
+<!ELEMENT url (#PCDATA)>
+<!ELEMENT aut (#PCDATA|a|n)*>
+<!ELEMENT n   (#PCDATA)>
+<!ELEMENT a   (#PCDATA)>
+<!ELEMENT trd (#PCDATA|a|n)*>
+<!ELEMENT tit (#PCDATA)>
+<!ELEMENT isbn (#PCDATA)>
+<!ELEMENT ald (#PCDATA)>
+<!ELEMENT eld (nom?,lok?,dat?,nro?,isbn?)>
+<!ELEMENT nom (#PCDATA)>
+<!ELEMENT lok (#PCDATA)>
+<!ELEMENT dat (#PCDATA)>
+<!ELEMENT nro (#PCDATA)>
+<!ENTITY % signoj SYSTEM "../dtd/vokosgn.dtd">
+%signoj;
+]>
+ 
+<bibliografio> 
+  <vrk mll="Aventuroj">
+    <aut><a>Privat</a> <n>Edmond</n></aut>
+    <tit>Aventuroj de pioniro</tit>
+    <eld>
+      <nom>J. R&eacute;gulo</nom>
+      <lok>La Laguna</lok>
+      <dat>1963</dat>
+    </eld>
+  </vrk>
+</bibliografio>

@@ -47,8 +47,16 @@ xml=${xml//$'\n'/\\n}
 # elkalkulu HMAC
 HMAC=$((echo ${RETADRESO} && cat $file) | openssl dgst -sha256 -hmac "${SIGELILO}"); HMAC=${HMAC#*= }
 
-info="{\n\"red_id\":\"1\",\n\"red_nomo\":\"Testa Redaktanto\",\n\"sigelo\":\"${HMAC}\",\n\"celo\":\"revo-fonto-testo/revo\"\n}"
-info=${info//\"/\\\"}
+IFS= read -r -d '' info <<EOI
+{
+  "red_id": "1",
+  "red_nomo": "Testa Redaktanto",
+  "sigelo": "${HMAC}",
+  "celo": "revo-fonto-testo/revo"
+}
+EOI
+
+info=$(echo $info | jq '@json')
 
 #echo "$info"
 
@@ -60,7 +68,7 @@ IFS= read -r -d '' json <<EOJ
       "content": "${xml}"
     },
     "info.json": {
-      "content": "${info}"
+      "content": ${info}
     }
   }
 }
