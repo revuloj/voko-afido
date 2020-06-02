@@ -42,11 +42,27 @@ IFS= read -r -d '' info <<EOI
 }
 EOI
 
+#"eraro.json": {
+#     "content": ""
+#        }
+
+IFS= read -r -d '' eraro <<EOE
+{
+  "rezulto":"eraro",
+  "shangho":"brita urbo Dovero/Dovro en aparata artikolo",
+  "senddato":"2020-05-29T16:21:34Z",
+  "artikolo":"\$Id: dovr.xml,v 1.1 2020/05/28 21:34:18 revo Exp \$",
+  "mesagho":"La de vi sendita artikolo||ne baziĝas sur la aktuala arkiva versio||(\$Id: dovr.xml,v 1.2 2020/05/29 16:45:17 revo Exp \$)||Bonvolu preni aktualan version el la TTT-ejo. (http://www.reta-vortaro.de/cgi-bin/vokomail.pl?art=dovr)",
+  "dosiero":"/home/afido/dict/xml/5d87c99cd8c4f33b7fc998d6aa8bcb84.xml"
+}
+EOE
+
 #echo "$info"
 fname="xml"
 xml="x"
 echo ${info} | jq '.'
 info=$(echo $info | jq '@json')
+eraro=$(echo $eraro | jq '@json')
 
 #IFS= read -r -d '' json <<EOJ
 #{
@@ -69,8 +85,8 @@ IFS= read -r -d '' json <<EOJ
     "${fname}": {
       "content": "${xml}"
     },
-    "info.json": {
-      "content": ${info}
+    "eraro.json": {
+      "content": ${eraro}
     }
   }
 }
@@ -79,9 +95,8 @@ EOJ
 echo ${info} | jq '.'
 echo ${json} | jq '.'
 
-echo ${json} | cut -c109-119
+#echo ${json} | cut -c109-119
 
-#echo ${json} | curl -H "Content-Type: application/json" -H "Authorization: token ${REVO_TOKEN}" -d '@-' -i -X POST ${api}/gists 
 
 
 
