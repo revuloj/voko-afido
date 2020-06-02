@@ -39,16 +39,17 @@ do
   fname=$(echo "$rez" | jq -r -c '.rezulto') 
   esc=${rez//\\n/||};  
 
-  esc=$(echo "$esc" | jq -r '@json') 
+  esc=$(echo "$esc" | jq '@json') 
 #  esc=${esc//\\/\\\\}; 
 #  esc=${esc//\"/\\\"}; 
 #  esc=${esc//$'\n'/\\n}
 
+  # noto: ne uzu citilojn ĉirkaŭ $esc, ĉar tiujn jam aldonas jq '@json'!
   IFS= read -r -d '' data <<EOJ
   {
     "files": {
         "${fname}.json": {
-          "content": "${esc}"
+          "content": ${esc}
         }
     }
   }
