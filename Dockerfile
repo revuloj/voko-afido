@@ -52,7 +52,7 @@ COPY --chown=afido:afido etc/* etc/
 ###USER afido:users
 
 RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/master.zip \
-  && unzip master.zip voko-grundo-master/dtd/* && rm master.zip && mkdir dict \
+  && unzip master.zip voko-grundo-master/dtd/* && rm master.zip && mkdir dict  \
   && ln -s /home/afido/voko-grundo-master/dtd dict/dtd
 
 # farenda:
