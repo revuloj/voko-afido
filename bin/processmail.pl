@@ -878,10 +878,10 @@ sub checkin {
 
     # checkin in CSV
     my $xmlfile="$art.xml";
-    `cp $xml_temp/xml.xml $xml_dir/$xmlfile`;
-
-    chdir($xml_dir);
-	checkin_csv($xmlfile);
+    #`cp $xml_temp/xml.xml $xml_dir/$xmlfile`;
+#
+    #chdir($xml_dir);
+	#checkin_csv($xmlfile);
 
 	# checkin in Git
     `mv $xml_temp/xml.xml $git_dir/$xmlfile`;
