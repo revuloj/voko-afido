@@ -16,7 +16,7 @@ if [[ -z "$CGI_PASSWORD" ]]; then
     CGI_PASSWORD=$(cat /run/secrets/voko-araneo.cgi_password)
 fi
 
-url=http://${REVO_HOST}/cgi-bin/admin/redaktantoj-json.pl
+url=https://${REVO_HOST}/cgi-bin/admin/redaktantoj-json.pl
 
 mkdir -p ${etc}
 
