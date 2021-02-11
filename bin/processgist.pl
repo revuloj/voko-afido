@@ -147,7 +147,7 @@ if ($err =~ m/fatal/ || $err =~ m/error/) {
 $log->info($separator);
 
 # sendu raportojn
-# provizore jam nun konektur al SMTP, por trovi eraron en ->auth
+# provizore jam nun konektu al SMTP, por trovi eraron en ->auth
 #$IO::Socket::SSL::DEBUG=3;
 if (-s $mail_send > 10) {
 	my $mailer = mailsender::smtp_connect;
@@ -157,18 +157,6 @@ if (-s $mail_send > 10) {
 
 #send_newarts_report();
 $log->info($separator);
-
-#
-## arkivu la poshtdosieron
-#if ($mail_file eq $mail_local) {
-#    print "\nshovas $mail_local al $old_mail/$filename\n" if ($verbose);
-#    `mv $mail_local $old_mail/$filename`;
-#}
-#
-#if (-e $mail_error) {
-#    print "shovas $mail_error al $err_mail/$filename\n" if ($verbose);
-#    `mv $mail_error $err_mail/$filename`;
-#}
 
 if (-s $mail_send > 10) {
 	$filename = "mail_sent_".`date +%Y%m%d_%H%M%S`;    
