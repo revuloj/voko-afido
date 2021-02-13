@@ -3,5 +3,13 @@
 # haltigu la skripton ĉe eraro, ĉu tio ankaŭ redonas status=1?
 set -e
 
-prenu_redaktantojn.sh && git-clone-repo.sh && prenu_gistojn.sh && processgist.pl \
-  && aktualigu_gistojn.sh && forigu_malnovajn_gistojn.sh
+case $1 in
+subm)
+  prenu_redaktantojn.sh && git-clone-repo.sh && processsubm.pl 
+  ;;
+*)
+  prenu_redaktantojn.sh && git-clone-repo.sh && prenu_gistojn.sh && processgist.pl \
+    && aktualigu_gistojn.sh && forigu_malnovajn_gistojn.sh
+  ;;  
+esac
+  
