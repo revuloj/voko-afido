@@ -9,11 +9,11 @@ if [[ -z "$REVO_HOST" ]]; then
 fi
 
 if [[ -z "$CGI_USER" ]]; then
-    CGI_USER=$(cat /run/secrets/voko-araneo.cgi_user)
+    export CGI_USER=$(cat /run/secrets/voko-araneo.cgi_user)
 fi
 
 if [[ -z "$CGI_PASSWORD" ]]; then
-    CGI_PASSWORD=$(cat /run/secrets/voko-araneo.cgi_password)
+    export CGI_PASSWORD=$(cat /run/secrets/voko-araneo.cgi_password)
 fi
 
 url=https://${REVO_HOST}/cgi-bin/admin/redaktantoj-json.pl
