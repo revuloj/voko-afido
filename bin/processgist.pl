@@ -18,6 +18,7 @@ use Log::Dispatch;
 
 use lib("/usr/local/bin");
 use lib("./bin");
+use process qw (trim);
 use mailsender;
 
 use Data::Dumper;
@@ -93,17 +94,17 @@ $json_parser = JSON->new->allow_nonref;
 
 # legu redaktantoj el JSON-dosiero kaj transformu al HASH por 
 # trovi ilin facile laŭ numero (red_id)
-$editors=read_json_file($editor_file);
+$editors=process::read_json_file($editor_file);
 $ed_hashs=();
 # %editors = map { $_->{retadr}[0] => $_	} @{$fe};
 
-$sigelilo = $ENV{"SIGELILO"} || read_file("$sigelilo_file");
+$sigelilo = $ENV{"SIGELILO"} || process::read_file("$sigelilo_file");
 $sigelilo =~ s/^\s+|\s+$//g;
 unless ($sigelilo) {
 	die "Mankas sigelilo. Sen ĝi ni ne povas kontroli la sigelojn de redaktoj."
 }
 
-write_file(">", $mail_send,"[\n"); my $mail_send_sep = '';
+process::write_file(">", $mail_send,"[\n"); my $mail_send_sep = '';
 
 foreach my $file (glob "$gist_dir/*") {
 
@@ -116,7 +117,7 @@ foreach my $file (glob "$gist_dir/*") {
 
     # malfermu kaj enlegu la giston
 	#$gist = read_json_file("$gist_dir/$file");
-	$gist = read_json_file("$file");
+	$gist = process::read_json_file("$file");
     unless ($gist) {
 		next;
     }
@@ -131,11 +132,11 @@ foreach my $file (glob "$gist_dir/*") {
     process_gist($gist);
 }
 
-write_file(">>",$mail_send,"\n]\n");
+process::write_file(">>",$mail_send,"\n]\n");
 
 $log->info($separator);
 #git_push();
-my ($lg,$err) = git_cmd("$git push origin master");
+my ($lg,$err) = process::git_cmd("$git push origin master");
 
 if ($err =~ m/fatal/ || $err =~ m/error/) {
 	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
@@ -176,7 +177,7 @@ sub process_gist {
 	my $xmltxt = '';
 	
 	# legu aldonajn informojn pri la gisto
-	my $info = read_json_file("$json_dir/".$gist->{id}.".json");
+	my $info = process::read_json_file("$json_dir/".$gist->{id}.".json");
     unless ($info) {
 		$log->warn("Mankas aldonaj informoj, ne eblas trakti giston: ".$gist->{id}."\n");
 		return;
@@ -276,10 +277,10 @@ sub report {
     $log->info($detaloj->{mesagho}."\n");
 
     $detaloj->{senddato} = $gist->{updated_at};
-	write_json_file(">","$rez_dir/$gist->{id}", $detaloj);
+	process::write_json_file(">","$rez_dir/$gist->{id}", $detaloj);
 
 	$detaloj->{sendinto} = $editor->{red_nomo}." <".$editor->{retadr}[0].">";
-	write_json_file(">>",$mail_send, $detaloj, $mail_send_sep);
+	process::write_json_file(">>",$mail_send, $detaloj, $mail_send_sep);
 	$mail_send_sep = ',';
 }
 
@@ -304,7 +305,7 @@ sub send_reports {
 	$log->info("sendas raportojn al redaktintoj...\n");
 
 	# kolektu raportojn laŭ retadreso
-	my $reps = read_json_file($mail_send);
+	my $reps = process::read_json_file($mail_send);
 	for my $rep (@$reps) {
 		
 		if ($rep->{sendinto}) {
@@ -421,8 +422,7 @@ sub cmd_aldon {
 	my $fname = "$xml_dir/".$gist->{id}.".xml";
 
     # kio estu la nomo de la nova artikolo
-    $art =~ s/^\s+//s;
-    $art =~ s/\s+$//s;
+    $art =~ s/^\s+|\s+$//sg;
     
     unless ($art =~ /^[a-z0-9_]+$/s) {
 		report($gist, { 
@@ -466,7 +466,7 @@ sub check_signature_valid {
 	my $fname = "$xml_dir/".$gist->{id}.".xml";
 	my $retadr = $editor->{retadr}[0];
 
-	$text = "$retadr\n".read_file($fname);
+	$text = "$retadr\n".process::read_file($fname);
 	$digest = hmac_sha256_hex($text, $sigelilo);
 
 	$log->info("sigelo: $info->{sigelo}\n");
@@ -488,7 +488,7 @@ sub checkxml {
     #symlink("$dtd_dir","$xml_temp/../dtd") ;
 #	|| warn "Ne povis ligi de $dtd_dir al $xml_temp/../dtd\n";
 
-	$teksto = read_file("$fname");
+	$teksto = process::read_file("$fname");
     # uniksajn linirompojn!
     $teksto =~ s/\r\n/\n/sg;
 
@@ -504,17 +504,17 @@ sub checkxml {
     $teksto =~ s/(<!--\s+\044Log(?:[^\n]*\n){20})(?:[^\n]*\n)*(-->)/$1$2/s;
 
     # reskribu la dosieron
-    unless (write_file(">",$fname,$teksto)) { return; }
+    unless (process::write_file(">",$fname,$teksto)) { return; }
 
     # kontrolu la sintakson de la XML-teksto
     `$xmlcheck $fname 2> $lname`;
 
     # legu la erarojn
-    my $err = read_file($lname);
+    my $err = process::read_file($lname);
     # unlink("$lname");
 
     if ($err) {
-		$err .= "\nkunteksto:\n".xml_context($err,"$fname");
+		$err .= "\nkunteksto:\n".process::xml_context($err,"$fname");
 		$log->info("XML-eraroj:\n$err");
 
 		report($gist, {
@@ -551,7 +551,7 @@ sub checkin {
     my $edtr = $editor->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
-	write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
+	process::write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
 	my $repo_art_file = git_art_path($info,$art);
@@ -614,8 +614,8 @@ sub checkin_git {
 
 	incr_ver("$xmlfile");
 
-	my ($log1,$err1) = git_cmd("$git add $xmlfile");
-	my ($log2,$err2) = git_cmd("$git commit -F $tmp/shanghoj.msg");
+	my ($log1,$err1) = process::git_cmd("$git add $xmlfile");
+	my ($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
 
 	# chu 'commit' sukcesis?
 
@@ -672,7 +672,7 @@ sub checkinnew {
     my $edtr = $editor->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
-    write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
+    process::write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
 
 	my $repo_art_file = git_art_path($info,$art);
 
@@ -693,8 +693,8 @@ sub checkinnew_git {
 
 	init_ver("$xmlfile");
 
-	($log1,$err1) = git_cmd("$git add $xmlfile");
-	($log2,$err2) = git_cmd("$git commit -F $tmp/shanghoj.msg");
+	($log1,$err1) = process::git_cmd("$git add $xmlfile");
+	($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco
@@ -741,7 +741,7 @@ sub incr_ver {
 	my $artfile = shift;
 
 	# $Id: test.xml,v 1.51 2019/12/01 16:57:36 afido Exp $
-    my $art = read_file("$artfile");
+    my $art = process::read_file("$artfile");
 
 	$art =~ m/\$Id:\s+([^\.]+)\.xml,v\s+(\d)\.(\d+)\s+(?:\d\d\d\d\/\d\d\/\d\d\s+\d\d:\d\d:\d\d)(.*?)\$/s;	
 	my $ver = id_incr($2,$3);
@@ -749,7 +749,7 @@ sub incr_ver {
 	$art =~ s/\$Id:[^\$]+\$/$id/;
 	$art =~ s/\$Log[^\$]*\$(.*?)-->/log_incr($1,$ver)/se;
 
-	write_file(">",$artfile,$art);
+	process::write_file(">",$artfile,$art);
 }
 
 sub id_incr {
@@ -766,7 +766,7 @@ sub log_incr {
 	my @lines = split(/\n/,$alog);
 	$alog = join("\n",splice(@lines,0,20));
 
-	my $shg = read_file("$tmp/shanghoj.msg");
+	my $shg = process::read_file("$tmp/shanghoj.msg");
 
 	return "\$Log\$\nversio $ver\n".$shg."\n$alog\n-->";
 }
@@ -776,9 +776,9 @@ sub init_ver {
 	my $artfile = shift;
 
 	# $Id: test.xml,v 1.1 2019/12/01 16:57:36 afido Exp $
-    my $art = read_file("$artfile");
+    my $art = process::read_file("$artfile");
 
-	my $shg = read_file("$tmp/shanghoj.msg");
+	my $shg = process::read_file("$tmp/shanghoj.msg");
 
 	$artfile =~ m|/([^/]+\.xml)|;
 	my $fn = $1;
@@ -789,45 +789,45 @@ sub init_ver {
 	$art =~ s/\$Id[^\$]*\$/$id/;
 	$art =~ s/<\/vortaro>/$alog<\/vortaro>/s;
 
-	write_file(">",$artfile,$art);
+	process::write_file(">",$artfile,$art);
 }
 
-sub xml_context {
-    my ($err,$file) = @_;
-    my ($line, $char,$result,$n,$txt);
-
-	if ($err =~ /line\s+([0-9]+)\s+char\s+([0-9]+)\s+/s) {
-		$line = $1;
-		$char = $2;
-
-		unless (open XML,$file) {
-			$log->warn("Ne povis malfermi $file:$!\n");
-			return '';
-		}
-
-		# la linio antau la eraro
-		if ($line > 1) {
-			for ($n=1; $n<$line-1; $n++) { <XML>; }	    
-			$result .= "$n: ".<XML>;
-			$result =~ s/\n?$/\n/s;
-		}
-
-		$result .= "$line: ".<XML>;
-		$result =~ s/\n?$/\n/s;
-		$result .= "-" x ($char + length($line) + 1) . "^\n";
-
-		if (defined($txt=<XML>)) {
-			$line++;
-			$result .= "$line: $txt";
-			$result =~ s/\n?$/\n/s;
-		}
-
-		close XML;			
-		return $result;
-    }
-
-    return '';
-}
+#sub xml_context {
+#    my ($err,$file) = @_;
+#    my ($line, $char,$result,$n,$txt);
+#
+#	if ($err =~ /line\s+([0-9]+)\s+char\s+([0-9]+)\s+/s) {
+#		$line = $1;
+#		$char = $2;
+#
+#		unless (open XML,$file) {
+#			$log->warn("Ne povis malfermi $file:$!\n");
+#			return '';
+#		}
+#
+#		# la linio antau la eraro
+#		if ($line > 1) {
+#			for ($n=1; $n<$line-1; $n++) { <XML>; }	    
+#			$result .= "$n: ".<XML>;
+#			$result =~ s/\n?$/\n/s;
+#		}
+#
+#		$result .= "$line: ".<XML>;
+#		$result =~ s/\n?$/\n/s;
+#		$result .= "-" x ($char + length($line) + 1) . "^\n";
+#
+#		if (defined($txt=<XML>)) {
+#			$line++;
+#			$result .= "$line: $txt";
+#			$result =~ s/\n?$/\n/s;
+#		}
+#
+#		close XML;			
+#		return $result;
+#    }
+#
+#    return '';
+#}
 
 sub git_art_path {
 	my ($info,$art) = @_;
@@ -842,7 +842,7 @@ sub get_art_id {
     my $artfile = shift;
 
     # legu la ghisnunan artikolon
-	my $xml = read_file($artfile);
+	my $xml = process::read_file($artfile);
 
 	if ($xml) {
 		# pri kiu artikolo temas, trovighas en <art mrk="...">
@@ -874,93 +874,93 @@ sub extract_article {
     }
 }
 
-sub read_file {
-	my $file = shift;
-	unless (open FILE, $file) {
-		$log->warn("Ne povis malfermi '$file': $!\n");
-		return;
-	}
-	my $text = join('',<FILE>);
-	close FILE;
-	return $text;
-}
+#sub read_file {
+#	my $file = shift;
+#	unless (open FILE, $file) {
+#		$log->warn("Ne povis malfermi '$file': $!\n");
+#		return;
+#	}
+#	my $text = join('',<FILE>);
+#	close FILE;
+#	return $text;
+#}
 
-sub write_file {
-	my ($mode, $file, $text) = @_;
+#sub write_file {
+#	my ($mode, $file, $text) = @_;
+#
+#	unless (open FILE, $mode, $file) {
+#		$log->warn("Ne povis malfermi '$file': $!\n");
+#		return;
+#	}
+#	print FILE $text;
+#	close FILE;
+#}
 
-	unless (open FILE, $mode, $file) {
-		$log->warn("Ne povis malfermi '$file': $!\n");
-		return;
-	}
-	print FILE $text;
-	close FILE;
-}
+#sub read_json_file {
+#	my $file = shift;
+#  	my $j = process::read_file($file);
+#
+#	$log->debug("json file: $file\n");
+#
+#	unless ($j) {
+#		$log->warn("Malplena aŭ mankanta JSON-dosiero '$file'\n");
+#		return;
+#	}
+#    $log->debug(substr($j,0,20)."...\n");
+#
+#    my $parsed;
+#	eval {
+#    	$parsed = $json_parser->decode($j);
+#    	1;
+#	} or do {
+#  		my $error = $@;
+#		$log->error("Ne eblis analizi enhavon de JSON-dosiero '$file'.\n");
+#  		$log->error("$error\n");
+#		return;
+#	};
+#
+#	return $parsed;	  
+#}
 
-sub read_json_file {
-	my $file = shift;
-  	my $j = read_file($file);
+#sub write_json_file {
+#	my ($mode,$file,$content,$sep) = @_;
+#    my $json = $json_parser->encode($content);
+#
+#    unless (open JSN, $mode, $file) {
+#		$log->warn("Ne povis malfermi $file: $!\n");
+#		return;
+#    }
+#
+#	print JSN $sep if ($sep);
+#	print JSN $json;
+#	close JSN;  
+#}
 
-	$log->debug("json file: $file\n");
-
-	unless ($j) {
-		$log->warn("Malplena aŭ mankanta JSON-dosiero '$file'\n");
-		return;
-	}
-    $log->debug(substr($j,0,20)."...\n");
-
-    my $parsed;
-	eval {
-    	$parsed = $json_parser->decode($j);
-    	1;
-	} or do {
-  		my $error = $@;
-		$log->error("Ne eblis analizi enhavon de JSON-dosiero '$file'.\n");
-  		$log->error("$error\n");
-		return;
-	};
-
-	return $parsed;	  
-}
-
-sub write_json_file {
-	my ($mode,$file,$content,$sep) = @_;
-    my $json = $json_parser->encode($content);
-
-    unless (open JSN, $mode, $file) {
-		$log->warn("Ne povis malfermi $file: $!\n");
-		return;
-    }
-
-	print JSN $sep if ($sep);
-	print JSN $json;
-	close JSN;  
-}
-
-sub git_cmd {
-	my $git_cmd = shift;
-
-	chdir($git_dir);
-	$log->info("------------------------------\n");
-	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
-	$log->info("$git_cmd\n");
-	`$git_cmd 1> $tmp/git.log 2> $tmp/git.err`;
-
-	# chu 'commit' sukcesis?
-	my $git_log = read_file("$tmp/git.log");
-    $log->info("git-out:\n$git_log\n") if ($git_log);
-
-    my $git_err = read_file("$tmp/git.err");
-    $log->error("git-err:\n$git_err\n") if ($git_err);
-	$log->info("------------------------------\n");
-
-    unlink("$tmp/git.log");
-	unlink("$tmp/git.err");
-	chdir($dict_base);
-
-	$git_log =~ s/\[master\s+/[m /;
-	$git_log =~ s/file changed/dosiero/;
-	$git_log =~ s/insertions/enmetoj/;
-	$git_log =~ s/deletions+/forigoj/;
-
-	return ($git_log,$git_err);
-}
+#sub git_cmd {
+#	my $git_cmd = shift;
+#
+#	chdir($git_dir);
+#	$log->info("------------------------------\n");
+#	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+#	$log->info("$git_cmd\n");
+#	`$git_cmd 1> $tmp/git.log 2> $tmp/git.err`;
+#
+#	# chu 'commit' sukcesis?
+#	my $git_log = process::read_file("$tmp/git.log");
+#    $log->info("git-out:\n$git_log\n") if ($git_log);
+#
+#    my $git_err = process::read_file("$tmp/git.err");
+#    $log->error("git-err:\n$git_err\n") if ($git_err);
+#	$log->info("------------------------------\n");
+#
+#    unlink("$tmp/git.log");
+#	unlink("$tmp/git.err");
+#	chdir($dict_base);
+#
+#	$git_log =~ s/\[master\s+/[m /;
+#	$git_log =~ s/file changed/dosiero/;
+#	$git_log =~ s/insertions/enmetoj/;
+#	$git_log =~ s/deletions+/forigoj/;
+#
+#	return ($git_log,$git_err);
+#}
