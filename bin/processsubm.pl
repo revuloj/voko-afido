@@ -123,7 +123,7 @@ foreach my $subm (@submetoj) {
 		"desc:",$subm->{"desc"}."\n");
 
     # analizu la enhavon de la mesagho
-    process_subm($subm,\%subm_detaloj);
+    process_subm($subm,\%subm_detaloj);	
 }
 
 write_file(">>",$mail_send,"\n]\n");
@@ -215,7 +215,8 @@ sub report {
     $log->info($detaloj->{mesagho}."\n");
 
     $detaloj->{senddato} = $subm->{time};
-	write_json_file(">","$rez_dir/$subm->{id}", $detaloj);
+	#write_json_file(">","$rez_dir/$subm->{id}", $detaloj);
+	submeto_rezulto($subm,$detaloj);
 
 	$detaloj->{sendinto} = $editor->{red_nomo}." <".$editor->{retadr}[0].">";
 	write_json_file(">>",$mail_send, $detaloj, $mail_send_sep);
@@ -708,5 +709,29 @@ sub pluku_submeton {
 		return 0;
 	}
 }
+
+sub submeto_rezulto {
+	my ($subm,$detaloj) = @_;
+	my $state;
+
+	if ($detaloj->{rezulto} eq 'konfirmo') {
+		$state = 'arkiv';
+	} else {
+		$state = 'eraro';
+	}
+    # vd. https://www.perl.com/pub/2002/08/20/perlandlwp.html/
+
+	my $res = $ua->post($submeto_url,
+		[
+			id => $subm->{id}, 
+			state => $state,
+			result => $detaloj->{mesagho}
+		]);
+
+ 	if (not $res->is_success) {
+		$log->warn("Ne eblis aktualigi la rezulton de la submeto '$id'.\n".$result->status_line);
+		return 0;		
+	}
+}	
 
 
