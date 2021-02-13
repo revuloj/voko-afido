@@ -8,16 +8,23 @@ use strict;
 package process;
 
 use JSON;
-$json_parser = JSON->new->allow_nonref;
+my $json_parser = JSON->new->allow_nonref;
 #$json_parser->allow_tags(true);
 
 use Text::CSV;
 
-use File::Tempdir;
-my $tmpdir = File::Tempdir->new();
-my $tmp = $tmpdir->name;
+#use File::Tempdir;
+#my $tmpdir = File::Tempdir->new();
+#my $tmp = $tmpdir->name;
 
-$xml_temp     = "$tmp/xml";
+my $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
+my $dict_base    = "$dict_home/dict"; # xml, dok, dtd
+my $tmp          = "$dict_base/tmp";
+my $xml_temp     = "$tmp/xml";
+
+# my $git          = '/usr/bin/git';
+my $git_dir      = "$dict_base/revo-fonto";
+
 
 # preparu protokolon
 use Log::Dispatch;
@@ -28,7 +35,7 @@ my $log = Log::Dispatch->new(
     ],
 );
 
-$xmlcheck     = '/usr/bin/rxp -V -s';
+my $xmlcheck     = '/usr/bin/rxp -V -s';
 
 
 # forigu spacojn komence kaj fine de signoĉeno
@@ -109,9 +116,11 @@ sub csv2arr {
 
     my @lines = split("\n",$csv);
     my $first_line = 1;
-    my %rec; my @cols;
+    my %rec;
+    my @cols;
+    my @records;
 
-    for $line (@lines) {
+    for my $line (@lines) {
         chomp($line);
         if ($parser->parse($line)) {
             if ($first_line) {
@@ -164,7 +173,7 @@ sub checkxml {
     #symlink("$dtd_dir","$xml_temp/../dtd") ;
 #	|| warn "Ne povis ligi de $dtd_dir al $xml_temp/../dtd\n";
 
-	$teksto = read_file("$fname");
+	my $teksto = read_file("$fname");
     # uniksajn linirompojn!
     $teksto =~ s/\r\n/\n/sg;
 
