@@ -57,9 +57,8 @@ $log_dir      = "$dict_base/log";
 $mail_send    = "$tmp/mailsend";
 
 $rez_dir      = "$dict_base/rez";
-$json_dir     = "$dict_base/json";
 $xml_dir      = "$dict_base/xml";
-$git_repo     = $ENV{"GIT_REPO_REVO"} || "revo-fonto";
+#$git_repo     = $ENV{"GIT_REPO_REVO"} || "revo-fonto";
 $git_dir      = "$dict_base/revo-fonto";
 
 $editor_file  = "$dict_etc/redaktantoj.json"; #"$dict_etc/voko.redaktantoj";
@@ -96,9 +95,9 @@ mkdir($rez_dir);
 
 # legu redaktantoj el JSON-dosiero kaj transformu al HASH por 
 # trovi ilin facile laŭ numero (red_id)
-$editors=read_json_file($editor_file);
+$editors=process::read_json_file($editor_file);
 
-write_file(">", $mail_send,"[\n"); my $mail_send_sep = '';
+process::write_file(">", $mail_send,"[\n"); my $mail_send_sep = '';
 
 my @submetoj = submeto_listo();
 
@@ -126,11 +125,11 @@ foreach my $subm (@submetoj) {
     process_subm($subm,\%subm_detaloj);	
 }
 
-write_file(">>",$mail_send,"\n]\n");
+process::write_file(">>",$mail_send,"\n]\n");
 
 $log->info($separator);
 #git_push();
-my ($lg,$err) = git_cmd("$git push origin master");
+my ($lg,$err) = process::git_cmd("$git push origin master");
 
 if ($err =~ m/fatal/ || $err =~ m/error/) {
 	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
@@ -193,7 +192,7 @@ sub process_subm {
 }
 
 sub is_editor {
-    my $retadresp = shift;
+    my $retadreso = shift;
 
 	# se ne troviĝis, trairu la liston kaj kalkulu dume la Sha-ojn
 	for $ed (@$editors) {
@@ -219,7 +218,7 @@ sub report {
 	submeto_rezulto($subm,$detaloj);
 
 	$detaloj->{sendinto} = $editor->{red_nomo}." <".$editor->{retadr}[0].">";
-	write_json_file(">>",$mail_send, $detaloj, $mail_send_sep);
+	process::write_json_file(">>",$mail_send, $detaloj, $mail_send_sep);
 	$mail_send_sep = ',';
 }
 
@@ -233,7 +232,7 @@ sub send_reports {
 	$log->info("sendas raportojn al redaktintoj...\n");
 
 	# kolektu raportojn laŭ retadreso
-	my $reps = read_json_file($mail_send);
+	my $reps = process::read_json_file($mail_send);
 	for my $rep (@$reps) {
 		
 		if ($rep->{sendinto}) {
@@ -389,7 +388,7 @@ sub cmd_aldon {
 }
 
 sub check_xml {
-	my $subm,$fname,$article_id,$nova) = @_;
+	my ($subm,$fname,$article_id,$nova) = @_;
 
 	my $err = process::checkxml($subm->{id},$fname,$nova);
 
@@ -432,7 +431,7 @@ sub checkin {
     my $edtr = $editor->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
-	write_file(">","$tmp/shanghoj.msg","$edtr: $subm->{desc}");
+	process::write_file(">","$tmp/shanghoj.msg","$edtr: $subm->{desc}");
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
 	my $repo_art_file = git_art_path($info,$art);
@@ -547,7 +546,7 @@ sub checkinnew {
     my $edtr = $editor->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
-    write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
+    process::write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
 
 	my $repo_art_file = git_art_path($info,$art);
 
@@ -671,7 +670,7 @@ sub pluku_submeton {
 			$log->warn("Submeto ne enhavas redaktanton en la unua linio.\n");
 			return 0;
 		}
-		while @lines[0] =~ "\s*\n" {
+		while ($lines[0] =~ m/\s*\n/) {
 			shift @lines;
 		}
 
@@ -685,7 +684,7 @@ sub pluku_submeton {
 		#	$log->warn("En la submeto ne troviĝis komando aŭ enestas nekonata komando.\n");
 		#	return 0;
 		#}
-		#while @lines[0] =~ "\s*\n" {
+		#while (@lines[0] =~ m/\s*\n/) {
 		#	shift @lines;
 		#}
 
@@ -729,7 +728,7 @@ sub submeto_rezulto {
 		]);
 
  	if (not $res->is_success) {
-		$log->warn("Ne eblis aktualigi la rezulton de la submeto '$id'.\n".$result->status_line);
+		$log->warn("Ne eblis aktualigi la rezulton de la submeto '".$subm->{id}."'\n".$res->status_line);
 		return 0;		
 	}
 }	
