@@ -19,7 +19,7 @@ use Data::Dumper;
 
 use lib("/usr/local/bin");
 use lib("./bin");
-use process qw (trim);
+use process qw( trim );
 use mailsender;
 
 
@@ -109,11 +109,21 @@ process::write_file(">", $mail_send,"[\n"); my $mail_send_sep = '';
 my @submetoj = submeto_listo();
 #$log->info(Dumper(@submetoj));
 
-exit unless (@submetoj && $#submetoj > 0 && $submetoj[0]->{id});
+exit unless (@submetoj && $#submetoj >= 0 && $submetoj[0]->{id});
 
 foreach my $subm (@submetoj) {
 
     $log->info($separator);
+
+	$log->debug(join(',',keys %$subm));
+	$log->debug(encode('utf-8',join(',',values %$subm))."\n");
+
+	# eligu iom da informo pri la submeto
+	$log->info(
+		"id:".$subm->{"id"}."\n".
+		"date:",$subm->{"time"}."\n".
+		"desc:",encode('utf-8',$subm->{"desc"})."\n");
+
 
     # preparu por la nova mesagho
     $editor = '';
@@ -124,12 +134,6 @@ foreach my $subm (@submetoj) {
     unless (%subm_detaloj) {
 		next;
     }
-
-	# eligu iom da informo pri la submeto
-	$log->info(
-		"id:".$subm->{"id"}."\n".
-		"date:",$subm->{"time"}."\n".
-		"desc:",$subm->{"desc"}."\n");
 
     # analizu la enhavon de la mesagho
     process_subm($subm,\%subm_detaloj);	
@@ -179,7 +183,7 @@ sub process_subm {
     my $subm = shift;
 	my $detaloj = shift;
 
-	unless ($detaloj->{shangho}) {
+	unless ($subm->{desc}) {
 		$log->warn("Mankas priskribo en: ".$subm->{id}."\n");
 		return;
 	}
@@ -359,7 +363,7 @@ sub cmd_aldon {
 	my $fname = "$xml_dir/".$subm->{fname}.".xml";
 
     # kio estu la nomo de la nova artikolo
-	my $art = trim($subm->{fname}); 
+	my $art = process::trim($subm->{fname}); 
    
     unless ($art =~ /^[a-z0-9_]+$/s) {
 		report($subm, { 
@@ -461,7 +465,7 @@ sub checkin {
 		return;
 	}
 
-    my $ark_id = get_art_id($repo_art_file);
+    my $ark_id = process::get_art_id($repo_art_file);
 
     # eble tro strikta: if ($ark_id ne $id) {
  	if (substr($ark_id,0,-19) ne substr($id,0,-19)) {
@@ -667,22 +671,28 @@ sub submeto_listo {
 sub pluku_submeton {
 	my $id = shift;
 	my ($redaktanto,$cmd,$shangho,$xml);
-	my $result = $ua->get($submeto_url."?id=$id");
+
+	my $url = $submeto_url."?id=$id";
+	$log->info("submeto: ".$url."\n");
+
+	my $result = $ua->get($url);
 
 	if ($result->is_success) {
  		my @lines = split("\n",$result->content);
 
+		$log->debug("first line:".$lines[0]."\n");
 		# prenu redaktanton
 		my ($key,$value) = split(':',shift @lines);
 		if ($key eq 'From') {
-			$redaktanto = trim($value);
+			$redaktanto = process::trim($value);
 		} else {
 			$log->warn("Submeto ne enhavas redaktanton en la unua linio.\n");
 			return 0;
 		}
-		while ($lines[0] =~ m/\s*\n/) {
+		while ($lines[0] =~ m/^\s*$/s) {
 			shift @lines;
 		}
+		$log->debug("next line:".$lines[0]."\n");
 
 		# prenu komandon kaj ŝanĝon
 		#my $line = shift @lines;
@@ -699,7 +709,7 @@ sub pluku_submeton {
 		#}
 
 		# trovu la komencon de XML kaj kunkolektu ties liniojn
-		if ($lines[0] =~ /<?xml/) {
+		if ($lines[0] =~ m/^\s*<\?xml/) {
 			$xml = join("\n",@lines);
 		} else {
 			$log->warn("En la submeto ne troviĝis XML-teksto.\n");
@@ -709,8 +719,6 @@ sub pluku_submeton {
 		# redonu ĉion
 		return (
 			redaktanto => $redaktanto,
-			cmd => $cmd,
-			shangho => $shangho,
 			xml => $xml);
 
 	} else {

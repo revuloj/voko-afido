@@ -12,6 +12,7 @@ my $json_parser = JSON->new->allow_nonref;
 #$json_parser->allow_tags(true);
 
 use Text::CSV;
+use Encode;
 
 my $loglevel = 'debug';
 
@@ -123,6 +124,7 @@ sub csv2arr {
     my @records;
 
     for my $line (@lines) {
+       	$log->debug("CSV line: ".encode('utf-8',$line)."\n");
         chomp($line);
         if ($parser->parse($line)) {
             if ($first_line) {
@@ -132,13 +134,24 @@ sub csv2arr {
                 $first_line = 0;
             } else {
                 # aliaj linioj estas la datumoj
-               	$log->debug("CSV rec:".join(';',$parser->fields())."\n");
-                my %rec; @rec{@cols} = $parser->fields();
-                push @records,(%rec);
+                my @fields = $parser->fields();
+                my %rec; 
+                @rec{@cols} = @fields;
+                #for (my $i=0; $i<=$#fields; $i++) {
+                #    $rec{$cols[$i]} = $fields[$i];
+                #}
+               	#$log->debug("CSV cols:".join(';',@cols)."\n");
+               	#$log->debug("CSV rec:".join(';',$parser->fields())."\n");
+               	$log->debug("CSV keys:".join(',',keys %rec)."\n");
+               	$log->debug("CSV vals:".encode('utf-8',join(',',values %rec))."\n");
+                push @records,\%rec;
             }
+        } else {
+            $log->error("Eraro dum analizado de CSV: [$line]\n".$parser->error_diag ()."\n");
         }
     }
 
+    $log->debug("CSV #recs:".(1+$#records)."\n");
     return @records;
 }
 
