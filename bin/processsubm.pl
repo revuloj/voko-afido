@@ -335,7 +335,7 @@ sub cmd_redakt {
 	$log->debug("redakto: ".$subm->{desc}."\n");
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
-	my $article_id = get_art_id($fname);
+	my $article_id = process::get_art_id($fname);
     my $art = extract_article($detaloj->{xml},$article_id);
 
     unless ($art =~ /^[a-z0-9_]+$/i) {

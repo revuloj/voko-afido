@@ -4,6 +4,8 @@ basedir=/home/afido
 etc=${basedir}/etc
 redj=${etc}/redaktantoj.json 
 
+source setup_env.sh
+
 # nun en setup_env.sh
 #if [[ -z "$REVO_HOST" ]]; then
 #    export REVO_HOST="reta-vortaro.de"
