@@ -13,6 +13,8 @@ my $json_parser = JSON->new->allow_nonref;
 
 use Text::CSV;
 
+my $loglevel = 'debug';
+
 #use File::Tempdir;
 #my $tmpdir = File::Tempdir->new();
 #my $tmp = $tmpdir->name;
@@ -31,7 +33,7 @@ use Log::Dispatch;
 my $log = Log::Dispatch->new(
     outputs => [
         #[ 'File',   min_level => 'debug', filename => 'logfile' ],
-        [ 'Screen', min_level => 'info' ],
+        [ 'Screen', min_level => $loglevel ],
     ],
 );
 
@@ -126,9 +128,11 @@ sub csv2arr {
             if ($first_line) {
                 # unua linio enhavas la kolumno-nomojn
                 @cols = $parser->fields();
+               	$log->debug("CSV cols:".join(';',@cols)."\n");
                 $first_line = 0;
             } else {
                 # aliaj linioj estas la datumoj
+               	$log->debug("CSV rec:".join(';',$parser->fields())."\n");
                 my %rec; @rec{@cols} = $parser->fields();
                 push @records,(%rec);
             }

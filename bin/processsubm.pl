@@ -28,9 +28,16 @@ use mailsender;
 # kiom da informoj
 #$verbose      = 1;
 #$debug        = 1;
+$loglevel = 'debug'; # info...
 
 # baza agordo
-$submeto_url  = 'https://reta-vortaro.de/cgi-bin/admin/submeto.pl';
+if ($ENV{REVO_HOST} eq "araneo") {
+	$submeto_url = "http://araneo/cgi-bin/admin/submeto.pl"
+} elsif ($ENV{REVO_HOST}) {
+	$submeto_url = "https://$ENV{REVO_HOST}/cgi-bin/admin/submeto.pl";
+} else {	
+  	$submeto_url = 'https://reta-vortaro.de/cgi-bin/admin/submeto.pl';
+}
 #$afido_dir    = "/var/afido"; # tmp, log
 $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
 $dict_base    = "$dict_home/dict"; # xml, dok, dtd
@@ -69,7 +76,7 @@ $separator    = "=" x 80 . "\n";
 my $log = Log::Dispatch->new(
     outputs => [
         #[ 'File',   min_level => 'debug', filename => 'logfile' ],
-        [ 'Screen', min_level => 'info' ],
+        [ 'Screen', min_level => $loglevel ],
     ],
 );
 
@@ -100,6 +107,9 @@ $editors=process::read_json_file($editor_file);
 process::write_file(">", $mail_send,"[\n"); my $mail_send_sep = '';
 
 my @submetoj = submeto_listo();
+#$log->info(Dumper(@submetoj));
+
+exit unless (@submetoj && $#submetoj > 0 && $submetoj[0]->{id});
 
 foreach my $subm (@submetoj) {
 
@@ -647,9 +657,9 @@ sub submeto_listo {
 
 	if ($result->is_success) {
 		my $csv = decode('utf8', $result->content);
-		return csv2arr($csv);
+		return process::csv2arr($csv);
 	} else {
-		$log->error("Ne eblis preni liston de submetoj el $submeto_url.\n".$result->status_line);
+		$log->error("Ne eblis preni liston de submetoj el $submeto_url.\n".$result->status_line."\n");
 		return 0;
 	}
 }
@@ -704,7 +714,7 @@ sub pluku_submeton {
 			xml => $xml);
 
 	} else {
-		$log->warn("Ne eblis preni liston de submeton '$id'.\n".$result->status_line);
+		$log->warn("Ne eblis preni submeton '$id'.\n".$result->status_line);
 		return 0;
 	}
 }
@@ -729,7 +739,7 @@ sub submeto_rezulto {
 
  	if (not $res->is_success) {
 		$log->warn("Ne eblis aktualigi la rezulton de la submeto '".$subm->{id}."'\n".$res->status_line);
-		return 0;		
+		return;		
 	}
 }	
 

@@ -10,7 +10,7 @@
 
 use warnings;
 
-use JSON;
+#use JSON;
 use MIME::Entity;
 use Digest::SHA qw(hmac_sha256_hex sha1_hex);
 #use experimental 'smartmatch';
@@ -89,7 +89,7 @@ mkdir($log_dir);
 mkdir($xml_temp);
 mkdir($rez_dir); 
 
-$json_parser = JSON->new->allow_nonref;
+#$json_parser = JSON->new->allow_nonref;
 #$json_parser->allow_tags(true);
 
 # legu redaktantoj el JSON-dosiero kaj transformu al HASH por 

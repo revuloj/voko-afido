@@ -25,7 +25,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     openssh-server ca-certificates openssl rxp git cvs curl unzip patch jq \
     libjson-perl libtext-csv-perl libmime-tools-perl liblog-dispatch-perl \
     libnet-ssleay-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libauthen-sasl-perl \
-    libauthen-sasl-saslprep-perl libnet-smtp-tls-perl\
+    libauthen-sasl-saslprep-perl libnet-smtp-tls-perl \
+    liblwp-protocol-https-perl liblwp-useragent-determined-perl \
   && rm -rf /var/lib/apt/lists/* \
 	&& mkdir -p /var/run/sshd 
 
