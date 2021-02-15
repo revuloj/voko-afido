@@ -135,6 +135,8 @@ foreach my $subm (@submetoj) {
 		next;
     }
 
+	$log->debug("subm_det: ".join(',',keys %subm_detaloj)."; xml: ".length($subm_detaloj{xml})." bitokoj\n");
+
     # analizu la enhavon de la mesagho
     process_subm($subm,\%subm_detaloj);	
 }
@@ -330,9 +332,11 @@ sub send_reports {
 sub cmd_redakt {
     my ($subm,$detaloj) = @_;
 	my $fname = "$xml_dir/".$subm->{fname}.".xml";
+	process::write_file(">",$fname,$detaloj->{xml});
+
     #$shangho = $shangh; # memoru por poste
     #$shangho =~ s/[\200-\377]/?/g; # forigu ne-askiajn signojn
-	$log->debug("redakto: ".$subm->{desc}."\n");
+	$log->debug("redakto: ".encode('utf-8',$subm->{desc})."\n");
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
 	my $article_id = process::get_art_id($fname);
@@ -360,10 +364,11 @@ sub cmd_redakt {
 # nova artikolo
 sub cmd_aldon {
     my ($subm, $detaloj) = @_;
-	my $fname = "$xml_dir/".$subm->{fname}.".xml";
 
     # kio estu la nomo de la nova artikolo
 	my $art = process::trim($subm->{fname}); 
+	my $fname = "$xml_dir/".$subm->{fname}.".xml";
+	process::write_file(">",$fname,$detaloj->{xml});
    
     unless ($art =~ /^[a-z0-9_]+$/s) {
 		report($subm, { 
@@ -382,7 +387,7 @@ sub cmd_aldon {
     $article_id = "\044Id: $art.xml,v\044";
 
     # kontrolu, ĉu la dosiernomo estas ankoraŭ uzebla
-	$xml_file = git_art_path($info, $art);
+	$xml_file = "$git_dir/revo/$art.xml";
     if (-e "$xml_file") {
 		report($subm, {
 			"rezulto"=>"eraro",
@@ -439,7 +444,7 @@ sub checkin {
 	  	});
       	return;
     } 
-    $log->info("ŝanĝoj: ".$subm->{desc}."\n");
+    $log->info("ŝanĝoj: ".encode('utf-8',$subm->{desc})."\n");
 
     # skribu la shanghojn en dosieron
     my $edtr = $editor->{red_nomo};
@@ -448,7 +453,7 @@ sub checkin {
 	process::write_file(">","$tmp/shanghoj.msg","$edtr: $subm->{desc}");
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
-	my $repo_art_file = git_art_path($info,$art);
+	my $repo_art_file = "$git_dir/revo/$art.xml";
 
 	unless (-e $repo_art_file) {
 		report($subm, {
@@ -550,7 +555,7 @@ sub checkin_git {
 }
 
 sub checkinnew {
-    my ($subm,$info,$art,$id,$fname) = @_;
+    my ($subm,$art,$id,$fname) = @_;
 	my $shangho = $subm->{desc};
 
     $shangho = "nova artikolo";
@@ -562,7 +567,7 @@ sub checkinnew {
 
     process::write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
 
-	my $repo_art_file = git_art_path($info,$art);
+	my $repo_art_file = "$git_dir/revo/$art.xml";
 
 	# checkin in Git
     $log->debug("cp $fname $repo_art_file\n");
@@ -623,16 +628,6 @@ sub checkinnew_git {
 	});
 	return 1;
 }
-
-
-sub git_art_path {
-	my ($info,$art) = @_;
-	my @parts = split('/',$info->{celo});
-	my $path = join('/',splice(@parts,1));
-
-	$log->debug("path: $path\n");
-	return "$git_dir/$path/$art.xml";
-}	
 
 sub extract_article {
     my ($subm,$id) = @_;

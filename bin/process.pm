@@ -62,6 +62,7 @@ sub read_file {
 sub write_file {
 	my ($mode, $file, $text) = @_;
 
+    $log->debug("Skribas ".length($text)." bitokojn al: ".$file."\n");
 	unless (open FILE, $mode, $file) {
 		$log->warn("Ne povis malfermi '$file': $!\n"); return;
 	}
