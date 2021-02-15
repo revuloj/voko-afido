@@ -340,7 +340,7 @@ sub cmd_redakt {
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
 	my $article_id = process::get_art_id($fname);
-    my $art = extract_article($detaloj->{xml},$article_id);
+    my $art = extract_article($subm,$article_id);
 
     unless ($art =~ /^[a-z0-9_]+$/i) {
 		report($subm,
@@ -729,10 +729,10 @@ sub submeto_rezulto {
 	if ($detaloj->{rezulto} eq 'konfirmo') {
 		$state = 'arkiv';
 	} else {
-		$state = 'eraro';
+		$state = 'erar';
 	}
     # vd. https://www.perl.com/pub/2002/08/20/perlandlwp.html/
-
+	$log->info("Aktualigo de submeto ".$subm->{id}.", stat: $state [".$detaloj->{mesagho}."]\n");
 	my $res = $ua->post($submeto_url,
 		[
 			id => $subm->{id}, 
@@ -743,6 +743,8 @@ sub submeto_rezulto {
  	if (not $res->is_success) {
 		$log->warn("Ne eblis aktualigi la rezulton de la submeto '".$subm->{id}."'\n".$res->status_line);
 		return;		
+	} else {
+		$log->info("Aktualigo rezulto: ".$res->content)
 	}
 }	
 
