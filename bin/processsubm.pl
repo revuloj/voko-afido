@@ -652,7 +652,7 @@ sub extract_article {
 
 sub submeto_listo {
 	my @records;
-	my $result = $ua->get($submeto_url.'?format=text');
+	my $result = $ua->post($submeto_url,[format=>'text']);
 
 	if ($result->is_success) {
 		my $csv = decode('utf8', $result->content);
@@ -667,10 +667,11 @@ sub pluku_submeton {
 	my $id = shift;
 	my ($redaktanto,$cmd,$shangho,$xml);
 
-	my $url = $submeto_url."?id=$id";
-	$log->info("submeto: ".$url."\n");
+	$log->info("submeto: $id\n");
 
-	my $result = $ua->get($url);
+	my $result = $ua->post($submeto_url,[
+		id=>$id
+	]);
 
 	if ($result->is_success) {
  		my @lines = split("\n",$result->content);
