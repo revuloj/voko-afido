@@ -284,16 +284,16 @@ sub report {
 	$mail_send_sep = ',';
 }
 
-sub rep_str {
-	my $rep = shift;
-	
-	my $msg = 
-		"senddato: $rep->{senddato}\n"
-		."artikolo: $rep->{artikolo}\n"
-		.uc($rep->{rezulto}).": "	
-		.$rep->{mesagho}."\n";	
-	return $msg;
-}
+#sub rep_str {
+#	my $rep = shift;
+#	
+#	my $msg = 
+#		"senddato: $rep->{senddato}\n"
+#		."artikolo: $rep->{artikolo}\n"
+#		.uc($rep->{rezulto}).": "	
+#		.$rep->{mesagho}."\n";	
+#	return $msg;
+#}
 
 sub send_reports {
 	my $mailer = shift;
@@ -330,7 +330,7 @@ sub send_reports {
 
 		$message = "Saluton!\nJen raporto pri via(j) sendita(j) artikolo(j).\n\n";
 		for (@$report) {
-			$message .= $separator. rep_str($_);
+			$message .= $separator.process::rep_str($_);
 		}
 		$message .= $separator."\n\n".$signature;
 		
@@ -410,7 +410,7 @@ sub cmd_redakt {
     }
 
     # kontroli la sintakson kaj arĥivi
-    if (checkxml($gist,$fname,$article_id,0)) {
+    if (check_xml($gist,$fname,$article_id,0)) {
 		return checkin($gist,$info,$art,$article_id,$shangho,$fname);
     }
 	return;
@@ -454,7 +454,7 @@ sub cmd_aldon {
     }
 
     # kontroli la sintakson kaj arĥivi
-    if (checkxml($gist,$fname,$article_id,1)) {
+    if (check_xml($gist,$fname,$article_id,1)) {
 		return checkinnew($gist,$info,$art,$article_id,$shangho,$fname);
     }
 	return;
@@ -480,38 +480,40 @@ sub check_signature_valid {
 	return ($digest eq $info->{sigelo})
 }
 
-sub checkxml {
+sub check_xml {
     my ($gist,$fname,$article_id,$nova) = @_;
 	my $lname = "$xml_temp/".$gist->{id}.".log";
 
-    # aldonu dtd symlink se ankoraŭ mankas
-    #symlink("$dtd_dir","$xml_temp/../dtd") ;
-#	|| warn "Ne povis ligi de $dtd_dir al $xml_temp/../dtd\n";
+	my $err = process::checkxml($gist->{id},$fname,$nova);
 
-	$teksto = process::read_file("$fname");
-    # uniksajn linirompojn!
-    $teksto =~ s/\r\n/\n/sg;
-
-	# ĉe nova artikolo, enŝovu Id, se mankas...
-	if ($nova) { $teksto =~ s/<art[^>]*>/<art mrk="\044Id\044">/s };
-
-    # enmetu Log se ankorau mankas... okazas en checkinnew_git anst.
-    # unless ($teksto =~ /<!--\s+\044Log/s) {
-	# 	$teksto =~ s/(<\/vortaro>)/\n<!--\n\044Log\044\n-->\n$1/s;
-    # }
-
-    # mallongigu Log al 20 linioj
-    $teksto =~ s/(<!--\s+\044Log(?:[^\n]*\n){20})(?:[^\n]*\n)*(-->)/$1$2/s;
-
-    # reskribu la dosieron
-    unless (process::write_file(">",$fname,$teksto)) { return; }
-
-    # kontrolu la sintakson de la XML-teksto
-    `$xmlcheck $fname 2> $lname`;
-
-    # legu la erarojn
-    my $err = process::read_file($lname);
-    # unlink("$lname");
+#    # aldonu dtd symlink se ankoraŭ mankas
+#    #symlink("$dtd_dir","$xml_temp/../dtd") ;
+##	|| warn "Ne povis ligi de $dtd_dir al $xml_temp/../dtd\n";
+#
+#	$teksto = process::read_file("$fname");
+#    # uniksajn linirompojn!
+#    $teksto =~ s/\r\n/\n/sg;
+#
+#	# ĉe nova artikolo, enŝovu Id, se mankas...
+#	if ($nova) { $teksto =~ s/<art[^>]*>/<art mrk="\044Id\044">/s };
+#
+#    # enmetu Log se ankorau mankas... okazas en checkinnew_git anst.
+#    # unless ($teksto =~ /<!--\s+\044Log/s) {
+#	# 	$teksto =~ s/(<\/vortaro>)/\n<!--\n\044Log\044\n-->\n$1/s;
+#    # }
+#
+#    # mallongigu Log al 20 linioj
+#    $teksto =~ s/(<!--\s+\044Log(?:[^\n]*\n){20})(?:[^\n]*\n)*(-->)/$1$2/s;
+#
+#    # reskribu la dosieron
+#    unless (process::write_file(">",$fname,$teksto)) { return; }
+#
+#    # kontrolu la sintakson de la XML-teksto
+#    `$xmlcheck $fname 2> $lname`;
+#
+#    # legu la erarojn
+#    my $err = process::read_file($lname);
+#    # unlink("$lname");
 
     if ($err) {
 		$err .= "\nkunteksto:\n".process::xml_context($err,"$fname");
