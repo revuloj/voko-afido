@@ -83,7 +83,7 @@ my $log = Log::Dispatch->new(
 # preparu UserAgent
 my $ua = LWP::UserAgent->new();
 $ua->agent('Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:36.0) Gecko/20100101 Firefox/36.0');
-$ua->credentials(
+$ua->credentials( # vd https://perlmaven.com/lwp-useragent-and-basic-authentication
     'reta-vortaro.de:443','Restricted Content',
     $ENV{'CGI_USER'} => $ENV{'CGI_PASSWORD'}
 );
@@ -273,7 +273,7 @@ sub send_reports {
 
 		$message = "Saluton!\nJen raporto pri via(j) sendita(j) artikolo(j).\n\n";
 		for (@$report) {
-			$message .= $separator. rep_str($_);
+			$message .= $separator.process::rep_str($_);
 		}
 		$message .= $separator."\n\n".$signature;
 		

@@ -14,7 +14,7 @@ my $json_parser = JSON->new->allow_nonref;
 use Text::CSV;
 use Encode;
 
-my $loglevel = 'debug';
+my $loglevel = 'info';
 
 #use File::Tempdir;
 #my $tmpdir = File::Tempdir->new();
