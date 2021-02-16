@@ -659,7 +659,8 @@ sub submeto_listo {
 		return process::csv2arr($csv);
 	} else {
 		$log->error("Ne eblis preni liston de submetoj el $submeto_url.\n".$result->status_line."\n");
-		return 0;
+		#return 0;
+		exit 1;
 	}
 }
 

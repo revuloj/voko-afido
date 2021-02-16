@@ -5,7 +5,7 @@ set -e
 
 case $1 in
 subm)
-  prenu_redaktantojn.sh && git-clone-repo.sh && processsubm.pl 
+  source setup_env.sh && prenu_redaktantojn.sh && git-clone-repo.sh && processsubm.pl 
   ;;
 *)
   prenu_redaktantojn.sh && git-clone-repo.sh && prenu_gistojn.sh && processgist.pl \
