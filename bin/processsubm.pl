@@ -84,7 +84,7 @@ my $log = Log::Dispatch->new(
 my $ua = LWP::UserAgent->new();
 $ua->agent('Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:36.0) Gecko/20100101 Firefox/36.0');
 $ua->credentials(
-    'reta-vortaro.de:443','realm',
+    'reta-vortaro.de:443','Restricted Content',
     $ENV{'CGI_USER'} => $ENV{'CGI_PASSWORD'}
 );
 
