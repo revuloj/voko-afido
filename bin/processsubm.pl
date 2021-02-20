@@ -671,7 +671,8 @@ sub pluku_submeton {
 	$log->info("submeto: $id\n");
 
 	my $result = $ua->post($submeto_url,[
-		id=>$id
+		id=>$id, 
+		state=>'trakt'
 	]);
 
 	if ($result->is_success) {
