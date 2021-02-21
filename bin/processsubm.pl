@@ -412,7 +412,7 @@ sub check_xml {
 	my $err = process::checkxml($subm->{id},$fname,$nova);
 
 	if ($err) {
-		$err .= "\nkunteksto:\n".xml_context($err,"$fname");
+		$err .= "\nkunteksto:\n".process::xml_context($err,"$fname");
 		$log->info("XML-eraroj:\n$err");
 
 		report($subm, {
