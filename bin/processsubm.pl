@@ -109,6 +109,7 @@ process::write_file(">", $mail_send,"[\n"); my $mail_send_sep = '';
 my @submetoj = submeto_listo();
 #$log->info(Dumper(@submetoj));
 
+$log->info("Trovitaj novaj submetoj: ".($#submetoj+1)."\n");
 exit unless (@submetoj && $#submetoj >= 0 && $submetoj[0]->{id});
 
 foreach my $subm (@submetoj) {
