@@ -42,8 +42,9 @@ if ($ENV{REVO_HOST} eq "araneo") {
 $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
 $dict_base    = "$dict_home/dict"; # xml, dok, dtd
 $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
-$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
-$revo_url     = "http://purl.oclc.org/NET/voko/revo";
+#$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
+$xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo/';
+$revo_url     = 'http://purl.oclc.org/NET/voko/revo';
 #$mail_folder  = "/var/spool/mail/tomocero";
 
 $revoservo    = '[Revo-Servo]';
@@ -150,8 +151,9 @@ my ($lg,$err) = process::git_cmd("$git push origin master");
 
 if ($err =~ m/fatal/ || $err =~ m/error/) {
 	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
-	# kun eraro-stato, tio devus ankaŭ eviti la postan aldonon de konfirmoj/eraroj al
-	# gistoj kaj permesi refari la tutan procedon...
+	# kun eraro-stato
+	# PLIBONIGU: tiuokaze ni fakte ankaŭ devus remeti la staton de submetoj al 'nov'!
+	# por ebligi retrakton venonantan fojon...
 	exit 1;
 }
 
@@ -482,7 +484,7 @@ sub checkin {
 	       		 		."ne baziĝas sur la aktuala arkiva versio\n"
 	       				."($ark_id)\n"
 	       				."Bonvolu preni aktualan version el la TTT-ejo. "
-	       				."($vokomail_url?art=$art)",
+	       				."($xml_source_url/$art.xml)",
 			"shangho" => $shangho,
 			"dosiero" => $fname,
 			"artikolo" => $id
