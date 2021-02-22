@@ -152,7 +152,7 @@ my ($lg,$err) = process::git_cmd("$git push origin master");
 if ($err =~ m/fatal/ || $err =~ m/error/) {
 	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
 	# kun eraro-stato
-	# PLIBONIGU: tiuokaze ni fakte ankaŭ devus remeti la staton de submetoj al 'nov'!
+	# PLIBONIGU: tiuokaze ni fakte ankaŭ devus remeti la staton de submetoj de 'trakt' al 'nov'!
 	# por ebligi retrakton venonantan fojon...
 	exit 1;
 }
@@ -232,9 +232,10 @@ sub report {
     
     $log->info($detaloj->{mesagho}."\n");
 
+	$detaloj->{subm_id} = $subm->{id}:
     $detaloj->{senddato} = $subm->{time};
 	#write_json_file(">","$rez_dir/$subm->{id}", $detaloj);
-	submeto_rezulto($subm,$detaloj);
+	#submeto_rezulto($subm->{id},$detaloj);
 
 	$detaloj->{sendinto} = $editor->{red_nomo}." <".$editor->{retadr}[0].">";
 	process::write_json_file(">>",$mail_send, $detaloj, $mail_send_sep);
@@ -254,6 +255,10 @@ sub send_reports {
 	my $reps = process::read_json_file($mail_send);
 	for my $rep (@$reps) {
 		
+		# aktualigu submeton
+		submeto_rezulto($rep->{subm_id},$rep);
+
+		# alordigu raporton al la sendinto de la redakto
 		if ($rep->{sendinto}) {
 			$mail_addr = $rep->{sendinto};
 			
@@ -729,7 +734,7 @@ sub pluku_submeton {
 }
 
 sub submeto_rezulto {
-	my ($subm,$detaloj) = @_;
+	my ($subm_id,$detaloj) = @_;
 	my $state;
 
 	if ($detaloj->{rezulto} eq 'konfirmo') {
@@ -738,7 +743,7 @@ sub submeto_rezulto {
 		$state = 'erar';
 	}
     # vd. https://www.perl.com/pub/2002/08/20/perlandlwp.html/
-	$log->info("Aktualigo de submeto ".$subm->{id}.", stat: $state [".$detaloj->{mesagho}."]\n");
+	$log->info("Aktualigo de submeto ".$subm_id.", stat: $state [".$detaloj->{mesagho}."]\n");
 	my $res = $ua->post($submeto_url,
 		[
 			id => $subm->{id}, 
@@ -747,7 +752,7 @@ sub submeto_rezulto {
 		]);
 
  	if (not $res->is_success) {
-		$log->warn("Ne eblis aktualigi la rezulton de la submeto '".$subm->{id}."'\n".$res->status_line);
+		$log->warn("Ne eblis aktualigi la rezulton de la submeto '".$subm_id."'\n".$res->status_line);
 		return;		
 	} else {
 		$log->info("Aktualigo rezulto: ".$res->content)
