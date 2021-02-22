@@ -232,7 +232,7 @@ sub report {
     
     $log->info($detaloj->{mesagho}."\n");
 
-	$detaloj->{subm_id} = $subm->{id}:
+	$detaloj->{subm_id} = $subm->{id};
     $detaloj->{senddato} = $subm->{time};
 	#write_json_file(">","$rez_dir/$subm->{id}", $detaloj);
 	#submeto_rezulto($subm->{id},$detaloj);
@@ -746,7 +746,7 @@ sub submeto_rezulto {
 	$log->info("Aktualigo de submeto ".$subm_id.", stat: $state [".$detaloj->{mesagho}."]\n");
 	my $res = $ua->post($submeto_url,
 		[
-			id => $subm->{id}, 
+			id => $subm_id, 
 			state => $state,
 			result => $detaloj->{mesagho}
 		]);
