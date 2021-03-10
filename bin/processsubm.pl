@@ -43,7 +43,7 @@ $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
 $dict_base    = "$dict_home/dict"; # xml, dok, dtd
 $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
 #$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
-$xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo/';
+$xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo';
 $revo_url     = 'http://purl.oclc.org/NET/voko/revo';
 #$mail_folder  = "/var/spool/mail/tomocero";
 
