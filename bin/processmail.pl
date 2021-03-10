@@ -8,6 +8,9 @@
 # voku:
 #  processmail.pl [<mesagh-dosiero>]
 
+use lib("/usr/local/bin");
+use lib("./bin");
+use process qw (trim);
 
 use MIME::Parser;
 use MIME::Entity;
@@ -20,18 +23,20 @@ $debug        = 1;
 
 # FARENDA: legu tiujn el /docker swarm config/
 # baza agordo
-$afido_dir    = "/var/afido"; # tmp, log
+$afido_dir    = $ENV{"HOME"}; #"/var/afido"; # tmp, log
 $dict_home    = $ENV{"HOME"};
 $dict_base    = "$dict_home/dict"; # xml, dok, dtd
-$dict_etc     = "/run/secrets"; # redaktantoj
-$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
+$dict_etc     = "$ENV{"HOME"}/etc"; #"/run/secrets"; # redaktantoj
+#$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
+$xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo';
+
 $revo_url     = "http://purl.oclc.org/NET/voko/revo";
-$mail_folder  = "/var/spool/mail/tomocero";
+$mail_folder  = "/var/spool/mail/revo"; #/var/spool/mail/tomocero";
 
 # FARENDA: legu tiujn el sekreto(j)
 $revoservo    = '[Revo-Servo]';
 $revo_mailaddr= 'revo@reta-vortaro.de';
-$redaktilo_from= 'revo@steloj.de';
+$redaktilo_from= 'redaktilo@reta-vortaro.de';
 ##$revolist     = 'wolfram';
 $revo_from    = "Reta Vortaro <$revo_mailaddr>";
 $signature    = "--\nRevo-Servo $revo_mailaddr\n"
@@ -39,13 +44,13 @@ $signature    = "--\nRevo-Servo $revo_mailaddr\n"
 
 
 # programoj
-$xmlcheck     = '/usr/bin/rxp -V -s';
-$cvs          = '/usr/bin/cvs';
+#$xmlcheck     = '/usr/bin/rxp -V -s';
+#$cvs          = '/usr/bin/cvs';
 $git          = '/usr/bin/git';
 # -t ne subtenata de ssmtp
 #$sendmail     = '/usr/lib/sendmail -t -i';
 $sendmail     = '/usr/lib/sendmail -i';
-$patch        = '/usr/bin/patch';
+#$patch        = '/usr/bin/patch';
 
 # dosierujoj
 $tmp          = "$afido_dir/tmp";
@@ -87,7 +92,16 @@ $shangho    = '';
 $komando    = '';
 $file_no    = 0;
 ##@newarts    = ();
-git_pull();
+#git_pull();
+my ($lg,$err) = process::git_cmd("$git pull");
+if ($err =~ m/fatal/ || $err =~ m/error/) {
+	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
+	# kun eraro-stato, tio devus ankaŭ eviti la postan aldonon de konfirmoj/eraroj al
+	# gistoj kaj permesi refari la tutan procedon...
+	exit 1;
+}
+
+
 if ($ARGV[0]) {
     $mail_file = shift @ARGV;
 } else {
@@ -153,7 +167,13 @@ close MAIL;
 # sendu raportojn
 send_reports();
 ##send_newarts_report();
-git_push();
+my ($lg,$err) = process::git_cmd("$git push origin master");
+if ($err =~ m/fatal/ || $err =~ m/error/) {
+	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
+	# kun eraro-stato, tio devus ankaŭ eviti la postan aldonon de konfirmoj/eraroj al
+	# gistoj kaj permesi refari la tutan procedon...
+	exit 1;
+}
 
 $filename = `date +%Y%m%d_%H%M%S`;    
 
@@ -765,51 +785,54 @@ sub cmd_redakt {
 		return;
     }
 
-    if (checkxml($teksto)) {
+    if (check_xml($teksto,0)) {
 		checkin($art,$id);
     }
 }
 
-sub checkxml {
-    my $teksto = shift;
-    my $err;
+sub check_xml {
+    my ($teksto,$nova) = @_;
+    #my $err;
+	my $fname = "$xml_temp/xml.xml";
 
     # aldonu dtd symlink se ankoraŭ mankas
     symlink("$dtd_dir","$xml_temp/../dtd") ;
 #	|| warn "Ne povis ligi de $dtd_dir al $xml_temp/../dtd\n";
 
-    # enmetu Log se ankorau mankas...
-    unless ($teksto =~ /<!--\s+\044Log/s) {
-		$teksto =~ s/(<\/vortaro>)/\n<!--\n\044Log\044\n-->\n$1/s;
-    }
+	my $err = process::checkxml('xml',$fname,$nova);
 
-    # mallongigu Log al 20 linioj
-    $teksto =~ s/(<!--\s+\044Log(?:[^\n]*\n){20})(?:[^\n]*\n)*(-->)/$1$2/s;
-
-    # skribu la dosieron provizore al tmp
-    unless (open XML,">$xml_temp/xml.xml") {
-		warn "Ne povis malfermi $xml_temp/xml.xml: $!\n";
-		return;
-    }
-
-    print XML $teksto;
-    close XML;
-
-    # kontrolu la sintakson de la XML-teksto
-    `$xmlcheck $xml_temp/xml.xml 2> $xml_temp/xml.err`;
+#    # enmetu Log se ankorau mankas...
+#    unless ($teksto =~ /<!--\s+\044Log/s) {
+#		$teksto =~ s/(<\/vortaro>)/\n<!--\n\044Log\044\n-->\n$1/s;
+#    }
+#
+#    # mallongigu Log al 20 linioj
+#    $teksto =~ s/(<!--\s+\044Log(?:[^\n]*\n){20})(?:[^\n]*\n)*(-->)/$1$2/s;
+#
+#    # skribu la dosieron provizore al tmp
+#    unless (open XML,">$xml_temp/xml.xml") {
+#		warn "Ne povis malfermi $xml_temp/xml.xml: $!\n";
+#		return;
+#    }
+#
+#    print XML $teksto;
+#    close XML;
+#
+#    # kontrolu la sintakson de la XML-teksto
+#    `$xmlcheck $xml_temp/xml.xml 2> $xml_temp/xml.err`;
 
     # legu la erarojn
-    open ERR,"$xml_temp/xml.err";
-    $err=join('',<ERR>);
-    close ERR;
-    unlink("$xml_temp/xml.err");
+    #open ERR,"$xml_temp/xml.err";
+    #$err=join('',<ERR>);
+    #close ERR;
+    #unlink("$xml_temp/xml.err");
 
     if ($err) {
-		$err .= "\nkunteksto:\n".xml_context($err,"$xml_temp/xml.xml");
+		$err .= "\nkunteksto:\n".process::xml_context($err,$fname);
 		print "XML-eraroj:\n$err" if ($verbose);
 
 		report("ERARO   : La XML-dosiero enhavas la sekvajn "
-			."sintakserarojn:\n$err","$xml_temp/xml.xml");
+			."sintakserarojn:\n$err",$fname);
 		return;
     } else {
 		print "XML: en ordo\n" if ($debug);
@@ -872,7 +895,7 @@ sub checkin {
 	       ."ne bazighas sur la aktuala arkiva versio\n"
 	       ."($ark_id)\n"
 	       ."Bonvolu preni aktualan version el la TTT-ejo. "
-	       ."($vokomail_url?art=$art)\n","$xml_temp/xml.xml");
+	       ."($xml_source_url/$art)\n","$xml_temp/xml.xml");
 	return;
     }
 
@@ -892,67 +915,72 @@ sub checkin {
 	unlink("$tmp/shanghoj.msg");
 }
 
-sub checkin_csv {
-	my $xmlfile = shift;
-    `$cvs ci -F $tmp/shanghoj.msg $xmlfile 1> $tmp/ci.log 2> $tmp/ci.err`;
-
-    # chu checkin sukcesis?
-    open LOG,"$tmp/ci.log";
-    $log = join('',<LOG>);
-    print "ci-log:\n$log\n" if ($debug);
-    close LOG;
-
-    # se finighas "done" - chio en ordo, 
-    # se finighas "aborting" - fiasko
-    # se neniu eligajho, la dosiero ne estas shanghita
-    
-    open ERR,"$tmp/ci.err";
-    $err = join('',<ERR>);
-    print "ci-err:\n$err\n" if ($debug);
-    close ERR;
-
-    # forigu provizorajn dosierojn
-    unlink("$tmp/ci.log");
-    unlink("$tmp/ci.err");
-
-    # raportu erarojn
-    if ($log =~ /^\s*$/s) {
-		report("ERARO   : La sendita artikolo shajne ne diferencas de "
-			."la aktuala versio.");
-		return;
-    } elsif (($log =~ /aborting\s*$/s) 
-	     or ($err !~ /^\s*$/s)) {
-		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
-			."$log\n$err","$tmp/xml.xml");
-		return;
-    }
-
-    # raportu sukceson 
-    report("KONFIRMO: $log");
-	return 1;
-}
+#sub checkin_csv {
+#	my $xmlfile = shift;
+#    `$cvs ci -F $tmp/shanghoj.msg $xmlfile 1> $tmp/ci.log 2> $tmp/ci.err`;
+#
+#    # chu checkin sukcesis?
+#    open LOG,"$tmp/ci.log";
+#    $log = join('',<LOG>);
+#    print "ci-log:\n$log\n" if ($debug);
+#    close LOG;
+#
+#    # se finighas "done" - chio en ordo, 
+#    # se finighas "aborting" - fiasko
+#    # se neniu eligajho, la dosiero ne estas shanghita
+#    
+#    open ERR,"$tmp/ci.err";
+#    $err = join('',<ERR>);
+#    print "ci-err:\n$err\n" if ($debug);
+#    close ERR;
+#
+#    # forigu provizorajn dosierojn
+#    unlink("$tmp/ci.log");
+#    unlink("$tmp/ci.err");
+#
+#    # raportu erarojn
+#    if ($log =~ /^\s*$/s) {
+#		report("ERARO   : La sendita artikolo shajne ne diferencas de "
+#			."la aktuala versio.");
+#		return;
+#    } elsif (($log =~ /aborting\s*$/s) 
+#	     or ($err !~ /^\s*$/s)) {
+#		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
+#			."$log\n$err","$tmp/xml.xml");
+#		return;
+#    }
+#
+#    # raportu sukceson 
+#    report("KONFIRMO: $log");
+#	return 1;
+#}
 
 sub checkin_git {
 	my ($xmlfile,$edtr) = @_;
 
-	incr_ver("$git_dir/$xmlfile");
+	#incr_ver("$git_dir/$xmlfile");
+	process::incr_ver($xmlfile);
 
-	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
-	`$git commit -F $tmp/shanghoj.msg $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+	my ($log1,$err1) = process::git_cmd("$git add $xmlfile");
+	my ($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
 
-	# chu 'commit' sukcesis?
-    open LOG,"$tmp/git.log";
-    $log = join('',<LOG>);
-    print "git-log:\n$log\n" if ($debug);
-    close LOG;
 
-    open ERR,"$tmp/git.err";
-    $err = join('',<ERR>);
-    print "git-err:\n$err\n" if ($debug);
-	close ERR;
-  
-    unlink("$tmp/git.log");
-	unlink("$tmp/git.err");
+#	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+#	`$git commit -F $tmp/shanghoj.msg $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+#
+#	# chu 'commit' sukcesis?
+#    open LOG,"$tmp/git.log";
+#    $log = join('',<LOG>);
+#    print "git-log:\n$log\n" if ($debug);
+#    close LOG;
+#
+#    open ERR,"$tmp/git.err";
+#    $err = join('',<ERR>);
+#    print "git-err:\n$err\n" if ($debug);
+#	close ERR;
+#  
+#    unlink("$tmp/git.log");
+#	unlink("$tmp/git.err");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco
@@ -970,14 +998,14 @@ sub checkin_git {
     # se log enhavas 'nothing to commit', la dosiero ne estas shanghita   
 
     # raportu erarojn
-    if ($log =~ /nothing\sto\scommit/s) {
+    if ($log2 =~ /nothing\sto\scommit/s) {
 # ni ne bezonas dum ni arĥivas unue en CVS:		
 #		report("ERARO   : La sendita artikolo shajne ne diferencas de "
 #			."la aktuala versio.");
 		return;
-    } elsif ($err !~ /^\s*$/s) {
+    } elsif ($err2 !~ /^\s*$/s) {
 		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
-			."$log\n$err","$tmp/xml.xml");
+			."$log1\n$log2\n$err1\n$err2\n","$tmp/xml.xml");
 		return;
     }
 
@@ -987,104 +1015,105 @@ sub checkin_git {
 	return 1;
 }
 
-sub incr_ver {
-	my $artfile = shift;
+#sub incr_ver {
+#	my $artfile = shift;
+#
+#	# $Id: test.xml,v 1.51 2019/12/01 16:57:36 afido Exp $
+#    open ART,"$artfile";
+#    my $art = join('',<ART>);
+#    close ART;
+#
+#	$art =~ m/\$Id:\s+([^\.]+)\.xml,v\s+(\d)\.(\d+)\s+(?:\d\d\d\d\/\d\d\/\d\d\s+\d\d:\d\d:\d\d)(.*?)\$/s;	
+#	my $ver = id_incr($2,$3);
+#	my $id = '$Id: '.$1.'.xml,v '.$ver.$4.'$';
+#	$art =~ s/\$Id:[^\$]+\$/$id/;
+#	$art =~ s/\$Log[^\$]*\$(.*?)-->/log_incr($1,$ver)/se;
+#
+#	open ART,">$artfile";
+#	print ART $art;
+#	close ART;
+#}
+#
+#sub id_incr {
+#	my ($major,$minor) = @_;
+#	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
+#	my $now = sprintf("%04d/%02d/%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec);
+#	return "$major.". ( ++$minor )." $now";
+#}
 
-	# $Id: test.xml,v 1.51 2019/12/01 16:57:36 afido Exp $
-    open ART,"$artfile";
-    my $art = join('',<ART>);
-    close ART;
+#sub log_incr {
+#	my ($log,$ver) = @_;
+#
+#	# mallongigu je maks. 10 linioj
+#	my @lines = split(/\n/,$log);
+#	$log = join("\n",splice(@lines,0,20));
+#
+#	open SHG, "$tmp/shanghoj.msg";
+#	my $shg = join('',<SHG>);
+#	close SHG;
+#
+#	return "\$Log\$\nversio $ver\n".$shg."\n$log\n-->";
+#}
 
-	$art =~ m/\$Id:\s+([^\.]+)\.xml,v\s+(\d)\.(\d+)\s+(?:\d\d\d\d\/\d\d\/\d\d\s+\d\d:\d\d:\d\d)(.*?)\$/s;	
-	my $ver = id_incr($2,$3);
-	my $id = '$Id: '.$1.'.xml,v '.$ver.$4.'$';
-	$art =~ s/\$Id:[^\$]+\$/$id/;
-	$art =~ s/\$Log[^\$]*\$(.*?)-->/log_incr($1,$ver)/se;
+#sub git_pull {
+#	chdir($git_dir);
+#	`$git pull origin master 1> $tmp/git.log 2> $tmp/git.err`;
+#
+#	# chu 'pull' sukcesis?
+#	open LOG,"$tmp/git.log";
+#	$log = join('',<LOG>);
+#	print "git-log:\n$log\n" if ($debug);
+#	close LOG;
+#
+#	open ERR,"$tmp/git.err";
+#	$err = join('',<ERR>);
+#	warn "git-err:\n$err\n" if ($err);
+#	close ERR;
+#
+#	unlink("$tmp/git.log");
+#	unlink("$tmp/git.err");
+#}
+#
+#sub git_push {
+#	chdir($git_dir);
+#	`$git push origin master 1> $tmp/git.log 2> $tmp/git.err`;
+#
+#	# chu 'push' sukcesis?
+#    open LOG,"$tmp/git.log";
+#    $log = join('',<LOG>);
+#    print "git-log:\n$log\n" if ($debug);
+#    close LOG;
+#
+#    open ERR,"$tmp/git.err";
+#	$err = join('',<ERR>);
+#	warn "git-err:\n$err\n" if ($err);
+#	close ERR;
+#  
+#    unlink("$tmp/git.log");
+#	unlink("$tmp/git.err");
+#}
 
-	open ART,">$artfile";
-	print ART $art;
-	close ART;
-}
-
-sub id_incr {
-	my ($major,$minor) = @_;
-	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
-	my $now = sprintf("%04d/%02d/%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec);
-	return "$major.". ( ++$minor )." $now";
-}
-
-sub log_incr {
-	my ($log,$ver) = @_;
-
-	# mallongigu je maks. 10 linioj
-	my @lines = split(/\n/,$log);
-	$log = join("\n",splice(@lines,0,20));
-
-	open SHG, "$tmp/shanghoj.msg";
-	my $shg = join('',<SHG>);
-	close SHG;
-
-	return "\$Log\$\nversio $ver\n".$shg."\n$log\n-->";
-}
-
-sub git_pull {
-	chdir($git_dir);
-	`$git pull origin master 1> $tmp/git.log 2> $tmp/git.err`;
-
-	# chu 'pull' sukcesis?
-	open LOG,"$tmp/git.log";
-	$log = join('',<LOG>);
-	print "git-log:\n$log\n" if ($debug);
-	close LOG;
-
-	open ERR,"$tmp/git.err";
-	$err = join('',<ERR>);
-	warn "git-err:\n$err\n" if ($err);
-	close ERR;
-
-	unlink("$tmp/git.log");
-	unlink("$tmp/git.err");
-}
-sub git_push {
-	chdir($git_dir);
-	`$git push origin master 1> $tmp/git.log 2> $tmp/git.err`;
-
-	# chu 'push' sukcesis?
-    open LOG,"$tmp/git.log";
-    $log = join('',<LOG>);
-    print "git-log:\n$log\n" if ($debug);
-    close LOG;
-
-    open ERR,"$tmp/git.err";
-	$err = join('',<ERR>);
-	warn "git-err:\n$err\n" if ($err);
-	close ERR;
-  
-    unlink("$tmp/git.log");
-	unlink("$tmp/git.err");
-}
-
-sub merge_revisions {
-    my ($base_id,$arch_id) = @_;
-    my $art = extract_article($base_id); 
-    my $base_ver = extract_version($base_id);
-    my $arch_ver = extract_version($arch_id);
-
-    `cp $tmp/xml.xml $tmp/patch.xml`;
-    unlink("$tmp/patch.xml.rej"); # kaze, ke ekzistas ankorau pro eraro
-    `$cvs diff -u -r $base_ver -r $arch_ver $art | $patch -s $tmp/patch.xml`;
-    
-    # chu sukcesis?
-    unless (-e "$tmp/patch.xml.rej") {
-	unlink("$tmp/xml.xml");
-	rename("$tmp/patch.xml","$tmp/xml.xml");
-	return 1;
-    } else {
-	unlink("$tmp/patch.xml.rej");
-	unlink("$tmp/patch.xml");
-	return;
-    }
-}
+#sub merge_revisions {
+#    my ($base_id,$arch_id) = @_;
+#    my $art = extract_article($base_id); 
+#    my $base_ver = extract_version($base_id);
+#    my $arch_ver = extract_version($arch_id);
+#
+#    `cp $tmp/xml.xml $tmp/patch.xml`;
+#    unlink("$tmp/patch.xml.rej"); # kaze, ke ekzistas ankorau pro eraro
+#    `$cvs diff -u -r $base_ver -r $arch_ver $art | $patch -s $tmp/patch.xml`;
+#    
+#    # chu sukcesis?
+#    unless (-e "$tmp/patch.xml.rej") {
+#	unlink("$tmp/xml.xml");
+#	rename("$tmp/patch.xml","$tmp/xml.xml");
+#	return 1;
+#    } else {
+#	unlink("$tmp/patch.xml.rej");
+#	unlink("$tmp/patch.xml");
+#	return;
+#    }
+#}
 
 sub cmd_aldon {
     my ($art,$teksto) = @_;
@@ -1119,7 +1148,7 @@ sub cmd_aldon {
     }
 
     # kontroli la sintakson
-    if (checkxml($teksto)) {
+    if (check_xml($teksto,1)) {
 		checkinnew($art);
     }
 }
@@ -1141,10 +1170,10 @@ sub checkinnew {
 
     # checkin CSV
     my $xmlfile="$art.xml";
-	`cp $xml_temp/xml.xml $xml_dir/$xmlfile`;
+	#`cp $xml_temp/xml.xml $xml_dir/$xmlfile`;
 	
-	chdir($xml_dir);
-	checkinnew_csv($xmlfile,$art);
+	#chdir($xml_dir);
+	#checkinnew_csv($xmlfile,$art);
 
 	# checkin in Git
     `mv $xml_temp/xml.xml $git_dir/$xmlfile`;
@@ -1155,76 +1184,82 @@ sub checkinnew {
 	unlink("$tmp/shanghoj.msg");
 }
 
-sub checkinnew_csv {
-	my $xmlfile = shift;
-	my $art = shift;
-
-	`$cvs add $xmlfile 1> $tmp/ci.log 2> $tmp/ci.err`;
-    `$cvs ci -F $tmp/shanghoj.msg $xmlfile 1>> $tmp/ci.log 2>> $tmp/ci.err`;
-
-    # chu checkin sukcesis?
-    open LOG,"$tmp/ci.log";
-    $log = join('',<LOG>);
-    print "ci-log:\n$log\n" if ($debug);
-    close LOG;
-
-    # se finighas "done" - chio en ordo, 
-    # se finighas "aborting" - fiasko
-    # se neniu eligajho, la dosiero ne estas shanghita
-    
-    open ERR,"$tmp/ci.err";
-    $err = join('',<ERR>);
-    print "ci-err:\n$err\n" if ($debug);
-    close ERR;
-
-    # forigu provizorajn dosierojn
-    unlink("$tmp/ci.log");
-    unlink("$tmp/ci.err");
-
-    # ignoru kelkajn mesaghojn, eligitaj de cvs add kiel "eraro"
-    $err =~ s/\Acvs add: use.*?\Z//sg;
-    $err =~ s/\Acvs add: scheduling.*?\Z//sg;
-    $err =~ s/\Acvs add: re-adding.*?\Z//sig;
-
-    # raportu erarojn
-    if ($log =~ /^\s*$/s) {
-	report("ERARO   : La sendita artikolo shajne ne arkivighis.",
-	       "$tmp/xml.xml");
-	return;
-    } elsif (($log =~ /aborting\s*$/s) 
-	     or ($err !~ /^\s*$/s)) {
-	report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
-	      ."$log\n$err","$tmp/xml.xml");
-	return;
-    }
-
-    # raportu sukceson
-    ##push @newarts, ("$edtr: $art ( $revo_url/art/$art.html )");
-    report("KONFIRMO: $log");
-}
+#sub checkinnew_csv {
+#	my $xmlfile = shift;
+#	my $art = shift;
+#
+#	`$cvs add $xmlfile 1> $tmp/ci.log 2> $tmp/ci.err`;
+#    `$cvs ci -F $tmp/shanghoj.msg $xmlfile 1>> $tmp/ci.log 2>> $tmp/ci.err`;
+#
+#    # chu checkin sukcesis?
+#    open LOG,"$tmp/ci.log";
+#    $log = join('',<LOG>);
+#    print "ci-log:\n$log\n" if ($debug);
+#    close LOG;
+#
+#    # se finighas "done" - chio en ordo, 
+#    # se finighas "aborting" - fiasko
+#    # se neniu eligajho, la dosiero ne estas shanghita
+#    
+#    open ERR,"$tmp/ci.err";
+#    $err = join('',<ERR>);
+#    print "ci-err:\n$err\n" if ($debug);
+#    close ERR;
+#
+#    # forigu provizorajn dosierojn
+#    unlink("$tmp/ci.log");
+#    unlink("$tmp/ci.err");
+#
+#    # ignoru kelkajn mesaghojn, eligitaj de cvs add kiel "eraro"
+#    $err =~ s/\Acvs add: use.*?\Z//sg;
+#    $err =~ s/\Acvs add: scheduling.*?\Z//sg;
+#    $err =~ s/\Acvs add: re-adding.*?\Z//sig;
+#
+#    # raportu erarojn
+#    if ($log =~ /^\s*$/s) {
+#	report("ERARO   : La sendita artikolo shajne ne arkivighis.",
+#	       "$tmp/xml.xml");
+#	return;
+#    } elsif (($log =~ /aborting\s*$/s) 
+#	     or ($err !~ /^\s*$/s)) {
+#	report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
+#	      ."$log\n$err","$tmp/xml.xml");
+#	return;
+#    }
+#
+#    # raportu sukceson
+#    ##push @newarts, ("$edtr: $art ( $revo_url/art/$art.html )");
+#    report("KONFIRMO: $log");
+#}
 
 sub checkinnew_git {
 	my ($xmlfile,$edtr) = @_;
 
-	init_ver("$git_dir/$xmlfile");
+	process::init_ver("$xmlfile","$tmp/shanghoj.msg");
 
-	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
-	`$git add $xmlfile`;
-	`$git commit -F $tmp/shanghoj.msg $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+	($log1,$err1) = process::git_cmd("$git add $xmlfile");
+	($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
 
-	# chu 'commit' sukcesis?
-    open LOG,"$tmp/git.log";
-    $log = join('',<LOG>);
-    print "git-log:\n$log\n" if ($debug);
-    close LOG;
 
-    open ERR,"$tmp/git.err";
-    $err = join('',<ERR>);
-    print "git-err:\n$err\n" if ($debug);
-	close ERR;
-  
-    unlink("$tmp/git.log");
-	unlink("$tmp/git.err");
+#	init_ver("$git_dir/$xmlfile");
+#
+#	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+#	`$git add $xmlfile`;
+#	`$git commit -F $tmp/shanghoj.msg $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+#
+#	# chu 'commit' sukcesis?
+#    open LOG,"$tmp/git.log";
+#    $log = join('',<LOG>);
+#    print "git-log:\n$log\n" if ($debug);
+#    close LOG;
+#
+#    open ERR,"$tmp/git.err";
+#    $err = join('',<ERR>);
+#    print "git-err:\n$err\n" if ($debug);
+#	close ERR;
+#  
+#    unlink("$tmp/git.log");
+#	unlink("$tmp/git.err");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco
@@ -1242,14 +1277,14 @@ sub checkinnew_git {
     # se log enhavas 'nothing to commit', la dosiero ne estas shanghita   
 
     # raportu erarojn
-    if ($log =~ /nothing\sto\scommit/s) {
+    if ($log2 =~ /nothing\sto\scommit/s) {
 # ni ne bezonas dum ni arĥivas unue en CVS:		
 #		report("ERARO   : La sendita artikolo shajne ne diferencas de "
 #			."la aktuala versio.");
 		return;
-    } elsif ($err !~ /^\s*$/s) {
+    } elsif ($err2 !~ /^\s*$/s) {
 		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
-			."$log\n$err","$tmp/xml.xml");
+			."$log1\n$log2\n$err1\n$err2\n","$tmp/xml.xml");
 		return;
     }
 
@@ -1259,31 +1294,31 @@ sub checkinnew_git {
 	return 1;
 }
 
-sub init_ver {
-	my $artfile = shift;
-
-	# $Id: test.xml,v 1.1 2019/12/01 16:57:36 afido Exp $
-    open ART,"$artfile";
-    my $art = join('',<ART>);
-    close ART;
-
-	open SHG, "$tmp/shanghoj.msg";
-	my $shg = join('',<SHG>);
-	close SHG;
-
-	$artfile =~ m|/([^/]+\.xml)|;
-	my $fn = $1;
-	my $ver = id_incr("1","0");
-	my $id = '$Id: '.$fn.',v '.$ver.' afido Exp $';
-	my $log = "\n<!--\n\$Log: $fn,v \$\nversio $ver\n$shg\n-->\n";
-
-	$art =~ s/\$Id[^\$]*\$/$id/;
-	$art =~ s/<\/vortaro>/$log<\/vortaro>/s;
-
-	open ART,">$artfile";
-	print ART $art;
-	close ART;
-}
+#sub init_ver {
+#	my $artfile = shift;
+#
+#	# $Id: test.xml,v 1.1 2019/12/01 16:57:36 afido Exp $
+#    open ART,"$artfile";
+#    my $art = join('',<ART>);
+#    close ART;
+#
+#	open SHG, "$tmp/shanghoj.msg";
+#	my $shg = join('',<SHG>);
+#	close SHG;
+#
+#	$artfile =~ m|/([^/]+\.xml)|;
+#	my $fn = $1;
+#	my $ver = id_incr("1","0");
+#	my $id = '$Id: '.$fn.',v '.$ver.' afido Exp $';
+#	my $log = "\n<!--\n\$Log: $fn,v \$\nversio $ver\n$shg\n-->\n";
+#
+#	$art =~ s/\$Id[^\$]*\$/$id/;
+#	$art =~ s/<\/vortaro>/$log<\/vortaro>/s;
+#
+#	open ART,">$artfile";
+#	print ART $art;
+#	close ART;
+#}
 
 sub cmd_dokument {
   # realigu poste
@@ -1301,45 +1336,45 @@ sub cmd_histori {
   # realigu poste
 }
 
-sub xml_context {
-    my ($err,$file) = @_;
-    my ($line, $char,$result,$n,$txt);
-
-    if ($err =~ /line\s+([0-9]+)\s+char\s+([0-9]+)\s+/s) {
-	$line = $1;
-	$char = $2;
-
-	unless (open XML,$file) {
-	    warn "Ne povis malfermi $file:$!\n";
-	    return '';
-	}
-
-	# la linio antau la eraro
-	if ($line > 1) {
-	    for ($n=1; $n<$line-1; $n++) {
-		<XML>;
-	    }
-	    
-	    $result .= "$n: ".<XML>;
-	    $result =~ s/\n?$/\n/s;
-	}
-	$result .= "$line: ".<XML>;
-	$result =~ s/\n?$/\n/s;
-	$result .= "-" x ($char + length($line) + 1) . "^\n";
-
-	if (defined($txt=<XML>)) {
-	    $line++;
-	    $result .= "$line: $txt";
-	    $result =~ s/\n?$/\n/s;
-	}
-
-	close XML;
-	    
-	return $result;
-    }
-
-    return '';
-}
+#sub xml_context {
+#    my ($err,$file) = @_;
+#    my ($line, $char,$result,$n,$txt);
+#
+#    if ($err =~ /line\s+([0-9]+)\s+char\s+([0-9]+)\s+/s) {
+#	$line = $1;
+#	$char = $2;
+#
+#	unless (open XML,$file) {
+#	    warn "Ne povis malfermi $file:$!\n";
+#	    return '';
+#	}
+#
+#	# la linio antau la eraro
+#	if ($line > 1) {
+#	    for ($n=1; $n<$line-1; $n++) {
+#		<XML>;
+#	    }
+#	    
+#	    $result .= "$n: ".<XML>;
+#	    $result =~ s/\n?$/\n/s;
+#	}
+#	$result .= "$line: ".<XML>;
+#	$result =~ s/\n?$/\n/s;
+#	$result .= "-" x ($char + length($line) + 1) . "^\n";
+#
+#	if (defined($txt=<XML>)) {
+#	    $line++;
+#	    $result .= "$line: $txt";
+#	    $result =~ s/\n?$/\n/s;
+#	}
+#
+#	close XML;
+#	    
+#	return $result;
+#    }
+#
+#    return '';
+#}
 
 sub get_archive_version {
     my ($art) = @_;
