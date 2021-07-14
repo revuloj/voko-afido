@@ -12,9 +12,13 @@ CGI_USER=$(cat /run/secrets/voko-araneo.cgi_user)
 CGI_PASSWORD=$(cat /run/secrets/voko-araneo.cgi_password)
 
 # legu aktualan liston de redaktantoj
-echo "${etc}/redaktantoj.json <- ${url}"
+echo "${redj} <- ${url}"
 curl -o ${redj} --user ${CGI_USER}:${CGI_PASSWORD} ${url}
 
+
+### prenu retpoŝtojn...
+
+fetchmail
 
 #### nun lanĉu redaktoservon per ant....
 
