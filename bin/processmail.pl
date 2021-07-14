@@ -371,17 +371,19 @@ sub process_ent {
     }
 }
 
+
 sub is_editor {
     my $from_addr = shift;
     my $reply_addr = shift;
-	my $res_addr = '';
-	my $email_addr;
+    my $res_addr = '';
 
-    chomp $from_addr;
+    chomp $email_addr;
     chomp $reply_addr;
 
-    my $pos = index($from_addr,$redaktilo_from);
-    if ($pos == 0 || $pos == 1) {
+    my $pos1 = index($from_addr,$redaktilo_from1);
+    my $pos2 = index($from_addr,$redaktilo_from2);
+
+    if ($pos1 == 0 || $pos1 == 1 || $pos2 >= 0) {
 		$email_addr = $reply_addr;
     } else {
 		$email_addr = $from_addr;
@@ -398,20 +400,21 @@ sub is_editor {
     # serchu en la dosiero kun redaktoroj
     open EDI, $editor_file;
     while (<EDI>) {
-	chomp;
-	unless (/^#/) {
-		if (index(lc($_),lc($email_addr)) >= 0) {
-		    print "retadreso trovita en: $_\n" if ($debug);
-		    /^([a-z'"\-\.\s]*<[a-z\@0-9\.\-_]*>)/i;
-		    $res_addr = $1;
-		    unless ($res_addr) {
-			print "ne povis ekstrakti la adreson el $_\n";
-		    } else {
-			print "sendadreso de la redaktoro: $res_addr\n" 
-			    if ($debug);
-		    }
-		    return $res_addr;
-		}
+		chomp;
+		unless (/^#/) {
+			if (index(lc($_),lc($email_addr)) >= 0) {
+				print "retadreso trovita en: $_\n" if ($debug);
+				# /^([a-z'"\-\.\s]*<[a-z\@0-9\.\-_]*>)/i;
+						/^([\wćáàéè'"\-\.\s]*<[a-z\@0-9\.\-_]*>)/i;
+				$res_addr = $1;
+				unless ($res_addr) {
+					print "ne povis ekstrakti la adreson el $_\n";
+				} else {
+					print "sendadreso de la redaktoro: $res_addr\n" 
+					if ($debug);
+				}
+				return $res_addr;
+			}
 	    }
     }
 		
