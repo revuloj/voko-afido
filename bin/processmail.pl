@@ -138,8 +138,8 @@ while ($file = readmail()) {
     open ML, $file; 
     $entity = $parser->read(\*ML);
     unless ($entity) {
-	warn "Ne eblis analizi la MIME-mesaghon.\n";
-	next;
+		warn "Ne eblis analizi la MIME-mesaghon.\n";
+		next;
     }
 
     # eligu iom da informo pri la mesagho
