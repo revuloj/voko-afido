@@ -49,6 +49,7 @@ $signature    = "--\nRevo-Servo $revo_mailaddr\n"
 $git          = '/usr/bin/git';
 # -t ne subtenata de ssmtp
 #$sendmail     = '/usr/lib/sendmail -t -i';
+$rsync        = '/usr/bin/rsync -rv';
 $sendmail     = '/usr/lib/sendmail -i';
 #$patch        = '/usr/bin/patch';
 
@@ -100,6 +101,9 @@ if ($err =~ m/fatal/ || $err =~ m/error/) {
 	# gistoj kaj permesi refari la tutan procedon...
 	exit 1;
 }
+# sinkronigu revo/xml
+`$rsync $git_dir/ $xml_dir/`;
+
 
 
 if ($ARGV[0]) {
@@ -1057,7 +1061,7 @@ sub checkin_git {
 #
 #	return "\$Log\$\nversio $ver\n".$shg."\n$log\n-->";
 #}
-
+#
 #sub git_pull {
 #	chdir($git_dir);
 #	`$git pull origin master 1> $tmp/git.log 2> $tmp/git.err`;
