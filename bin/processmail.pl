@@ -26,7 +26,7 @@ $debug        = 1;
 $afido_dir    = $ENV{"HOME"}; #"/var/afido"; # tmp, log
 $dict_home    = $ENV{"HOME"};
 $dict_base    = "$dict_home/dict"; # xml, dok, dtd
-$dict_etc     = "$ENV{"HOME"}/etc"; #"/run/secrets"; # redaktantoj
+$dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
 #$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
 $xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo';
 
