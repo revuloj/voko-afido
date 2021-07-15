@@ -45,7 +45,6 @@ $signature    = "--\nRevo-Servo $revo_mailaddr\n"
 
 # programoj
 #$xmlcheck     = '/usr/bin/rxp -V -s';
-#$cvs          = '/usr/bin/cvs';
 $git          = '/usr/bin/git';
 # -t ne subtenata de ssmtp
 #$sendmail     = '/usr/lib/sendmail -t -i';
@@ -822,9 +821,10 @@ sub checkin {
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
     my $ark_id = get_archive_version($art);
-	# estas problemo, ke versioj de CVS kaj Git momente povas devii je sekundo
-	# por mildigi la problemon ni ignoras la tempon
+	# estis problemo, ke versioj de CVS kaj Git povis devii je sekundo
+	# por mildigi la problemon ni ignoris la tempon:
     if (substr($ark_id,0,-19) ne substr($id,0,-19)) {
+
 	# provu solvi la versiokonflikton
 #	report ("PROBLEMO: La de vi sendita artikolo\n"
 #	       ."ne bazighas sur la aktuala arkiva versio\n"
@@ -896,9 +896,8 @@ sub checkin_git {
 
     # raportu erarojn
     if ($log2 =~ /nothing\sto\scommit/s) {
-# ni ne bezonas dum ni arĥivas unue en CVS:		
-#		report("ERARO   : La sendita artikolo shajne ne diferencas de "
-#			."la aktuala versio.");
+		report("ERARO   : La sendita artikolo shajne ne diferencas de "
+			."la aktuala versio.");
 		return;
     } elsif ($err2 !~ /^\s*$/s) {
 		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
@@ -907,8 +906,7 @@ sub checkin_git {
     }
 
     # raportu sukceson 
-# ni ne bezonas dum ni arĥivas unue en CVS:		
-#    report("KONFIRMO: $log");
+    report("KONFIRMO: $log");
 	return 1;
 }
 
@@ -1004,9 +1002,8 @@ sub checkinnew_git {
 
     # raportu erarojn
     if ($log2 =~ /nothing\sto\scommit/s) {
-# ni ne bezonas dum ni arĥivas unue en CVS:		
-#		report("ERARO   : La sendita artikolo shajne ne diferencas de "
-#			."la aktuala versio.");
+		report("ERARO   : La sendita artikolo shajne ne diferencas de "
+			."la aktuala versio.");
 		return;
     } elsif ($err2 !~ /^\s*$/s) {
 		report("ERARO   : Eraro dum arkivado de la nova artikolversio:\n"
@@ -1015,8 +1012,7 @@ sub checkinnew_git {
     }
 
     # raportu sukceson 
-# ni ne bezonas dum ni arĥivas unue en CVS:		
-#    report("KONFIRMO: $log");
+    report("KONFIRMO: $log");
 	return 1;
 }
 
