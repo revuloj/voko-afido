@@ -19,7 +19,7 @@ use MIME::Entity;
 
 # kiom da informoj
 $verbose      = 1;
-$debug        = 1;
+$debug        = 0;
 
 # FARENDA: legu tiujn el /docker swarm config/
 # baza agordo
@@ -69,7 +69,7 @@ $err_mail     = "$log_mail/errmail";
 $prc_mail     = "$log_mail/prcmail";
 
 $xml_dir      = "$dict_base/xml";
-$git_dir      = "$dict_base/revo-fonto/revo";
+$git_dir      = "$dict_base/revo-fonto";
 $dok_dir      = "$dict_base/dok";
 
 $mail_local   = "$tmp/mail";
@@ -102,18 +102,22 @@ if ($err =~ m/fatal/ || $err =~ m/error/) {
 	exit 1;
 }
 # sinkronigu revo/xml
-`$rsync $git_dir/ $xml_dir/`;
+print "$rsync $git_dir/revo/ $xml_dir/\n...\n" if ($verbose);
+`$rsync $git_dir/revo/ $xml_dir/`;
 
-
-
+# vi povas retrakti specifan (antaŭan) poŝtdosieron, ekz-e se okazis
+# eraro kaj vi volas ripeti por ne perdi la redakton...
 if ($ARGV[0]) {
     $mail_file = shift @ARGV;
+
+# normala procedo, kiam la poŝtdosiero estas tiu 
+# kreita per fetchmail+postfix
 } else {
 
     # chu estas poshto?
     if (not -s $mail_folder) {
-	print "neniu poshto en $mail_folder\n" if ($verbose);
-	exit;
+		print "neniu poshto en $mail_folder\n" if ($verbose);
+		exit;
     };
 
     # shovu la poshtdosieron
@@ -740,7 +744,7 @@ sub cmd_help {
 				      To=>"$mail_addr",
 				      Subject=>"$revoservo - helpo");
 	    
-   $mail_handle->attach(Type=>"text/plain",
+    $mail_handle->attach(Type=>"text/plain",
 			 Encoding=>"quoted-printable",
 			 Data=>"Saluton!\n\n"
 			."Jen informoj pri la uzo de Revo-Servo.");
@@ -754,8 +758,8 @@ sub cmd_help {
 
     # forsendu
     unless (open SENDMAIL, "|$sendmail $mail_addr") {
-	warn "Ne povas dukti al $sendmail: $!\n";
-	return;
+		warn "Ne povas dukti al $sendmail: $!\n";
+		return;
     }
     $mail_handle->print(\*SENDMAIL);
     close SENDMAIL;
@@ -900,13 +904,13 @@ sub checkin {
 #	};
 #	# konflikto solvita, daurigu do...
 
-	# versiokonflikto
-	report("ERARO   : La de vi sendita artikolo\n"
-	       ."ne bazighas sur la aktuala arkiva versio\n"
-	       ."($ark_id)\n"
-	       ."Bonvolu preni aktualan version el la TTT-ejo. "
-	       ."($xml_source_url/$art)\n","$xml_temp/xml.xml");
-	return;
+		# versiokonflikto
+		report("ERARO   : La de vi sendita artikolo\n"
+			."ne bazighas sur la aktuala arkiva versio\n"
+			."($ark_id)\n"
+			."Bonvolu preni aktualan version el la TTT-ejo. "
+			."($xml_source_url/$art)\n","$xml_temp/xml.xml");
+		return;
     }
 
     # checkin in CSV
@@ -917,10 +921,10 @@ sub checkin {
 	#checkin_csv($xmlfile);
 
 	# checkin in Git
-    `mv $xml_temp/xml.xml $git_dir/$xmlfile`;
+    `mv $xml_temp/xml.xml $git_dir/revo/$xmlfile`;
 
 	chdir($git_dir);
-	checkin_git($xmlfile,$edtr);
+	checkin_git("revo/$xmlfile",$edtr);
 
 	unlink("$tmp/shanghoj.msg");
 }
@@ -969,7 +973,7 @@ sub checkin_git {
 	my ($xmlfile,$edtr) = @_;
 
 	#incr_ver("$git_dir/$xmlfile");
-	process::incr_ver($xmlfile);
+	process::incr_ver($xmlfile,"$tmp/shanghoj.msg");
 
 	my ($log1,$err1) = process::git_cmd("$git add $xmlfile");
 	my ($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
@@ -1186,10 +1190,10 @@ sub checkinnew {
 	#checkinnew_csv($xmlfile,$art);
 
 	# checkin in Git
-    `mv $xml_temp/xml.xml $git_dir/$xmlfile`;
+    `mv $xml_temp/xml.xml $git_dir/revo/$xmlfile`;
 
-	chdir($git_dir);
-	checkinnew_git($xmlfile,$edtr);
+	#chdir($git_dir);
+	checkinnew_git("revo/$xmlfile",$edtr);
 
 	unlink("$tmp/shanghoj.msg");
 }

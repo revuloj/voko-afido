@@ -11,6 +11,7 @@ mkdir -p tmp/mail
 mkdir tmp/mailerr
 mkdir tmp/mailsend
 mkdir tmp/mailparts
+mkdir tmp/mailatt
 mkdir tmp/xml
 mkdir tmp/dtd
 
