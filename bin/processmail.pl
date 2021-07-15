@@ -906,7 +906,7 @@ sub checkin_git {
     }
 
     # raportu sukceson 
-    report("KONFIRMO: $log");
+    report("KONFIRMO: $log2");
 	return 1;
 }
 
@@ -1012,7 +1012,7 @@ sub checkinnew_git {
     }
 
     # raportu sukceson 
-    report("KONFIRMO: $log");
+    report("KONFIRMO: $log2");
 	return 1;
 }
 
