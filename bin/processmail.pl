@@ -806,6 +806,14 @@ sub check_xml {
     symlink("$dtd_dir","$xml_temp/../dtd") ;
 #	|| warn "Ne povis ligi de $dtd_dir al $xml_temp/../dtd\n";
 
+    # skribu la dosieron provizore al tmp
+    unless (open XML,">$xml_temp/xml.xml") {
+		warn "Ne povis malfermi $xml_temp/xml.xml: $!\n";
+		return;
+    }
+    print XML $teksto;
+    close XML;
+
 	my $err = process::checkxml('xml',$fname,$nova);
 
 #    # enmetu Log se ankorau mankas...
@@ -816,14 +824,8 @@ sub check_xml {
 #    # mallongigu Log al 20 linioj
 #    $teksto =~ s/(<!--\s+\044Log(?:[^\n]*\n){20})(?:[^\n]*\n)*(-->)/$1$2/s;
 #
-#    # skribu la dosieron provizore al tmp
-#    unless (open XML,">$xml_temp/xml.xml") {
-#		warn "Ne povis malfermi $xml_temp/xml.xml: $!\n";
-#		return;
-#    }
+
 #
-#    print XML $teksto;
-#    close XML;
 #
 #    # kontrolu la sintakson de la XML-teksto
 #    `$xmlcheck $xml_temp/xml.xml 2> $xml_temp/xml.err`;
@@ -832,6 +834,7 @@ sub check_xml {
     #open ERR,"$xml_temp/xml.err";
     #$err=join('',<ERR>);
     #close ERR;
+
     #unlink("$xml_temp/xml.err");
 
     if ($err) {
