@@ -172,8 +172,11 @@ while ($file = readmail()) {
 close MAIL;
 
 # sendu raportojn
+print "elsendas raportojn..." if ($verbose);
 send_reports();
+
 ##send_newarts_report();
+print "puŝas ŝanĝojn al git..." if ($verbose);
 my ($lg,$err) = process::git_cmd("$git push origin master");
 if ($err =~ m/fatal/ || $err =~ m/error/) {
 	print $err;
@@ -198,7 +201,9 @@ if (-e $mail_error) {
 if (-e $mail_send) {
     print "shovas $mail_send al $prc_mail/$filename\n" if ($verbose);
     `mv $mail_send $prc_mail/$filename`;
-}  
+}
+
+exit 0;
 
 ###################### analizado de la mesaghoj ################
 
