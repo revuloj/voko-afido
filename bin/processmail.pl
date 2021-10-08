@@ -653,7 +653,7 @@ sub send_reports {
 					      To=>"$mail_addr",
 					      Subject=>"$revoservo - raporto");
 
-		print "AL: <$mail_addr>: $message\n\n"
+		print "AL: <$mail_addr>: [[[\n$message\n]]]\n" if ($verbose);
 	    
 	    $mail_handle->attach(Type=>"text/plain",
 				 Encoding=>"quoted-printable",
@@ -688,7 +688,8 @@ sub send_reports {
 	    }
 	    
 	    # forsendu
-	    unless (open SENDMAIL, "| $sendmail $mail_addr") {
+	    print "sendi nun...\n" if ($verbose);
+	    unless (open SENDMAIL, "| $sendmail '$mail_addr'") {
 			warn "Ne povas dukti al $sendmail: $!\n";
 			next;
 	    }
