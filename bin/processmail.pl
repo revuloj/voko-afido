@@ -641,7 +641,7 @@ sub send_reports {
 	# forsendu la raportojn
 	while (($mail_addr,$message) = each %reports) {
 	    $dos = $dosieroj{$mail_addr};
-	    $mail_addr =~ s/.*<([a-z\.\_\-@]+)>.*/$1/;
+	    $mail_addr =~ s/.*<([a-z0-9\.\_\-@]+)>.*/$1/;
 	    
 	    # preparu mesaghon
 	    $message = "Saluton!\n"
