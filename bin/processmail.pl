@@ -94,7 +94,7 @@ $file_no    = 0;
 ##@newarts    = ();
 #git_pull();
 my ($lg,$err) = process::git_cmd("$git pull");
-if ($err =~ m/fatal/ || $err =~ m/error/) {
+if ($err =~ m/fatal/ || $err =~ m/error/ || $lg =~ m/[CK]ONFLI/) {
 	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
 	# kun eraro-stato, tio devus ankaŭ eviti la postan aldonon de konfirmoj/eraroj al
 	# gistoj kaj permesi refari la tutan procedon...
@@ -172,14 +172,13 @@ while ($file = readmail()) {
 close MAIL;
 
 # sendu raportojn
-print "elsendas raportojn..." if ($verbose);
+print "elsendas raportojn...\n" if ($verbose);
 send_reports();
 
 ##send_newarts_report();
-print "puŝas ŝanĝojn al git..." if ($verbose);
+print "puŝas ŝanĝojn al git...\n" if ($verbose);
 my ($lg,$err) = process::git_cmd("$git push origin master");
 if ($err =~ m/fatal/ || $err =~ m/error/) {
-	print $err;
 	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
 	# kun eraro-stato...
 	exit 1;
@@ -653,6 +652,8 @@ sub send_reports {
 					      From=>$revo_from,
 					      To=>"$mail_addr",
 					      Subject=>"$revoservo - raporto");
+
+		print "AL: <$mail_addr>: $message\n\n"
 	    
 	    $mail_handle->attach(Type=>"text/plain",
 				 Encoding=>"quoted-printable",
@@ -687,9 +688,9 @@ sub send_reports {
 	    }
 	    
 	    # forsendu
-	    unless (open SENDMAIL, "|$sendmail $mail_addr") {
-		warn "Ne povas dukti al $sendmail: $!\n";
-		next;
+	    unless (open SENDMAIL, "| $sendmail $mail_addr") {
+			warn "Ne povas dukti al $sendmail: $!\n";
+			next;
 	    }
 	    $mail_handle->print(\*SENDMAIL);
 	    close SENDMAIL;
