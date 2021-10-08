@@ -17,18 +17,18 @@ CGI_PASSWORD=$(cat /run/secrets/voko-araneo.cgi_password)
 
 # legu aktualan liston de redaktantoj
 echo "${redj} <- ${url}" | tee ${log}
-curl -o ${redj} --user ${CGI_USER}:${CGI_PASSWORD} ${url} | tee -a ${log}
+curl -o ${redj} --user ${CGI_USER}:${CGI_PASSWORD} ${url} 2>&1 | tee -a ${log}
 
 ### prenu retpoŝtojn...
 
-fetchmail | tee -a ${log}
+fetchmail 2>&1 | tee -a ${log}
 
 #### nun traktu redaktojn kaj fine forsendu raportojn
 
 if [[ -s /var/spool/mail/revo ]]; then
-    echo -e "${proc}\nTIME:" $(date)"\n" | tee -a ${log}
+    echo -e "${proc}\nTIME:" $(date)"\n" 2>&1 | tee -a ${log}
     ${proc} 2>&1 | tee -a ${log}
-    sendmail -q | tee -a ${log}
+    sendmail -q 2>&1 | tee -a ${log}
 fi
 
 

@@ -176,9 +176,9 @@ send_reports();
 ##send_newarts_report();
 my ($lg,$err) = process::git_cmd("$git push origin master");
 if ($err =~ m/fatal/ || $err =~ m/error/) {
+	print $err;
 	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
-	# kun eraro-stato, tio devus ankaŭ eviti la postan aldonon de konfirmoj/eraroj al
-	# gistoj kaj permesi refari la tutan procedon...
+	# kun eraro-stato...
 	exit 1;
 }
 
