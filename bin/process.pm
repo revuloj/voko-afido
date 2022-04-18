@@ -157,7 +157,7 @@ sub csv2arr {
 }
 
 
-################ helpfukcioj por raporti rezulojn ##############
+################ helpfukcioj por raporti rezultojn ##############
 
 # $rep referencu al vortareto kun la ŝlosiloj:
 # "mesagho" mesaĝo pri eraro aŭ konfirmo

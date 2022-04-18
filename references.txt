@@ -1,3 +1,6 @@
+# forigi malnovan SSH-ŝlosilon
+ssh-keygen -R "<hostname>/<IP>"
+
 
 https://developer.github.com/v3/guides/managing-deploy-keys/#deploy-keys
 https://gist.github.com/zhujunsan/a0becf82ade50ed06115
