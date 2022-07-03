@@ -1,25 +1,11 @@
 FROM ubuntu:18.04
-#FROM perl:5.24-slim-threaded
-#FROM perl:slim
 LABEL Maintainer="<diestel@steloj.de>"
 
-# https://packages.debian.org/stretch/perl/
-
-## https://hub.docker.com/r/jjmerelo/perl-io-socket-ssl/dockerfile
-#FROM perl:5.24-slim-threaded
-#LABEL version="1.0" maintainer="JJ Merelo <jjmerelo@GMail.com>" perl5version="5.24"
-#
-## Set up dir and download modules
-#RUN chmod o+r /etc/resolv.conf
-#RUN mkdir /test && apt-get update && apt-get install -y git curl libio-socket-ssl-perl libnet-ssleay-perl
-#RUN perl --version
-#
-## Will run this
-#ENTRYPOINT ["perl", "-I/usr/local/lib -I/usr/share/perl5 -I/usr/lib/x86_64-linux-gnu/perl5/5.24/"] 
-
-#RUN chmod o+r /etc/resolv.conf
-#RUN mkdir /test && apt-get update && apt-get install -y git curl libio-socket-ssl-perl libnet-ssleay-perl
-#RUN perl --version
+# normale: master aŭ v1e ks, 'bin/eldono.sh kreo' metas tion de ekstere per --build-arg
+ARG VG_TAG=master
+# por etikedoj kun nomo vXXX estas la problemo, ke GH en la ZIP-nomo kaj dosierujo forprenas la "v"
+# do se VG_TAG estas "v1e", ZIP_SUFFIX estu "1e", en 'bin/eldono.sh kreo' tio estas jam konsiderata
+ARG ZIP_SUFFIX=master
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     openssh-server ca-certificates openssl rxp git cvs curl unzip patch jq \
@@ -52,9 +38,9 @@ COPY --chown=afido:afido etc/* etc/
 
 ###USER afido:users
 
-RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/master.zip \
-  && unzip master.zip voko-grundo-master/dtd/* && rm master.zip && mkdir dict \
-  && ln -s /home/afido/voko-grundo-master/dtd  dict/dtd
+RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/${VG_TAG}.zip \
+  && unzip ${VG_TAG}.zip voko-grundo-${ZIP_SUFFIX}/dtd/* && rm ${VG_TAG}.zip && mkdir dict \
+  && ln -s /home/afido/voko-grundo-${ZIP_SUFFIX}/dtd  dict/dtd
 
 # farenda:
 #
