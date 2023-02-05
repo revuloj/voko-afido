@@ -38,7 +38,7 @@ COPY --chown=afido:afido etc/* etc/
 
 ###USER afido:users
 
-RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/${VG_TAG}.zip \
+RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/${VG_TAG}.zip  \
   && unzip ${VG_TAG}.zip voko-grundo-${ZIP_SUFFIX}/dtd/* && rm ${VG_TAG}.zip && mkdir dict \
   && ln -s /home/afido/voko-grundo-${ZIP_SUFFIX}/dtd  dict/dtd
 
