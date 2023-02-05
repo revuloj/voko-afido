@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Ricevi la aktualan kodon
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
 
 #      - name: Run tests
 #        run: |
@@ -42,7 +42,7 @@ jobs:
 #          fi
       - name: Kreo de ${{ env.IMAGE_NAME }}
         run: |
-           docker build . --file Dockerfile --tag $IMAGE_NAME
+          ./bin/eldono.sh kreo
 
       - name: Testoj de ${{ env.IMAGE_NAME }}
         run: |
@@ -53,7 +53,7 @@ jobs:
            docker image save -o ${IMAGE_NAME}.tar ${IMAGE_NAME}
 
       - name: Konservo de ${{ env.IMAGE_NAME }} por la sekvonta tasko
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.IMAGE_NAME }}
           path: ${{ env.IMAGE_NAME }}.tar
@@ -70,7 +70,7 @@ jobs:
     steps:
 
       - name: Reakiro de ${{ env.IMAGE_NAME }}
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: ${{ env.IMAGE_NAME }}
           path: image
