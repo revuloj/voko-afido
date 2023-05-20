@@ -12,8 +12,12 @@ REVO_HOST="reta-vortaro.de"
 url=https://${REVO_HOST}/cgi-bin/admin/redaktantoj.pl
 
 # legu sekretojn...
-CGI_USER=$(cat /run/secrets/voko-araneo.cgi_user)
-CGI_PASSWORD=$(cat /run/secrets/voko-araneo.cgi_password)
+if [[ -z "$CGI_USER" ]]; then
+  CGI_USER=$(cat /run/secrets/voko-araneo.cgi_user)
+fi
+if [[ -z "$CGI_PASSWORD" ]]; then
+  CGI_PASSWORD=$(cat /run/secrets/voko-araneo.cgi_password)
+fi
 
 # legu aktualan liston de redaktantoj
 echo "${redj} <- ${url}" | tee ${log}
