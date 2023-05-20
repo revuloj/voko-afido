@@ -14,4 +14,4 @@ else
     date=$(date +"%Y%m%d")
 fi
 
-grep -E "(fatal|fail|artikolo|KONFIRMO|ERARO)" ${log_prefix}${date}*
+grep -2 -E "(fatal|fail|artikolo:)" ${log_prefix}${date}*
