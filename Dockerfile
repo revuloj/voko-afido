@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 #FROM perl:5.24-slim-threaded
 #FROM perl:slim
 LABEL Maintainer="<diestel@steloj.de>"
@@ -28,8 +28,10 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     libauthen-sasl-saslprep-perl libnet-smtp-tls-perl \
     liblwp-protocol-https-perl liblwp-useragent-determined-perl \
   && rm -rf /var/lib/apt/lists/* \
-	&& mkdir -p /var/run/sshd 
+	&& mkdir -p /var/run/sshd
 
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
 
 #  && cpanm install MIME::Entity Authen::SASL::Perl \
 
