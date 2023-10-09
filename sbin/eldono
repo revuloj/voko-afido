@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Tio estas la eldono de voko-afido
+eldono=2k
+
+target="${1:-helpo}"
+
+case $target in
+kreo)
+    echo "Kreante lokan procezujon (por docker) voko-afido"
+    #docker build --build-arg VERSION=${eldono} --build-arg VG_TAG=v${eldono} --build-arg ZIP_SUFFIX=${eldono} \
+    #    -t voko-afiddo .
+    docker build --build-arg VERSION=${eldono} -t voko-afido .
+    ;;
+etikedo)
+    echo "Provizante la aktualan staton per etikedo (git tag) v${eldono}"
+    echo "kaj puŝante tiun staton al la centra deponejo"
+    git tag -f v${eldono} && git push && git push origin v${eldono} -f
+    ;;    
+helpo | *)
+    echo "---------------------------------------------------------------------------"
+    echo "Per la celo 'kreo' oni povas krei docker-procezujon de voko-afido. "
+    echo "Per etikedo vi etikedas la aktualan staton per la eldono (adaptebla variablo supre en la skripto)"
+    echo "kaj puŝas tion al Github, per kio tie kreiĝas aktuala procezujo kun tiu eldono."
+    ;;    
+esac
