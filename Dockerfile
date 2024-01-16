@@ -46,7 +46,7 @@ COPY --chown=afido:afido etc/* etc/
 ##   && unzip master.zip voko-grundo-master/dtd/* && rm master.zip && mkdir dict \
 ##   && ln -s /home/afido/voko-grundo-master/dtd  dict/dtd
 
-COPY --from=grundo dtd/ dict/dtd
+COPY --from=grundo build/dtd/ dict/dtd
 
 USER root
 EXPOSE 22
