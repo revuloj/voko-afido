@@ -43,7 +43,8 @@ jobs:
 #          fi
       - name: Kreo de ${{ env.IMAGE_NAME }}
         run: |
-           docker build . --file Dockerfile --tag $IMAGE_NAME
+          sbin/eldono kreo
+
 
       - name: Testoj de ${{ env.IMAGE_NAME }}
         run: |
