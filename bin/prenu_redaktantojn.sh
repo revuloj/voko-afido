@@ -2,7 +2,9 @@
 
 basedir=/home/afido
 etc=${basedir}/etc
-redj=${etc}/redaktantoj.json 
+redj=${etc}/redaktantoj.json
+timeout=60
+retry=3
 
 source setup_env.sh
 
@@ -24,4 +26,4 @@ url=https://${REVO_HOST}/cgi-bin/admin/redaktantoj-json.pl
 mkdir -p ${etc}
 
 echo "${etc}/redaktantoj.json <- ${url}"
-curl -o ${etc}/redaktantoj.json --user ${CGI_USER}:${CGI_PASSWORD} ${url}
+curl -o ${etc}/redaktantoj.json --user ${CGI_USER}:${CGI_PASSWORD} --max-time ${timeout} --retry ${retry} ${url}
