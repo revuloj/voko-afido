@@ -4,6 +4,8 @@ basedir=${HOME}
 etc=${basedir}/etc
 redj=${etc}/voko.redaktantoj
 proc=${HOME}/voko-afido/bin/processmail.pl
+timeout=60
+retry=3
 
 datetime=$(date +%Y%m%d_%H%M%S)
 log=${HOME}/log/redsrv-${datetime}.log
@@ -17,7 +19,7 @@ CGI_PASSWORD=${CGI_PASSWORD}||$(cat /run/secrets/voko-araneo.cgi_password)
 
 # legu aktualan liston de redaktantoj
 echo "${redj} <- ${url}" | tee ${log}
-curl -o ${redj} --fail --user ${CGI_USER}:${CGI_PASSWORD} ${url} 2>&1 | tee -a ${log}
+curl -o ${redj} --fail --user ${CGI_USER}:${CGI_PASSWORD} --max-time ${timeout} --retry ${retry} ${url} 2>&1 | tee -a ${log}
 
 ### prenu retpoŝtojn...
 
