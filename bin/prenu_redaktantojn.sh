@@ -6,6 +6,7 @@ redj=${etc}/redaktantoj.json
 timeout=60
 retry=1
 delay=300
+ipv="--ipv4"
 
 source setup_env.sh
 
@@ -27,4 +28,4 @@ url=https://${REVO_HOST}/cgi-bin/admin/redaktantoj-json.pl
 mkdir -p ${etc}
 
 echo "${etc}/redaktantoj.json <- ${url}"
-curl -o ${etc}/redaktantoj.json --user ${CGI_USER}:${CGI_PASSWORD} --max-time ${timeout} --retry ${retry} --retry-delay ${delay} ${url}
+curl -o ${etc}/redaktantoj.json --user ${CGI_USER}:${CGI_PASSWORD} ${ipv} --max-time ${timeout} --retry ${retry} --retry-delay ${delay} ${url}
