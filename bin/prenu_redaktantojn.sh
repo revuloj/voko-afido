@@ -1,6 +1,6 @@
 #!/bin/bash
 
-basedir=/home/afido
+basedir="${REVO_DIR:-/home/afido}"
 etc=${basedir}/etc
 redj=${etc}/redaktantoj.json
 timeout=60
@@ -22,8 +22,12 @@ source setup_env.sh
 #if [[ -z "$CGI_PASSWORD" ]]; then
 #    export CGI_PASSWORD=$(cat /run/secrets/voko-araneo.cgi_password)
 #fi
-
-url=https://${REVO_HOST}/cgi-bin/admin/redaktantoj-json.pl
+if [[ "$REVO_HOST" = "reta-vortaro.de" ]]; then
+    url=https://${REVO_HOST}/cgi-bin/admin/redaktantoj-json.pl
+else
+    # ni prenas jam pretan JSON, ekz-e de svagaj steloj
+    url=https://${REVO_HOST}/admin/redaktantoj.json
+fi
 
 mkdir -p ${etc}
 
