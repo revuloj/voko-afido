@@ -10,23 +10,13 @@ ipv="--ipv4"
 
 source setup_env.sh
 
-# nun en setup_env.sh
-#if [[ -z "$REVO_HOST" ]]; then
-#    export REVO_HOST="reta-vortaro.de"
-#fi
-#
-#if [[ -z "$CGI_USER" ]]; then
-#    export CGI_USER=$(cat /run/secrets/voko-araneo.cgi_user)
-#fi
-#
-#if [[ -z "$CGI_PASSWORD" ]]; then
-#    export CGI_PASSWORD=$(cat /run/secrets/voko-araneo.cgi_password)
-#fi
-if [[ "$REVO_HOST" = "reta-vortaro.de" ]]; then
-    url=https://${REVO_HOST}/cgi-bin/admin/redaktantoj-json.pl
-else
+# REVO_HOST kaj CGI-variabloj estas difinitaj en setup_env.sh
+
+if [[ "$REVO_HOST" == svagaj* ]]; then
     # ni prenas jam pretan JSON, ekz-e de svagaj steloj
     url=https://${REVO_HOST}/admin/redaktantoj.json
+else
+    url=https://${REVO_HOST}/cgi-bin/admin/redaktantoj-json.pl
 fi
 
 mkdir -p ${etc}

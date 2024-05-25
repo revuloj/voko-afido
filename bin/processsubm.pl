@@ -32,10 +32,13 @@ $loglevel = 'debug'; # info...
 
 # baza agordo
 if ($ENV{REVO_HOST} eq "araneo") {
+	# ene de docker-medio ni uzas nur HTTP
 	$submeto_url = "http://araneo/cgi-bin/admin/submeto.pl"
 } elsif ($ENV{REVO_HOST}) {
+	# uzu HTTPS kun eksterna servilo
 	$submeto_url = "https://$ENV{REVO_HOST}/cgi-bin/admin/submeto.pl";
 } else {	
+	# se SERVILO ne estas aparte difinita ni uzas reta-vortaro.de
   	$submeto_url = 'https://reta-vortaro.de/cgi-bin/admin/submeto.pl';
 }
 #$afido_dir    = "/var/afido"; # tmp, log
