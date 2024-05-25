@@ -34,7 +34,7 @@ use Data::Dumper;
 $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
 $dict_base    = "$dict_home/dict"; # xml, dok, dtd
 $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
-$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
+$redakto_url = "http://www.reta-vortaro.de/?r=";
 $revo_url     = "http://purl.oclc.org/NET/voko/revo";
 #$mail_folder  = "/var/spool/mail/tomocero";
 
@@ -584,7 +584,7 @@ sub checkin {
 	       		 		."ne baziĝas sur la aktuala arkiva versio\n"
 	       				."($ark_id)\n"
 	       				."Bonvolu preni aktualan version el la TTT-ejo. "
-	       				."($vokomail_url?art=$art)",
+	       				."($redakto_url$art)",
 			"shangho" => $shangho,
 			"dosiero" => $fname,
 			"artikolo" => $id
