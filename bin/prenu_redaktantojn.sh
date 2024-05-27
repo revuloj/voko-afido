@@ -23,3 +23,11 @@ mkdir -p ${etc}
 
 echo "${etc}/redaktantoj.json <- ${url}"
 curl -o ${etc}/redaktantoj.json --user ${CGI_USER}:${CGI_PASSWORD} ${ipv} --max-time ${timeout} --retry ${retry} --retry-delay ${delay} ${url}
+
+# kontrolu ĉu ni ricevis JSON kaj ne eble HTML-eraron
+first = $(head -c 1 ${etc}/redaktantoj.json)
+if [[ "${first}" != "[" ]]; then
+  echo "Ni atendis JSON-liston. Ŝajne redaktantoj ne ŝargiĝis ĝuste!"
+  exit 1
+fi
+
