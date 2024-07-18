@@ -21,8 +21,9 @@ sub smtp_connect {
 
     if ($setup) {
 
+        # vd https://www.iana.org/assignments/sasl-mechanisms/sasl-mechanisms.xhtml
         my $sasl = Authen::SASL->new(
-            mechanism => 'CRAM-MD5 DIGEST-MD5',
+            mechanism => 'PLAIN',
             debug => $debug,
             callback => {
                 pass => $setup->{password},
