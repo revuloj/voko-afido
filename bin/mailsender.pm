@@ -22,6 +22,7 @@ sub smtp_connect {
     if ($setup) {
 
         # vd https://www.iana.org/assignments/sasl-mechanisms/sasl-mechanisms.xhtml
+        # post forigo de *-MD5 restas PLAIN (eble LOGIN?)
         my $sasl = Authen::SASL->new(
             mechanism => 'PLAIN',
             debug => $debug,
