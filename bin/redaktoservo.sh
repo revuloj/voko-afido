@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# por loka uzo, t.e. ekster docker-procezujo
+# Ni nur traktas retpoŝtajn redaktojn per tiu ĉi skripto.
+# Ni supozas ke en la operaciumo estas instalita
+# fetchmail por ricevi retpoŝtajn redaktojn kaj
+# poŝtservo al kiu ni sendas konfirmojn kaj fine
+# forsendas per sendmail -q
+
 basedir=${HOME}
 etc=${basedir}/etc
 redj=${etc}/voko.redaktantoj

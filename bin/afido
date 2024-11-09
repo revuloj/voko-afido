@@ -4,10 +4,20 @@
 set -e
 
 case $1 in
+mail)
+  # ni supozas, ke revo-fonto jam ĉeestas, muntita kiel dosierujo
+  # en la procezujon, git pull/push okazas ene de processmail.pl
+  # fetchmail devos okazi antataŭe kaj sendmail -q devos okaze fine
+  # en la gastiga operaciumo, plej bone ĉiu tri paŝoj difinitaj
+  # sur unu linio de cron-tasko
+  source setup_env.sh && prenu_redaktantojn.sh && processmail.pl 
+  ;;  
 subm)
+  # por uzo en Github-ago, ni prenas redaktojn de reta-vortaro.de/cgi-bin/admin/submetoj.pl (t.e. el tiea mysql-datumbazo)
   source setup_env.sh && prenu_redaktantojn.sh && git-clone-repo.sh && processsubm.pl 
   ;;
-*)
+gist,*)
+  # por uzo en Github-ago, ni prenas redaktojn el Github-gists per Github REST-API
   prenu_redaktantojn.sh && git-clone-repo.sh && prenu_gistojn.sh && processgist.pl \
     && aktualigu_gistojn.sh && forigu_malnovajn_gistojn.sh
   ;;  
