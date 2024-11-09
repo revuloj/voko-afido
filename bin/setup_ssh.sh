@@ -20,7 +20,7 @@ if [ -f "/run/secrets/voko-afido.ssh_key.pub" ]; then
     ##  fi  
     ##fi
 
-    chown -R afido.users ${basedir}/.ssh 
+    chown -R afido:users ${basedir}/.ssh 
     chmod 0700 ${basedir}/.ssh
     chmod 0600 ${basedir}/.ssh/*
 

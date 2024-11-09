@@ -13,5 +13,5 @@ mkdir -p ${var}/log/oldmail
 mkdir -p ${var}/log/errmail
 mkdir -p ${var}/log/prcmail
 
-chown -R afido.users ${var}
+chown -R afido:users ${var}
 
