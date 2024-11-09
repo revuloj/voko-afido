@@ -2,7 +2,7 @@
 
 basedir=/home/afido
 
-if [ -f "/run/secrets/voko-afido.ssh_key.pub"]; then
+if [ -f "/run/secrets/voko-afido.ssh_key.pub" ]; then
 
     cat /run/secrets/voko-afido.ssh_key.pub > ${basedir}/.ssh/authorized_keys
 

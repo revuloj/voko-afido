@@ -5,7 +5,7 @@ ARG VERSION=latest
 FROM ghcr.io/revuloj/voko-grundo/voko-grundo:${VERSION} as grundo 
   # ni bezonos la enhavon de voko-grundo build poste por kopi jsc, stl, dok
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 LABEL Maintainer="<diestel@steloj.de>"
 
