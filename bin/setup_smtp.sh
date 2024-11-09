@@ -30,7 +30,8 @@ cat <<EOC > ${mailsenderconf}
 }
 EOC
 
-cat <<EOT > ${ssmtpconf}
+if [ -d "/etc/ssmtp" ]; then
+  cat <<EOT > ${ssmtpconf}
 # The user that gets all the mails (UID < 1000, usually the admin)
 #root=username@gmail.com
 mailhub=${SMTP_SERVER}:${SMTP_PORT}
@@ -54,4 +55,4 @@ AuthMethod=LOGIN
 FromLineOverride=yes
 EOT
 
-#fi
+fi
