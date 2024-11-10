@@ -4,6 +4,11 @@
 set -e
 
 case $1 in
+git)
+  # se ni kontinue uzas Afidon kun retpoŝta preno ni devas unuafoje
+  # akiri la enhavon de revo-fonto el git
+  git-clone-repo.sh
+  ;;  
 mail)
   # ni supozas, ke revo-fonto jam ĉeestas, muntita kiel dosierujo
   # en la procezujon, git pull/push okazas ene de processmail.pl
