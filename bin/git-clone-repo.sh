@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 basedir=. #/home/afido
 dict=${basedir}/dict
@@ -15,7 +16,7 @@ if [[ ! -z $GITHUB_TOKEN ]]; then
 # se ni volas subteni ankaŭ DEPLOY-TOKEN...
 # elif [[ ! -z $GITHUB_DEPLOYKEY ]]  ...
 #    git_credentials_prefix=https://github.com/" 
-elif [ -s "/run/secrets/voko-afido.github_key" ]; then
+elif [[ -s "/run/secrets/voko-afido.github_key" ]]; then
   git_credentials_prefix=git@github.com:
 else
   git_credentials_prefix=""
