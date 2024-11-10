@@ -2,6 +2,8 @@
 
 basedir=/home/afido
 
+ssh-keygen -f ${basedir}/.ssh/known_hosts -R "github.com"
+
 if [ -f "/run/secrets/voko-afido.ssh_key.pub" ]; then
 
     cat /run/secrets/voko-afido.ssh_key.pub > ${basedir}/.ssh/authorized_keys
