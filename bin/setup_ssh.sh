@@ -2,6 +2,8 @@
 
 basedir=/home/afido
 
+# aldonu servilo-ŝlosilon por github.com
+touch ${basedir}/.ssh/known_hosts
 ssh-keygen -f ${basedir}/.ssh/known_hosts -R "github.com"
 
 if [ -f "/run/secrets/voko-afido.ssh_key.pub" ]; then
@@ -22,8 +24,8 @@ if [ -f "/run/secrets/voko-afido.ssh_key.pub" ]; then
     ##  fi  
     ##fi
 
-    chown -R afido:users ${basedir}/.ssh 
-    chmod 0700 ${basedir}/.ssh
-    chmod 0600 ${basedir}/.ssh/*
-
 fi
+
+chown -R afido:users ${basedir}/.ssh 
+chmod 0700 ${basedir}/.ssh
+chmod 0600 ${basedir}/.ssh/*
