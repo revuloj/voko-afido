@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 
 basedir=. #/home/afido
 dict=${basedir}/dict
@@ -12,13 +12,16 @@ if [[ -z $GIT_REPO_REVO ]]; then
 fi
 
 if [[ ! -z $GITHUB_TOKEN ]]; then
+  echo "Ni uzos HTTPS por preni la fontojn"
   git_credentials_prefix="https://x-access-token:${GITHUB_TOKEN}@github.com/"
 # se ni volas subteni ankaŭ DEPLOY-TOKEN...
 # elif [[ ! -z $GITHUB_DEPLOYKEY ]]  ...
 #    git_credentials_prefix=https://github.com/" 
 elif [[ -s "/run/secrets/voko-afido.github_key" ]]; then
+  echo "Ni uzos SSH por preni la fontojn"
   git_credentials_prefix=git@github.com:
 else
+  echo "Ni uzos lokan dosierujon por preni la fontojn"
   git_credentials_prefix=""
 fi
 
