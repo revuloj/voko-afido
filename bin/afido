@@ -4,7 +4,7 @@
 set -e
 
 case $1 in
-git)
+repo)
   # se ni kontinue uzas Afidon kun retpoŝta preno ni devas unuafoje
   # akiri la enhavon de revo-fonto el git
   git-clone-repo.sh
