@@ -48,7 +48,15 @@ COPY --chown=afido:afido etc/* etc/
 
 COPY --from=grundo build/dtd/ dict/dtd
 
+# se ni volas uzi la gastigan reton (network_mode: "host) por forsendi retpoŝton
+# ni bezonas la eblecon difini alian servo-retpordon tie ĉi,
+# ĉar 
+#   network --driver host 
+# ne kunfunkcias kun
+#   run --publish gastiga:interna
+ENV AFIDO_PORT=22
+
 USER root
-EXPOSE 22
+EXPOSE ${AFIDO_PORT}
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["/usr/sbin/sshd", "-D"]
+CMD ["/usr/sbin/sshd", "-D","-p","${AFIDO_PORT}"]
