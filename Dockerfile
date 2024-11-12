@@ -57,6 +57,8 @@ COPY --from=grundo build/dtd/ dict/dtd
 ENV AFIDO_PORT=22
 
 USER root
-EXPOSE ${AFIDO_PORT}
+#EXPOSE ${AFIDO_PORT}
+EXPOSE 22
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["/usr/sbin/sshd", "-D","-p","${AFIDO_PORT}"]
+#CMD ["/usr/sbin/sshd", "-D","-p","${AFIDO_PORT}"]
+CMD ["/usr/sbin/sshd", "-D"]
