@@ -60,8 +60,4 @@ USER root
 #EXPOSE 22
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-# vd. https://stackoverflow.com/questions/40454470/how-can-i-use-a-variable-inside-a-dockerfile-cmd
-#CMD ["/usr/sbin/sshd", "-D"]
-# transdono de la medivariablo por la retpordo funkcias nur tra ŝelo
-#CMD ["sh","-c","exec /usr/sbin/sshd -d -p ${AFIDO_PORT}"]
-CMD ["sh","-c","exec /usr/sbin/sshd -D -p ${AFIDO_PORT}"]
+CMD ["/usr/sbin/sshd","-D","-p","${AFIDO_PORT}"]

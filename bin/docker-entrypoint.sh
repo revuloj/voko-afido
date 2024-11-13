@@ -13,7 +13,9 @@ setup_smtp.sh
 setup_var.sh
 setup_dict.sh
 
-echo "AFIDO_PORT=${AFIDO_PORT}"
+# echo "AFIDO_PORT=${AFIDO_PORT}"
+# anstataŭigu medivariablojn en $@
+eval "set -- $@"
 echo "lanĉo: $@"
 
 exec "$@"
