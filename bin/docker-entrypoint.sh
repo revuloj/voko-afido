@@ -13,4 +13,7 @@ setup_smtp.sh
 setup_var.sh
 setup_dict.sh
 
+echo "AFIDO_PORT=${AFIDO_PORT}"
+echo "lanĉo: $@"
+
 exec "$@"
