@@ -15,7 +15,7 @@ mail)
   # fetchmail devos okazi antataŭe kaj sendmail -q devos okaze fine
   # en la gastiga operaciumo, plej bone ĉiu tri paŝoj difinitaj
   # sur unu linio de cron-tasko
-  source setup_env.sh && prenu_redaktantojn.sh && processmail.pl 
+  source setup_env.sh && prenu_redaktantoliston.sh && processmail.pl 
   ;;  
 subm)
   # por uzo en Github-ago, ni prenas redaktojn de reta-vortaro.de/cgi-bin/admin/submetoj.pl (t.e. el tiea mysql-datumbazo)
