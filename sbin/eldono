@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Tio estas la eldono de voko-afido
-eldono=2m
+eldono=2n
 
 target="${1:-helpo}"
 
@@ -16,6 +16,8 @@ preparo)
         echo "Ne kongruas la branĉo (${branch}) kun la eldono (${eldono})"
         echo "Agordu la variablon 'eldono' en tiu ĉi skripto por prepari novan eldonon."
         exit 1
+    else
+        echo "Bone, branĉo kaj eldono kongruas."
     fi
     ;;
 kreo)
