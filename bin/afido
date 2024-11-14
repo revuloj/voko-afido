@@ -21,7 +21,7 @@ subm)
   # por uzo en Github-ago, ni prenas redaktojn de reta-vortaro.de/cgi-bin/admin/submetoj.pl (t.e. el tiea mysql-datumbazo)
   source setup_env.sh && prenu_redaktantojn.sh && git-clone-repo.sh && processsubm.pl 
   ;;
-gist,*)
+gist|*)
   # por uzo en Github-ago, ni prenas redaktojn el Github-gists per Github REST-API
   prenu_redaktantojn.sh && git-clone-repo.sh && prenu_gistojn.sh && processgist.pl \
     && aktualigu_gistojn.sh && forigu_malnovajn_gistojn.sh
