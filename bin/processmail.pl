@@ -23,15 +23,17 @@ $debug        = 0;
 
 # FARENDA: legu tiujn el /docker swarm config/
 # baza agordo
-$afido_dir    = $ENV{"HOME"}; #"/var/afido"; # tmp, log
+$afido_dir    = "/var/afido"; # $ENV{"HOME"}; # tmp, log
 $dict_home    = $ENV{"HOME"};
 $dict_base    = "$dict_home/dict"; # xml, dok, dtd
 $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
+
 #$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
 $xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo';
-
 $revo_url     = "http://purl.oclc.org/NET/voko/revo";
-$mail_folder  = "/var/spool/mail/revo"; #/var/spool/mail/tomocero";
+
+$mi = `id -un`;
+$mail_folder  = "/var/spool/mail/$mi"; #/var/spool/mail/tomocero";
 
 # FARENDA: legu tiujn el sekreto(j)
 $revoservo    = '[Revo-Servo]';
