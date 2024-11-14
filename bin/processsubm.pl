@@ -165,7 +165,7 @@ if ($err =~ m/fatal/ || $err =~ m/error/) {
 $log->info($separator);
 
 # sendu raportojn
-# provizore jam nun konektur al SMTP, por trovi eraron en ->auth
+# provizore jam nun konektu al SMTP, por trovi eraron en ->auth
 #$IO::Socket::SSL::DEBUG=3;
 if (-s $mail_send > 10) {
 	my $mailer = mailsender::smtp_connect;

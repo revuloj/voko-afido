@@ -36,7 +36,7 @@ ENV LC_ALL C.UTF-8
 COPY bin/* /usr/local/bin/
 #ENV PATH "$PATH:/usr/local/bin"
 
-RUN useradd -ms /bin/bash -u 1074 afido && mkdir -p /home/afido/.ssh
+RUN useradd -ms /bin/bash -u 1074 -G mail afido && mkdir -p /home/afido/.ssh
 WORKDIR /home/afido
 COPY --chown=afido:afido  ssh/* .ssh/
 COPY --chown=afido:afido etc/* etc/
