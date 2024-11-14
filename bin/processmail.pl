@@ -32,7 +32,7 @@ $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
 $xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo';
 $revo_url     = "http://purl.oclc.org/NET/voko/revo";
 
-$mi = `id -un`;
+chomp($mi = `id -un`);
 $mail_folder  = "/var/spool/mail/$mi"; #/var/spool/mail/tomocero";
 
 # FARENDA: legu tiujn el sekreto(j)
