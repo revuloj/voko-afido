@@ -44,12 +44,14 @@ sub smtp_connect {
             }
 
             #$smtps->auth($setup->{user}, $setup->{password}) 
-            my $authzd = $smtps->auth($sasl);
-            unless ($authzd) {
-                #print "SASL: ",Dumper($sasl);
-                die "Saluto al retpoŝtilo malsukcesis!";
+            if ($setup->{password}) {
+                my $authzd = $smtps->auth($sasl);
+                unless ($authzd) {
+                    #print "SASL: ",Dumper($sasl);
+                    die "Saluto al retpoŝtilo malsukcesis!";
+                }
+                #print "SASL: ",Dumper($sasl) if ($debug);
             }
-            #print "SASL: ",Dumper($sasl) if ($debug);
             return $smtps;
         }
     } else {
