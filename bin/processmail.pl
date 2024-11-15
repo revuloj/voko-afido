@@ -622,105 +622,105 @@ sub send_reports {
 
     # legu la respondojn el $mail_send
     if (-e $mail_send) {
-	
-	$/ = $separator;
-	unless (open SMAIL, $mail_send) {
-	    warn "Ne povis malfermi $mail_send: $!\n";
-	    return;
-	}
-
-	while (<SMAIL>) {
-	    # elprenu la sendinton
-		if (s/^sendinto: *([^\n]+)\n//) {
-			$mail_addr = $1;
-			# chu dosierojn sendu?
-			if (s/^dosieroj: *([^\n\s]+)\n//) {
-				$dos = $1;
-				if ($_ =~ /artikolo: *([^\n]+)\n/s) { $art_id = $1; }
-				# foje jam malaperis la aldonenda dosiero pro antaŭa eraro, kio kaŭzus
-				# senfinan sendadon de ĉiam la sama eraro..., do aldonu nur se la dosiero ekzistas
-				if (-e $dos) {				
-					$dosieroj{$mail_addr} .= "$dos $art_id|";
-				}
-			}
-			$reports{$mail_addr} .= $_;
-	    } else {
-			warn "Ne povis elpreni sendinton el $_\n";
-			next;
-	    }
-	}
-	close SMAIL;
-	$/ = $newline;
-
-	# forsendu la raportojn
-	while (($mail_addr,$message) = each %reports) {
-	    $dos = $dosieroj{$mail_addr};
-	    $mail_addr =~ s/.*<([a-z0-9\.\_\-@]+)>.*/$1/;
-	    
-	    # preparu mesaghon
-	    $message = "Saluton!\n"
-		."Jen raporto pri via(j) sendita(j) artikolo(j).\n\n"
-		    .$separator.$message."\n".$signature;
-	    
-	    $mail_handle = build MIME::Entity(Type=>"multipart/mixed",
-					      From=>$revo_from,
-					      To=>"$mail_addr",
-					      Subject=>"$revoservo - raporto");
-
-		print "AL: <$mail_addr>: [[[\n$message\n]]]\n" if ($verbose);
-	    
-	    $mail_handle->attach(Type=>"text/plain",
-				 Encoding=>"quoted-printable",
-				 Data=>$message);
-	    
-	    # alpendigu dosierojn
-		if ($dos) {
-			for $file (split (/\|/,$dos)) {
-				if ($file =~ /^\s*([^\s]+)\s+(.+?)\s*$/) {
-					$file = $1;
-					$art_id = $2;
-
-					if ($art_id =~ /^\044([^\044]+)\044$/) {
-						$art_id = $1;
-						$art_id =~ /^Id: ([^ ,\.]+\.xml),v/;
-						$marko = $1;
-					} else {
-						$marko=$art_id;
-					}
-				} else { $art_id = $file; $marko=$file; }
-				
-				print "attach: $file\n" if ($debug);
-				if (-e $file) {
-					$mail_handle->attach(Path=>$file,
-							Type=>'text/plain',
-							Encoding=>'quoted-printable',
-							Disposition=>'attachment',
-							Filename=>$marko,
-							Description=>$art_id);
-				}
-			}
-	    }
-	    
-	    # forsendu
-	    print "sendi nun...\n" if ($verbose);
-	    ## unless (open SENDMAIL, "| $sendmail '$mail_addr'") {
-		## 	warn "Ne povas dukti al $sendmail: $!\n";
-		## 	next;
-	    ## }
-	    ## $mail_handle->print(\*SENDMAIL);
-	    ## close SENDMAIL;
-
-		# forsendu
-		unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
-			$log->warn("Ne povas forsendi retpoŝtan raporton!\n");
-			next;
+		
+		$/ = $separator;
+		unless (open SMAIL, $mail_send) {
+			warn "Ne povis malfermi $mail_send: $!\n";
+			return;
 		}
 
-	}
+		while (<SMAIL>) {
+			# elprenu la sendinton
+			if (s/^sendinto: *([^\n]+)\n//) {
+				$mail_addr = $1;
+				# chu dosierojn sendu?
+				if (s/^dosieroj: *([^\n\s]+)\n//) {
+					$dos = $1;
+					if ($_ =~ /artikolo: *([^\n]+)\n/s) { $art_id = $1; }
+					# foje jam malaperis la aldonenda dosiero pro antaŭa eraro, kio kaŭzus
+					# senfinan sendadon de ĉiam la sama eraro..., do aldonu nur se la dosiero ekzistas
+					if (-e $dos) {				
+						$dosieroj{$mail_addr} .= "$dos $art_id|";
+					}
+				}
+				$reports{$mail_addr} .= $_;
+			} else {
+				warn "Ne povis elpreni sendinton el $_\n";
+				next;
+			}
+		}
+		close SMAIL;
+		$/ = $newline;
+
+		# forsendu la raportojn
+		while (($mail_addr,$message) = each %reports) {
+			$dos = $dosieroj{$mail_addr};
+			$mail_addr =~ s/.*<([a-z0-9\.\_\-@]+)>.*/$1/;
+			
+			# preparu mesaghon
+			$message = "Saluton!\n"
+			."Jen raporto pri via(j) sendita(j) artikolo(j).\n\n"
+				.$separator.$message."\n".$signature;
+			
+			$mail_handle = build MIME::Entity(Type=>"multipart/mixed",
+							From=>$revo_from,
+							To=>"$mail_addr",
+							Subject=>"$revoservo - raporto");
+
+			print "AL: <$mail_addr>: [[[\n$message\n]]]\n" if ($verbose);
+			
+			$mail_handle->attach(Type=>"text/plain",
+					Encoding=>"quoted-printable",
+					Data=>$message);
+			
+			# alpendigu dosierojn
+			if ($dos) {
+				for $file (split (/\|/,$dos)) {
+					if ($file =~ /^\s*([^\s]+)\s+(.+?)\s*$/) {
+						$file = $1;
+						$art_id = $2;
+
+						if ($art_id =~ /^\044([^\044]+)\044$/) {
+							$art_id = $1;
+							$art_id =~ /^Id: ([^ ,\.]+\.xml),v/;
+							$marko = $1;
+						} else {
+							$marko=$art_id;
+						}
+					} else { $art_id = $file; $marko=$file; }
+					
+					print "attach: $file\n" if ($debug);
+					if (-e $file) {
+						$mail_handle->attach(Path=>$file,
+								Type=>'text/plain',
+								Encoding=>'quoted-printable',
+								Disposition=>'attachment',
+								Filename=>$marko,
+								Description=>$art_id);
+					}
+				}
+			}
+			
+			# forsendu
+			print "sendi nun...\n" if ($verbose);
+			## unless (open SENDMAIL, "| $sendmail '$mail_addr'") {
+			## 	warn "Ne povas dukti al $sendmail: $!\n";
+			## 	next;
+			## }
+			## $mail_handle->print(\*SENDMAIL);
+			## close SENDMAIL;
+
+			# forsendu
+			unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
+				$log->warn("Ne povas forsendi retpoŝtan raporton!\n");
+				next;
+			}
+
+		} # while
 
 	# forigu $mail_send
 	# unlink($mail_send);
-    }
+    } # if
 }
 
 

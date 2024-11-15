@@ -52,6 +52,8 @@ sub smtp_connect {
             #print "SASL: ",Dumper($sasl) if ($debug);
             return $smtps;
         }
+    } else {
+        die "Agordo por retpoŝt-sendo mankas!";
     }
 }
 

@@ -19,7 +19,8 @@ if [[ -z "$SMTP_PASSWORD" ]]; then
 fi
 
 # 25 neĉifrita, ĉifritaj pordoj 465 aŭ 587
-SMTP_PORT=587
+#SMTP_PORT=587
+: ${SMTP_PORT:=587}
 
 cat <<EOC > ${mailsenderconf}
 {
