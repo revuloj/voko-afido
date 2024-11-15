@@ -11,9 +11,11 @@
 use lib("/usr/local/bin");
 use lib("./bin");
 use process qw (trim);
+use mailsender;
 
 use MIME::Parser;
 use MIME::Entity;
+
 
 ######################### agorda parto ##################
 
@@ -49,9 +51,9 @@ $signature    = "--\nRevo-Servo $revo_mailaddr\n"
 #$xmlcheck     = '/usr/bin/rxp -V -s';
 $git          = '/usr/bin/git';
 # -t ne subtenata de ssmtp
-#$sendmail     = '/usr/lib/sendmail -t -i';
 $rsync        = '/usr/bin/rsync -rv';
-$sendmail     = '/usr/lib/sendmail -i';
+#$sendmail     = '/usr/lib/sendmail -t -i';
+#$sendmail     = '/usr/lib/sendmail -i';
 #$patch        = '/usr/bin/patch';
 
 # dosierujoj
@@ -175,7 +177,15 @@ close MAIL;
 
 # sendu raportojn
 print "elsendas raportojn...\n" if ($verbose);
-send_reports();
+
+#send_reports();
+
+if (-s $mail_send > 10) {
+	my $mailer = mailsender::smtp_connect;
+	send_reports($mailer);
+	mailsender::smtp_quit($mailer);
+}
+
 
 ##send_newarts_report();
 print "puŝas ŝanĝojn al git...\n" if ($verbose);
@@ -603,6 +613,8 @@ MOVE_FILE:
 }
 
 sub send_reports {
+	my $mailer = shift;
+
     my $newline = $/;
     my %reports = ();
     my %dosieroj = ();
@@ -691,12 +703,19 @@ sub send_reports {
 	    
 	    # forsendu
 	    print "sendi nun...\n" if ($verbose);
-	    unless (open SENDMAIL, "| $sendmail '$mail_addr'") {
-			warn "Ne povas dukti al $sendmail: $!\n";
+	    ## unless (open SENDMAIL, "| $sendmail '$mail_addr'") {
+		## 	warn "Ne povas dukti al $sendmail: $!\n";
+		## 	next;
+	    ## }
+	    ## $mail_handle->print(\*SENDMAIL);
+	    ## close SENDMAIL;
+
+		# forsendu
+		unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
+			$log->warn("Ne povas forsendi retpoŝtan raporton!\n");
 			next;
-	    }
-	    $mail_handle->print(\*SENDMAIL);
-	    close SENDMAIL;
+		}
+
 	}
 
 	# forigu $mail_send
@@ -730,13 +749,22 @@ sub cmd_help {
 			 Filename=>"$dok_dir/helpo.txt",
 			 Description=>"helpo pri Revo-servo");
 
-    # forsendu
-    unless (open SENDMAIL, "|$sendmail $mail_addr") {
-		warn "Ne povas dukti al $sendmail: $!\n";
+    # forsendu	
+    # unless (open SENDMAIL, "|$sendmail $mail_addr") {
+	# 	warn "Ne povas dukti al $sendmail: $!\n";
+	# 	return;
+    # }
+    # $mail_handle->print(\*SENDMAIL);
+    # close SENDMAIL;
+
+	# forsendu
+	my $mailer = mailsender::smtp_connect;
+	unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
+		$log->warn("Ne povas forsendi retpoŝtan raporton!\n");
 		return;
-    }
-    $mail_handle->print(\*SENDMAIL);
-    close SENDMAIL;
+	}
+	mailsender::smtp_quit($mailer);
+
 }
 
 
