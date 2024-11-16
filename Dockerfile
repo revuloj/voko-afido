@@ -47,7 +47,10 @@ COPY --chown=afido:afido etc/* etc/
 ##   && unzip master.zip voko-grundo-master/dtd/* && rm master.zip && mkdir dict \
 ##   && ln -s /home/afido/voko-grundo-master/dtd  dict/dtd
 
-COPY --from=grundo build/dtd/ dict/dtd
+# al dict/dtd ni kreos simbolan ligon per ln -s en setup_dict.sh
+# tio plifaciligas munton de dosierujo dict/ en la gastiga medio
+#COPY --from=grundo build/dtd/ dict/dtd
+COPY --from=grundo build/dtd/ voko-grundo/dtd
 
 # se ni volas uzi la gastigan reton (network_mode: "host) por forsendi retpoŝton
 # ni bezonas la eblecon difini alian servo-retpordon tie ĉi,

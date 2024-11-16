@@ -4,11 +4,11 @@ set -x
 # FARENDA: legu var el config:
 # var=$(cat /voko-afido.var_afido)
 var=/var/afido
-dict=/home/afido/dict
+grundo=/home/afido/voko-grundo
 
 mkdir -p ${var}/tmp/mailatt
 mkdir -p ${var}/tmp/xml
-ln -s ${dict}/dtd ${var}/tmp/
+ln -s ${grundo}/dtd ${var}/tmp/
 
 #mkdir -p ${var}/log
 mkdir -p ${var}/log/oldmail
