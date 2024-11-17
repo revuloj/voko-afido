@@ -21,7 +21,7 @@ use MIME::Entity;
 
 # kiom da informoj
 $verbose      = 1;
-$debug        = 0;
+$debug        = $ENV{'DEBUG'}; #0;
 
 # FARENDA: legu tiujn el /docker swarm config/
 # baza agordo
@@ -1075,8 +1075,8 @@ sub get_archive_version {
 
     # legu la ghisnunan artikolon
     unless (open XMLFILE, $xmlfile) {
-	warn "Ne povis legi $xmlfile: $!\n";
-	return;
+		warn "Ne povis legi $xmlfile: $!\n";
+		return;
     }
 
     my $txt = join('',<XMLFILE>);
