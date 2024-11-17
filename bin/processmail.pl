@@ -51,7 +51,8 @@ $signature    = "--\nRevo-Servo $revo_mailaddr\n"
 #$xmlcheck     = '/usr/bin/rxp -V -s';
 $git          = '/usr/bin/git';
 # -t ne subtenata de ssmtp
-$rsync        = '/usr/bin/rsync -rv';
+#$rsync        = '/usr/bin/rsync -rv';
+$rsync        = '/usr/bin/rsync -r --stats';
 #$sendmail     = '/usr/lib/sendmail -t -i';
 #$sendmail     = '/usr/lib/sendmail -i';
 #$patch        = '/usr/bin/patch';
