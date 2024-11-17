@@ -106,7 +106,7 @@ if ($err =~ m/fatal/ || $err =~ m/error/ || $lg =~ m/[CK]ONFLI/) {
 }
 # sinkronigu revo/xml
 print "$rsync $git_dir/revo/ $xml_dir/\n...\n" if ($verbose);
-`$rsync $git_dir/revo/ $xml_dir/`;
+print `$rsync $git_dir/revo/ $xml_dir/`;
 
 # vi povas retrakti specifan (antaŭan) poŝtdosieron, ekz-e se okazis
 # eraro kaj vi volas ripeti por ne perdi la redakton...
@@ -1095,11 +1095,11 @@ sub extract_version {
     my $id = shift;
     # ekstraktu version el $Id: ...
     unless ($id =~ /^\044Id: [^ ,\.]+\.xml,v\s+([0-9\.]+)/) {
-	report ("ERARO   : Artikol-marko havas malghustan sintakson\n");
-	warn "$id ne enhavas version\n";
-	return '???';
+		report ("ERARO   : Artikol-marko havas malghustan sintakson\n");
+		warn "$id ne enhavas version\n";
+		return '???';
     } else {
-	return $1;
+		return $1;
     }
 }
 
@@ -1107,11 +1107,11 @@ sub extract_article {
     my $id = shift;
     # ekstraktu dosiernomon el $Id: ...
     unless ($id =~ /^\044Id: ([^ ,\.]+)\.xml,v\s+[0-9\.]+/) {
-	report ("ERARO   : Artikol-marko havas malghustan sintakson\n");
-	warn "$id ne enhavas dosiernomon\n";
-	return '???';
+		report ("ERARO   : Artikol-marko havas malghustan sintakson\n");
+		warn "$id ne enhavas dosiernomon\n";
+		return '???';
     } else {
-	return $1;
+		return $1;
     }
 }
 
