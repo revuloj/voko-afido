@@ -106,8 +106,8 @@ if ($err =~ m/fatal/ || $err =~ m/error/ || $lg =~ m/[CK]ONFLI/) {
 }
 # sinkronigu revo/xml
 print "$rsync $git_dir/revo/ $xml_dir/\n...\n" if ($verbose);
-unless (-x $rsync) {
-	warn "Programo ne ekzistas aŭ ne estas kanĉebla: $rsync\n";
+unless (-x "/usr/bin/rsync") {
+	warn "Programo 'rsync' ne ekzistas aŭ ne estas lanĉebla!\n";
 }
 print `$rsync $git_dir/revo/ $xml_dir/`;
 
@@ -978,9 +978,9 @@ sub cmd_aldon {
 
     # kontrolu, chu la dosiernomo estas ankorau uzebla
     if (-e "$xml_dir/$art.xml") {
-	report ("ERARO   : Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
-	    ."Bv. elekti alian nomon por la nova artikolo.\n");
-	return;
+		report ("ERARO   : Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
+			."Bv. elekti alian nomon por la nova artikolo.\n");
+		return;
     }
 
     # kontroli la sintakson
@@ -1004,14 +1004,12 @@ sub checkinnew {
     print MSG "$edtr: $shangho";
     close MSG;
 
-    # checkin CSV
-    my $xmlfile="$art.xml";
-
 	# checkin in Git
-    `mv $xml_temp/xml.xml $git_dir/revo/$xmlfile`;
+    my $repo_art_file = "$git_dir/revo/$art.xml";
+    `mv $xml_temp/xml.xml $repo_art_file`;
 
 	#chdir($git_dir);
-	checkinnew_git("revo/$xmlfile",$edtr);
+	checkinnew_git($repo_art_file,$edtr);
 
 	unlink("$tmp/shanghoj.msg");
 }
@@ -1077,6 +1075,7 @@ sub get_archive_version {
     my $xmlfile = "$xml_dir/$art.xml";
 
     # legu la ghisnunan artikolon
+	# KOREKTU: ĉe nova dosiero tiu atendeble ne ekzistas
     unless (open XMLFILE, $xmlfile) {
 		warn "Ne povis legi $xmlfile: $!\n";
 		return;
