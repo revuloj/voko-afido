@@ -106,6 +106,9 @@ if ($err =~ m/fatal/ || $err =~ m/error/ || $lg =~ m/[CK]ONFLI/) {
 }
 # sinkronigu revo/xml
 print "$rsync $git_dir/revo/ $xml_dir/\n...\n" if ($verbose);
+unless (-x $rsync) {
+	warn "Programo ne ekzistas aŭ ne estas kanĉebla: $rsync\n";
+}
 print `$rsync $git_dir/revo/ $xml_dir/`;
 
 # vi povas retrakti specifan (antaŭan) poŝtdosieron, ekz-e se okazis
