@@ -1,5 +1,6 @@
 #!/bin/bash
-set -x
+
+#set -x
 
 dict=/home/afido/dict
 grundo=/home/afido/voko-grundo

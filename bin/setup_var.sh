@@ -1,5 +1,6 @@
 #!/bin/bash
-set -x
+
+#set -x
 
 # FARENDA: legu var el config:
 # var=$(cat /voko-afido.var_afido)
