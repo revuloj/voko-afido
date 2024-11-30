@@ -6,7 +6,10 @@ grundo=/home/afido/voko-grundo
 
 mkdir -p ${dict}/xml
 mkdir -p ${dict}/tmp
-ln -s ${grundo}/dtd ${dict}/tmp/
+
+if [ ! -h ${dict}/tmp/dtd ]; then
+  ln -s ${grundo}/dtd ${dict}/tmp/
+fi
 
 chown -R afido:users ${dict}
 

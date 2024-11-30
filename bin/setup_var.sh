@@ -8,7 +8,10 @@ grundo=/home/afido/voko-grundo
 
 mkdir -p ${var}/tmp/mailatt
 mkdir -p ${var}/tmp/xml
-ln -s -f ${grundo}/dtd ${var}/tmp/
+
+if [ ! -h ${var}/tmp/dtd ]; then
+  ln -s -f ${grundo}/dtd ${var}/tmp/
+fi
 
 #mkdir -p ${var}/log
 mkdir -p ${var}/log/oldmail
