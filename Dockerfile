@@ -38,7 +38,7 @@ COPY bin/* /usr/local/bin/
 
 RUN useradd -ms /bin/bash -u 1074 -G mail afido && mkdir -p /home/afido/.ssh
 WORKDIR /home/afido
-COPY --chown=afido:afido  ssh/* .ssh/
+COPY --chown=afido:afido ssh/* .ssh/
 COPY --chown=afido:afido etc/* etc/
 
 ###USER afido:users
