@@ -6,6 +6,20 @@
 #
 # $ taga-resumo.sh  mail -s "redakto-servo - taga resumo" mia@poshtservo.org
 
+# kontrolu la staton de la atestiloj
+revaj="revaj.steloj.de"
+svagaj="svagaj.steloj.de"
+PORT="443"
+## echo necesas por fermi openssl s_client ##
+echo -n Q | openssl s_client -servername $revaj -connect $revaj:$PORT \
+| openssl x509 -noout -dates
+
+echo -n Q | openssl s_client -servername $svagaj -connect $svagaj:$PORT \
+| openssl x509 -noout -dates
+
+echo ""
+
+# kreu resumon de la afido-protokolo
 log_prefix="${HOME}/log/redsrv-"
 
 if [[ "$1" == "-a" ]]; then

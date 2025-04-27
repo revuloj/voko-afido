@@ -10,6 +10,7 @@ use JSON;
 
 my $mailsenderconf="/etc/mailsender.conf";
 my $debug = 0;
+my $verbose = 1;
 
 if ($debug) {
     $IO::Socket::SSL::DEBUG=3;
@@ -66,6 +67,8 @@ sub smtp_quit {
 
 sub smtp_send {
     my ($smtps, $from, $to, $mailhandle) = @_;
+
+    print "send from <$from> to <$to>\n" if ($verbose);
 
     $smtps->mail($from);
     $smtps->to($to);
