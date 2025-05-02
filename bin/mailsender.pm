@@ -10,7 +10,7 @@ use JSON;
 
 my $mailsenderconf="/etc/mailsender.conf";
 my $debug = 0;
-my $verbose = 1;
+my $verbose = 0;
 
 if ($debug) {
     $IO::Socket::SSL::DEBUG=3;
@@ -68,7 +68,8 @@ sub smtp_quit {
 sub smtp_send {
     my ($smtps, $from, $to, $mailhandle) = @_;
 
-    print "send from <$from> to <$to>\n" if ($verbose);
+    # nur por sencimigo, alie ni devus kaŝi partojn de la retpoŝtadresoj...
+    print "send from <$from> to <$to>\n" if ($debug);
 
     $smtps->mail($from);
     $smtps->to($to);
