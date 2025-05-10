@@ -34,15 +34,21 @@ my $realm = 'reta-vortaro.de:443';
 # baza agordo
 if ($ENV{REVO_HOST} eq "araneo") {
 	# ene de docker-medio ni uzas nur HTTP
-	$submeto_url = "http://araneo/cgi-bin/admin/submeto.pl"
+	$submeto_url = "http://araneo"
 } elsif ($ENV{REVO_HOST}) {
-	# uzu HTTPS kun eksterna servilo
-	$submeto_url = "https://$ENV{REVO_HOST}/cgi-bin/admin/submeto.pl";
+	# uzu HTTPS kun ekstera servilo
+	$submeto_url = "https://$ENV{REVO_HOST}";
 	$realm = $ENV{REVO_HOST}.':443';
 } else {	
 	# se SERVILO ne estas aparte difinita ni uzas reta-vortaro.de
-  	$submeto_url = 'https://reta-vortaro.de/cgi-bin/admin/submeto.pl';
+  	$submeto_url = 'https://reta-vortaro.de';
 }
+if ($ENV{ADM_URL}) {
+	$submeto_url .= $ENV{ADM_URL}.'/submeto.pl';
+} else {
+	$submeto_url .= '/cgi-bin/admin/submeto.pl';
+}
+
 #$afido_dir    = "/var/afido"; # tmp, log
 $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
 $dict_base    = "$dict_home/dict"; # xml, dok, dtd
@@ -91,7 +97,7 @@ my $ua = LWP::UserAgent->new();
 $ua->agent('Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:36.0) Gecko/20100101 Firefox/36.0');
 $ua->credentials( # vd https://perlmaven.com/lwp-useragent-and-basic-authentication
     $realm,'Restricted Content',
-    $ENV{'CGI_USER'} => $ENV{'CGI_PASSWORD'}
+    $ENV{'ADM_USER'} => $ENV{'ADM_PASSWORD'}
 );
 
 ################ la precipa masho de la programo ##############

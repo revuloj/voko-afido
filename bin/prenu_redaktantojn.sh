@@ -12,17 +12,12 @@ source setup_env.sh
 
 # REVO_HOST kaj CGI-variabloj estas difinitaj en setup_env.sh
 
-if [[ "$REVO_HOST" == svagaj* ]]; then
-    # ni prenas jam pretan JSON, ekz-e de svagaj steloj
-    url=https://${REVO_HOST}/admin/redaktantoj.json
-else
-    url=https://${REVO_HOST}/cgi-bin/admin/redaktantoj-json.pl
-fi
+url=https://${REVO_HOST}${ADM_URL}/redaktantoj-json.pl
 
 mkdir -p ${etc}
 
 echo "${etc}/redaktantoj.json <- ${url}"
-curl -o ${etc}/redaktantoj.json --user ${CGI_USER}:${CGI_PASSWORD} ${ipv} --max-time ${timeout} --retry ${retry} --retry-delay ${delay} ${url}
+curl -o ${etc}/redaktantoj.json --user ${ADM_USER}:${ADM_PASSWORD} ${ipv} --max-time ${timeout} --retry ${retry} --retry-delay ${delay} ${url}
 
 # kontrolu ĉu ni ricevis JSON kaj ne eble HTML-eraron
 first=$(head -c 1 ${etc}/redaktantoj.json)
