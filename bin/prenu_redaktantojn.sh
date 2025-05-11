@@ -23,7 +23,7 @@ curl -o ${etc}/redaktantoj.json --user ${ADM_USER}:${ADM_PASSWORD} ${ipv} --max-
 first=$(head -c 1 ${etc}/redaktantoj.json)
 if [[ "${first}" != "[" ]]; then
   echo "Ni atendis JSON-liston. Ŝajne redaktantoj ne ŝargiĝis ĝuste!"
-  echo "$(head -c 5 ${etc}/redaktantoj.json)"
+  echo "$(head -n 5 ${etc}/redaktantoj.json)"
   exit 1
 fi
 
