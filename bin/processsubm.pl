@@ -29,7 +29,8 @@ use mailsender;
 #$verbose      = 1;
 #$debug        = 1;
 $loglevel = 'debug'; # info...
-my $realm = 'reta-vortaro.de:443';
+my $netloc = 'reta-vortaro.de:443';
+my $realm = 'Restricted Content';
 
 # baza agordo
 if ($ENV{REVO_HOST} eq "araneo") {
@@ -38,13 +39,14 @@ if ($ENV{REVO_HOST} eq "araneo") {
 } elsif ($ENV{REVO_HOST}) {
 	# uzu HTTPS kun ekstera servilo
 	$submeto_url = "https://$ENV{REVO_HOST}";
-	$realm = $ENV{REVO_HOST}.':443';
+	$netloc = $ENV{REVO_HOST}.':443';
 } else {	
 	# se SERVILO ne estas aparte difinita ni uzas reta-vortaro.de
   	$submeto_url = 'https://reta-vortaro.de';
 }
 if ($ENV{ADM_URL}) {
 	$submeto_url .= $ENV{ADM_URL}.'/submeto.pl';
+	$realm = 'submetoj';
 } else {
 	$submeto_url .= '/cgi-bin/admin/submeto.pl';
 }
@@ -96,7 +98,7 @@ my $log = Log::Dispatch->new(
 my $ua = LWP::UserAgent->new();
 $ua->agent('Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:36.0) Gecko/20100101 Firefox/36.0');
 $ua->credentials( # vd https://perlmaven.com/lwp-useragent-and-basic-authentication
-    $realm,'Restricted Content',
+    $netloc,$realm,
     $ENV{'ADM_USER'} => $ENV{'ADM_PASSWORD'}
 );
 
