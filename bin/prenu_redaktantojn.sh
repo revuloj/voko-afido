@@ -17,6 +17,7 @@ url=https://${REVO_HOST}${ADM_URL}/redaktantoj-json.pl
 mkdir -p ${etc}
 
 echo "${etc}/redaktantoj.json <- ${url}"
+echo "${ADM_USER}:${ADM_PASSWORD::1}***${ADM_PASSWORD:0-1}"
 curl -o ${etc}/redaktantoj.json --user ${ADM_USER}:${ADM_PASSWORD} ${ipv} --max-time ${timeout} --retry ${retry} --retry-delay ${delay} ${url}
 
 # kontrolu ĉu ni ricevis JSON kaj ne eble HTML-eraron
