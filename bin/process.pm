@@ -52,7 +52,11 @@ sub read_file {
 	unless (open FILE, $file) {
 		$log->warn("Ne povis malfermi '$file': $!\n"); return;
 	}
-	my $text = decode('utf8', join('',<FILE>));
+	# ĝenerala trakto kiel utf8 kaŭzas problemon en forsendo de raportoj...
+	# open body: Invalid argument at /usr/share/perl5/MIME/Entity.pm line 1892
+	# do faru tion prefere post voko de read_file, kie necesas
+	# my $text = decode('utf8', join('',<FILE>));
+	my $text = join('',<FILE>);
 	close FILE;
 	return $text;
 }
@@ -276,7 +280,7 @@ sub log_incr {
 	my @lines = split(/\n/,$alog);
 	$alog = join("\n",splice(@lines,0,20));
 
-	my $shg = read_file($shangh_file);
+	my $shg = decode('utf8', read_file($shangh_file));
 	return "\$Log\$\nversio $ver\n".$shg."\n$alog\n-->";
 }
 
@@ -287,7 +291,7 @@ sub init_ver {
 
 	# $Id: test.xml,v 1.1 2019/12/01 16:57:36 afido Exp $
     my $art = read_file("$artfile");
-	my $shg = read_file($shangh_file);
+	my $shg = decode('utf8', read_file($shangh_file));
 
 	$artfile =~ m|/([^/]+\.xml)|;
 	my $fn = $1;
