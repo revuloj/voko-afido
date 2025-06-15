@@ -52,7 +52,7 @@ sub read_file {
 	unless (open FILE, $file) {
 		$log->warn("Ne povis malfermi '$file': $!\n"); return;
 	}
-	my $text = join('',<FILE>);
+	my $text = decode('utf8', join('',<FILE>));
 	close FILE;
 	return $text;
 }
