@@ -311,7 +311,7 @@ sub send_reports {
 				Data=>$message);
 		
 		# alpendigu dosierojn
-		$log->debug("dosieroj{maddr}: ".Dumper(@{$dosieroj{$maddr}}));
+		$log->debug("dosieroj{maddr}: ".Dumper(@{$dosieroj{$maddr}})."\n");
 		for $dos (@{$dosieroj{$maddr}}) {
 			$file = $dos->[0];
 			$art_id = $dos->[1];
