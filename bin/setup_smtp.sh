@@ -14,6 +14,8 @@ if [[ -z "$SMTP_USER" ]]; then
     SMTP_USER=$(cat /run/secrets/voko-afido.smtp_user)
 fi
 
+# PLIBONIGU: en revo-digesto ni havas nek nek, do
+# ankaŭ kontrolu ĉu la dosiero ekzistas
 if [[ -z "$SMTP_PASSWORD" ]]; then
     SMTP_PASSWORD=$(cat /run/secrets/voko-afido.smtp_password)
 fi

@@ -676,7 +676,7 @@ sub submeto_listo {
 	my $result = $ua->post($submeto_url,[format=>'text']);
 
 	if ($result->is_success) {
-		my $csv = decode('utf8', $result->content);
+		my $csv = $result->decoded_content(); # decode('utf8', $result->content);
 		return process::csv2arr($csv);
 	} else {
 		$log->error("Ne eblis preni liston de submetoj el $submeto_url.\n".$result->status_line."\n");
@@ -697,7 +697,7 @@ sub pluku_submeton {
 	]);
 
 	if ($result->is_success) {
- 		my @lines = split("\n",$result->content);
+ 		my @lines = split("\n",$result->decoded_content()); # decode('utf8', $result->content));
 
 		$log->debug("first line:".$lines[0]."\n");
 		# prenu redaktanton
@@ -761,7 +761,7 @@ sub submeto_rezulto {
 		[
 			id => $subm_id, 
 			state => $state,
-			result => $detaloj->{mesagho}
+			result => encode('utf-8',$detaloj->{mesagho})
 		]);
 
  	if (not $res->is_success) {
