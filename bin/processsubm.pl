@@ -14,6 +14,8 @@ use MIME::Entity;
 use Log::Dispatch;
 use LWP::UserAgent;
 use Encode;
+binmode STDOUT, ':utf8';
+binmode STDERR, ':utf8';
 
 use Data::Dumper;
 
@@ -243,6 +245,7 @@ sub is_editor {
 sub report {
     my ($subm, $detaloj) = @_;
     
+	$detaloj->{mesagho} = encode('utf-8',$detaloj->{mesagho});
     $log->info($detaloj->{mesagho}."\n");
 
 	$detaloj->{subm_id} = $subm->{id};
@@ -311,7 +314,9 @@ sub send_reports {
 				Data=>$message);
 		
 		# alpendigu dosierojn
-		$log->debug("dosieroj{maddr}: ".Dumper(@{$dosieroj{$maddr}})."\n");
+		$log->debug("dosieroj{maddr}: ");
+		Dumper(@{$dosieroj{$maddr}})."\n") if ($debug);
+		
 		for $dos (@{$dosieroj{$maddr}}) {
 			$file = $dos->[0];
 			$art_id = $dos->[1];
