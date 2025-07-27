@@ -14,8 +14,8 @@ use MIME::Entity;
 use Log::Dispatch;
 use LWP::UserAgent;
 use Encode;
-binmode STDOUT, ':utf8';
-binmode STDERR, ':utf8';
+# binmode STDOUT, ':utf8';
+# binmode STDERR, ':utf8';
 
 use Data::Dumper;
 
@@ -245,7 +245,7 @@ sub is_editor {
 sub report {
     my ($subm, $detaloj) = @_;
     
-	$detaloj->{mesagho} = encode('utf-8',$detaloj->{mesagho});
+	#$detaloj->{mesagho} = encode('utf-8',$detaloj->{mesagho});
     $log->info($detaloj->{mesagho}."\n");
 
 	$detaloj->{subm_id} = $subm->{id};
@@ -457,7 +457,7 @@ sub check_xml {
 
 sub checkin {
     my ($subm,$art,$id,$fname) = @_;
-	my $shangho = $subm->{desc};
+	my $shangho = encode('utf-8',$subm->{desc});
 
     # kontrolu chu ekzistas shangh-priskribo
     unless ($shangho) {
@@ -470,7 +470,7 @@ sub checkin {
 	  	});
       	return;
     } 
-    $log->info("ŝanĝoj: ".encode('utf-8',$subm->{desc})."\n");
+    $log->info("ŝanĝoj: ".$shangho."\n");
 
     # skribu la shanghojn en dosieron
     my $edtr = $editor->{red_nomo};
@@ -529,7 +529,7 @@ sub checkin {
 
 sub checkin_git {
 	my ($subm,$xmlfile,$edtr,$id) = @_;
-	my $shangho = $subm->{desc};
+	my $shangho = encode('utf-8',$subm->{desc});
 
 	process::incr_ver("$xmlfile","$tmp/shanghoj.msg");
 
@@ -582,7 +582,7 @@ sub checkin_git {
 
 sub checkinnew {
     my ($subm,$art,$id,$fname) = @_;
-	my $shangho = $subm->{desc};
+	my $shangho = encode('utf-8',$subm->{desc});
 
     $shangho = "nova artikolo";
     $log->info("shanghoj: $shangho\n");
