@@ -769,8 +769,10 @@ sub submeto_rezulto {
 			state => $state,
 			result => $detaloj->{mesagho} # encode('utf-8',$detaloj->{mesagho})
 		],
-		"Content-Type" => "application/x-www-form-urlencoded; charset=UTF-8"
-		);
+		Content_Type => 'form-data'
+	);
+#		"Content-Type" => "application/x-www-form-urlencoded; charset=UTF-8"
+#		);
 
  	if (not $res->is_success) {
 		$log->warn("Ne eblis aktualigi la rezulton de la submeto '".$subm_id."'\n".$res->status_line);
