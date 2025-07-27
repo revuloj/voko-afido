@@ -766,7 +766,7 @@ sub submeto_rezulto {
 		[
 			id => $subm_id, 
 			state => $state,
-			result => encode('utf-8',$detaloj->{mesagho})
+			result => $detaloj->{mesagho} # encode('utf-8',$detaloj->{mesagho})
 		]);
 
  	if (not $res->is_success) {
