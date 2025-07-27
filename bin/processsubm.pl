@@ -14,6 +14,7 @@ use MIME::Entity;
 use Log::Dispatch;
 use LWP::UserAgent;
 use Encode;
+use utf8;
 # binmode STDOUT, ':utf8';
 # binmode STDERR, ':utf8';
 
@@ -295,7 +296,7 @@ sub send_reports {
 	# forsendu la raportojn
 	while (my ($maddr,$report) = each %reports) {
 
-		$message = "Saluton!\nJen raporto pri via(j) sendita(j) artikolo(j).\n\n";
+		my $message = "Saluton!\nJen raporto pri via(j) sendita(j) artikolo(j).\n\n";
 		for (@$report) {
 			$message .= $separator.process::rep_str($_);
 		}
