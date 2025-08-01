@@ -15,8 +15,8 @@ use Log::Dispatch;
 use LWP::UserAgent;
 use Encode;
 use utf8;
-# binmode STDOUT, ':utf8';
-# binmode STDERR, ':utf8';
+binmode STDOUT, ':utf8';
+binmode STDERR, ':utf8';
 
 use Data::Dumper;
 
@@ -31,7 +31,7 @@ use mailsender;
 # kiom da informoj
 #$verbose      = 1;
 #$debug        = 1;
-$loglevel = 'debug'; # info...
+$loglevel = 'info'; #'debug'; 'info'...
 my $netloc = 'reta-vortaro.de:443';
 my $realm = 'Restricted Content';
 
@@ -121,7 +121,7 @@ mkdir($rez_dir);
 # trovi ilin facile laŭ numero (red_id)
 $editors=process::read_json_file($editor_file);
 
-process::write_file(">", $mail_send,"[\n"); my $mail_send_sep = '';
+process::write_file(">:encoding(utf-8)", $mail_send,"[\n"); my $mail_send_sep = '';
 
 my @submetoj = submeto_listo();
 #$log->info(Dumper(@submetoj));
@@ -159,7 +159,7 @@ foreach my $subm (@submetoj) {
     process_subm($subm,\%subm_detaloj);	
 }
 
-process::write_file(">>",$mail_send,"\n]\n");
+process::write_file(">>:encoding(utf-8)",$mail_send,"\n]\n");
 
 $log->info($separator);
 #git_push();
@@ -359,7 +359,7 @@ sub send_reports {
 sub cmd_redakt {
     my ($subm,$detaloj) = @_;
 	my $fname = "$xml_dir/".$subm->{fname}.".xml";
-	process::write_file(">",$fname,$detaloj->{xml});
+	process::write_file(">:encoding(utf-8)",$fname,$detaloj->{xml});
 
     #$shangho = $shangh; # memoru por poste
     #$shangho =~ s/[\200-\377]/?/g; # forigu ne-askiajn signojn
@@ -395,7 +395,7 @@ sub cmd_aldon {
     # kio estu la nomo de la nova artikolo
 	my $art = process::trim($subm->{fname}); 
 	my $fname = "$xml_dir/".$subm->{fname}.".xml";
-	process::write_file(">",$fname,$detaloj->{xml});
+	process::write_file(">:encoding(utf-8)",$fname,$detaloj->{xml});
    
     unless ($art =~ /^[a-z0-9_]+$/s) {
 		report($subm, { 
@@ -477,7 +477,7 @@ sub checkin {
     my $edtr = $editor->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
-	process::write_file(">","$tmp/shanghoj.msg","$edtr: $subm->{desc}");
+	process::write_file(">:encoding(utf-8)","$tmp/shanghoj.msg","$edtr: $subm->{desc}");
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
 	my $repo_art_file = "$git_dir/revo/$art.xml";
@@ -592,7 +592,7 @@ sub checkinnew {
     my $edtr = $editor->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
-    process::write_file(">","$tmp/shanghoj.msg","$edtr: $shangho");
+    process::write_file(">:encoding(utf-8)","$tmp/shanghoj.msg","$edtr: $shangho");
 
 	my $repo_art_file = "$git_dir/revo/$art.xml";
 
