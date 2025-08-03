@@ -1,0 +1,40 @@
+#!/bin/bash
+
+## | Deplojas (post eventuala kompilo) partojn de la kodo al procezujo afidotesto_afido
+##
+## Voku kiel:
+##    depolojo <celo>
+##
+## kie <celo> estas unu el la sekvaj:
+
+target="${1:-docker}"
+
+
+case $target in
+
+docker)
+    ## docker : kopias retpaĝojn el web/ al la procezujo
+    afido_id=$(docker ps --filter name=afidotesto_afido -q)
+    todir=/usr/local/bin
+
+    for pl in bin/*.pl
+    do
+        echo "${pl}"
+        docker cp ${pl} ${afido_id}:${todir}
+    done
+
+    for pm in bin/*.pm
+    do
+        echo "${pm}"
+        docker cp ${pm} ${afido_id}:${todir}
+    done
+
+    #for sh in bin/*.sh
+    #do
+    #    echo "${sh}"
+    #    docker cp ${sh} ${afido_id}:${todir}
+    #done
+
+    ;;
+
+esac

@@ -31,14 +31,15 @@ use mailsender;
 # kiom da informoj
 #$verbose      = 1;
 #$debug        = 1;
-$loglevel = 'info'; #'debug'; 'info'...
+$loglevel = 'debug'; # 'info'...
 my $netloc = 'reta-vortaro.de:443';
 my $realm = 'Restricted Content';
 
 # baza agordo
-if ($ENV{REVO_HOST} eq "araneo") {
+if ($ENV{REVO_HOST} eq "araneo" || $ENV{REVO_HOST} eq "cetonio:8080") {
 	# ene de docker-medio ni uzas nur HTTP
-	$submeto_url = "http://araneo"
+	$submeto_url = "http://$ENV{REVO_HOST}";
+	$netloc = $ENV{REVO_HOST};
 } elsif ($ENV{REVO_HOST}) {
 	# uzu HTTPS kun ekstera servilo
 	$submeto_url = "https://$ENV{REVO_HOST}";
@@ -47,6 +48,7 @@ if ($ENV{REVO_HOST} eq "araneo") {
 	# se SERVILO ne estas aparte difinita ni uzas reta-vortaro.de
   	$submeto_url = 'https://reta-vortaro.de';
 }
+
 if ($ENV{ADM_URL}) {
 	$submeto_url .= $ENV{ADM_URL}.'/submeto.pl';
 	$realm = 'submetoj';
@@ -104,6 +106,11 @@ $ua->credentials( # vd https://perlmaven.com/lwp-useragent-and-basic-authenticat
     $netloc,$realm,
     $ENV{'ADM_USER'} => $ENV{'ADM_PASSWORD'}
 );
+
+###
+$log->debug("netloc: $netloc\n");
+$log->debug("ADM_USER: $ENV{'ADM_USER'}\n");
+$log->debug("ADM_PASSWORD: $ENV{'ADM_PASSWORD'}\n");
 
 ################ la precipa masho de la programo ##############
 

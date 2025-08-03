@@ -39,10 +39,8 @@ COPY bin/* /usr/local/bin/
 
 RUN useradd -ms /bin/bash -u 1074 -G mail afido && mkdir -p /home/afido/.ssh
 WORKDIR /home/afido
-COPY --chown=afido:afido ssh/* .ssh/
+#COPY --chown=afido:afido ssh/* .ssh/
 COPY --chown=afido:afido etc/* etc/
-
-###USER afido:users
 
 ## RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/master.zip \
 ##   && unzip master.zip voko-grundo-master/dtd/* && rm master.zip && mkdir dict \
@@ -59,10 +57,15 @@ COPY --from=grundo build/dtd/ voko-grundo/dtd
 #   network --driver host 
 # ne kunfunkcias kun
 #   run --publish gastiga:interna
-ENV AFIDO_PORT=22
-
-USER root
-#EXPOSE 22
+# ENV AFIDO_PORT=22
+# USER root
+# EXPOSE 22
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["/usr/sbin/sshd","-D","-p","${AFIDO_PORT}"]
+#CMD ["/usr/sbin/sshd","-D","-p","${AFIDO_PORT}"]
+
+# docker-entrypoint.sh devas ruliĝi kiel "root"
+# ĝi en la fino lanĉas la malsupran komandon per 'exec su afido -c...'
+#USER afido:users
+
+CMD ["afido"]

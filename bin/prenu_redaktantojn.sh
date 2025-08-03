@@ -11,8 +11,13 @@ ipv="--ipv4"
 source setup_env.sh
 
 # REVO_HOST kaj CGI-variabloj estas difinitaj en setup_env.sh
+if [[ $REVO_HOST = "araneo" || $REVO_HOST = "cetonio:8080" ]]; then
+  proto="http"
+else
+  proto="https"
+fi
 
-url=https://${REVO_HOST}${ADM_URL}/redaktantoj-json.pl
+url=${proto}://${REVO_HOST}${ADM_URL}/redaktantoj-json.pl
 
 mkdir -p ${etc}
 
