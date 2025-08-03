@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#set -x
+
 basedir="${REVO_DIR:-/home/afido}"
 etc=${basedir}/etc
 redj=${etc}/redaktantoj.json

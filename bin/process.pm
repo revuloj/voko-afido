@@ -4,6 +4,7 @@
 # laŭ GPL 2.0
 
 use strict;
+use utf8;
 
 package process;
 

@@ -110,7 +110,6 @@ $ua->credentials( # vd https://perlmaven.com/lwp-useragent-and-basic-authenticat
 ###
 $log->debug("netloc: $netloc\n");
 $log->debug("ADM_USER: $ENV{'ADM_USER'}\n");
-$log->debug("ADM_PASSWORD: $ENV{'ADM_PASSWORD'}\n");
 
 ################ la precipa masho de la programo ##############
 
@@ -124,7 +123,7 @@ mkdir($log_dir);
 mkdir($rez_dir); 
 
 
-# legu redaktantoj el JSON-dosiero kaj transformu al HASH por 
+# legu redaktantojn el JSON-dosiero kaj transformu al HASH por 
 # trovi ilin facile laŭ numero (red_id)
 $editors=process::read_json_file($editor_file);
 
@@ -140,14 +139,15 @@ foreach my $subm (@submetoj) {
 
     $log->info($separator);
 
-	$log->debug(join(',',keys %$subm));
-	$log->debug(encode('utf-8',join(',',values %$subm))."\n");
+	$log->debug(join(',',keys %$subm)."\n");
+	$log->debug(join(',',values %$subm)."\n");
+	#$log->debug(encode('utf-8',join(',',values %$subm))."\n");
 
 	# eligu iom da informo pri la submeto
 	$log->info(
 		"id:".$subm->{"id"}."\n".
 		"date:",$subm->{"time"}."\n".
-		"desc:",encode('utf-8',$subm->{"desc"})."\n");
+		"desc:",$subm->{"desc"}."\n"); #encode('utf-8',$subm->{"desc"})."\n");
 
 
     # preparu por la nova mesagho
@@ -262,7 +262,7 @@ sub report {
 	#submeto_rezulto($subm->{id},$detaloj);
 
 	$detaloj->{sendinto} = $editor->{red_nomo}." <".$editor->{retadr}[0].">";
-	process::write_json_file(">>",$mail_send, $detaloj, $mail_send_sep);
+	process::write_json_file(">>:encoding(utf-8)",$mail_send, $detaloj, $mail_send_sep);
 	$mail_send_sep = ',';
 }
 
@@ -370,7 +370,7 @@ sub cmd_redakt {
 
     #$shangho = $shangh; # memoru por poste
     #$shangho =~ s/[\200-\377]/?/g; # forigu ne-askiajn signojn
-	$log->debug("redakto: ".encode('utf-8',$subm->{desc})."\n");
+	$log->debug("redakto: ".$subm->{desc}."\n"); # encode('utf-8',$subm->{desc})."\n");
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
 	my $article_id = process::get_art_id($fname);
@@ -465,7 +465,7 @@ sub check_xml {
 
 sub checkin {
     my ($subm,$art,$id,$fname) = @_;
-	my $shangho = encode('utf-8',$subm->{desc});
+	my $shangho = $subm->{desc}; # encode('utf-8',$subm->{desc});
 
     # kontrolu chu ekzistas shangh-priskribo
     unless ($shangho) {
@@ -769,7 +769,7 @@ sub submeto_rezulto {
 		$state = 'erar';
 	}
     # vd. https://www.perl.com/pub/2002/08/20/perlandlwp.html/
-	$log->info("Aktualigo de submeto ".$subm_id.", stat: $state [".$detaloj->{mesagho}."]\n");
+	$log->info("Aktualigo de submeto ".$subm_id.", stat: $state [".decode('utf-8',$detaloj->{mesagho})."]\n");
 	my $res = $ua->post($submeto_url,
 		[
 			id => $subm_id, 
