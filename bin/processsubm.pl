@@ -769,7 +769,8 @@ sub submeto_rezulto {
 		$state = 'erar';
 	}
     # vd. https://www.perl.com/pub/2002/08/20/perlandlwp.html/
-	$log->info("Aktualigo de submeto ".$subm_id.", stat: $state [".decode('utf-8',$detaloj->{mesagho})."]\n");
+	#$log->info("Aktualigo de submeto ".$subm_id.", stat: $state [".decode('utf-8',$detaloj->{mesagho})."]\n");
+	$log->info("Aktualigo de submeto ".$subm_id.", stat: $state [".$detaloj->{mesagho}."]\n");
 	my $res = $ua->post($submeto_url,
 		[
 			id => $subm_id, 
