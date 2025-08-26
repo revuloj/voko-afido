@@ -90,8 +90,8 @@ sub read_json_file {
 
     my $parsed;
 	eval {
-    	#$parsed = $json_parser->decode(decode('utf8', $j));
-		$parsed = $json_parser->decode($j);
+    	$parsed = $json_parser->decode(decode('utf8', $j));
+		#$parsed = $json_parser->decode($j);
     	1;
 	} or do {
   		my $error = $@;
