@@ -108,8 +108,9 @@ $ua->credentials( # vd https://perlmaven.com/lwp-useragent-and-basic-authenticat
 );
 
 ###
-$log->debug("netloc: $netloc\n");
-$log->debug("ADM_USER: $ENV{'ADM_USER'}\n");
+$log->debug("realm: $realm\n");
+$log->debug("netloc: ".substr($netloc,0,10)."...\n");
+$log->debug("ADM_USER: ".substr($ENV{'ADM_USER'},0,3)."...\n");
 
 ################ la precipa masho de la programo ##############
 
