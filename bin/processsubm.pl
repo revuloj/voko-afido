@@ -49,7 +49,7 @@ if ($ENV{REVO_HOST} eq "araneo" || $ENV{REVO_HOST} eq "cetonio:8080") {
   	$submeto_url = 'https://reta-vortaro.de';
 }
 
-if ($ENV{ADM_URL}) {
+if ($ENV{ADM_URL} && $ENV{REVO_HOST} !~ m/reta-?vortaro\.de/) {
 	$submeto_url .= $ENV{ADM_URL}.'/submeto.pl';
 	$realm = 'submetoj';
 } else {
