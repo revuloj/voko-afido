@@ -8,10 +8,14 @@
 # voku:
 #  processmail.pl [<mesagh-dosiero>]
 
+use strict; use warnings;
+
 use lib("/usr/local/bin");
 use lib("./bin");
 use process qw (trim);
 use mailsender;
+
+use utf8; use open ':std', ':encoding(UTF-8)';
 
 use MIME::Parser;
 use MIME::Entity;

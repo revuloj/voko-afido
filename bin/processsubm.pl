@@ -8,15 +8,13 @@
 # voku:
 #  processgist.pl
 
-use warnings;
+use strict; use warnings;
 
 use MIME::Entity;
 use Log::Dispatch;
 use LWP::UserAgent;
 use Encode;
-use utf8;
-binmode STDOUT, ':utf8';
-binmode STDERR, ':utf8';
+use utf8; use open ':std', ':encoding(UTF-8)';
 
 use Data::Dumper;
 
