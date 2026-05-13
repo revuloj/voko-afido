@@ -92,7 +92,7 @@ my $separator    = "=" x 50 . "\n";
 
 ################ la precipa masho de la programo ##############
 
-$| = 1;
+local $| = 1;
 my $the_mail   = '';
 my $editor     = '';
 my $article_id = '';
@@ -401,6 +401,8 @@ sub process_ent {
 	report("ERARO   : Ne trovighis komando kaj/au XML-teksto en la "
 		   ."plurparta mesagho");
     }
+
+	return;
 }
 
 # kontrolas ĉu unu el la retadresoj from: aŭ reply-to:
@@ -480,6 +482,8 @@ sub urlencoded_form {
     };           
 
     komando($content{'komando'},$content{'shangho'},$content{'teksto'});
+
+	return;
 }
 
 sub normal_message {
@@ -512,7 +516,7 @@ sub normal_message {
 		}
 
 		komando($cmd,$arg,$xml);
-	
+
     } else {
 		# sekurigu la dosieron
 		unless (open MSG,">$tmp/_err_msg") {
@@ -530,8 +534,9 @@ sub normal_message {
 
 		# raportu eraron
 		report("ERARO   : nekonata komando en la poshtajho","$tmp/_err_msg");
-		return;
     }
+
+	return;
 }
 
 sub komando {
@@ -540,30 +545,18 @@ sub komando {
     # memoru por poste
     $komando = $cmd;
 
-    if ($cmd =~ /^help[oui]$/i) {
-		cmd_hlp();
-
-    } elsif ($cmd =~ /^dokumento/i) {
-		cmd_dokument($arg);
-
-    } elsif ($cmd =~ /^redakt[oui]/i) {
+	if ($cmd =~ /^redakt[oui]/i) {
 		cmd_redakt($arg, $txt);
 
     } elsif ($cmd =~ /^aldon[oui]/i) {
 		cmd_aldon($arg, $txt);
 
-    } elsif ($cmd =~ /^historio/i) {
-		cmd_histori($arg);
-	
-    } elsif ($cmd =~ /^artikolo/i) {
-		cmd_artikol($arg);
-
-    } elsif ($cmd =~ /^propon[oui]/i) {
-		cmd_propon($arg, $txt);
     } else {
 		report("ERARO   : nekonata komando $cmd");
 		return;
     }
+
+	return;
 }
 
 sub save_errmail {
@@ -574,6 +567,8 @@ sub save_errmail {
     print ERRMAIL $the_mail;
     close ERRMAIL;
     print "erara mesagho sekurigita al $mail_error\n" if ($verbose);
+
+	return;
 }
 
 
@@ -627,6 +622,8 @@ MOVE_FILE:
     print SMAIL $separator;
 
     close SMAIL;
+
+	return;
 }
 
 sub send_reports {
@@ -640,7 +637,7 @@ sub send_reports {
     # legu la respondojn el $mail_send
     if (-e $mail_send) {
 		
-		$/ = $separator;
+		local $/ = $separator;
 		unless (open SMAIL, $mail_send) {
 			warn "Ne povis malfermi $mail_send: $!\n";
 			return;
@@ -667,7 +664,7 @@ sub send_reports {
 			}
 		}
 		close SMAIL;
-		$/ = $newline;
+		local $/ = $newline;
 
 		# forsendu la raportojn
 		while (($mail_addr,$message) = each %reports) {
@@ -738,6 +735,8 @@ sub send_reports {
 	# forigu $mail_send
 	# unlink($mail_send);
     } # if
+
+	return;
 }
 
 
@@ -818,6 +817,8 @@ sub cmd_redakt {
     if (check_xml($teksto,0)) {
 		checkin($art,$id);
     }
+
+	return;
 }
 
 sub check_xml {
@@ -879,31 +880,7 @@ sub checkin {
 	# por mildigi la problemon ni ignoris la tempon:
     if (substr($ark_id,0,-19) ne substr($id,0,-19)) {
 
-	# provu solvi la versiokonflikton
-#	report ("PROBLEMO: La de vi sendita artikolo\n"
-#	       ."ne bazighas sur la aktuala arkiva versio\n"
-#	       ."($ark_id)\n"
-#	       ."Mi provas solvi la konflikton. Vidu malsupre.\n");
-#
-#	if (merge_revisions($id,$ark_id)) {
-#	    # rekontrolu la XML-strukturon
-#	    open XML,"$tmp/xml.xml" 
-#		or die "Ne povis malfermi $tmp/xml.xml: $!\n";
-#	    $teksto = join('',<XML>);
-#	    close XML;
-#	    unless (checkxml($teksto)) {
-#		return;
-#	    }
-#	} else {
-#	    # konflikto ne solvebla
-#	    report("ERARO   : La versiokonflikto ne estis solvebla. "
-#		   ."Bonvolu preni aktualan version el la TTT-ejo. "
-#		   ."($vokomail_url?art=$art)\n","$tmp/xml.xml");
-#	    return;
-#	};
-#	# konflikto solvita, daurigu do...
-
-		# versiokonflikto
+		# versi-konflikto
 		report("ERARO   : La de vi sendita artikolo\n"
 			."ne bazighas sur la aktuala arkiva versio\n"
 			."($ark_id)\n"
@@ -921,6 +898,8 @@ sub checkin {
 	checkin_git("revo/$xmlfile",$edtr);
 
 	unlink("$tmp/shanghoj.msg");
+
+	return;
 }
 
 
@@ -1001,6 +980,8 @@ sub cmd_aldon {
     if (check_xml($teksto,1)) {
 		checkinnew($art);
     }
+
+	return;
 }
 
 sub checkinnew {
@@ -1026,6 +1007,8 @@ sub checkinnew {
 	checkinnew_git($repo_art_file,$edtr);
 
 	unlink("$tmp/shanghoj.msg");
+
+	return;
 }
 
 
@@ -1066,22 +1049,6 @@ sub checkinnew_git {
     # raportu sukceson 
     report("KONFIRMO: $log2");
 	return 1;
-}
-
-sub cmd_dokument {
-  # realigu poste
-}
-
-sub cmd_artikol {
-  # realigu poste
-}
-
-sub cmd_propon {
-  # realigu poste
-}
-
-sub cmd_histori {
-  # realigu poste
 }
 
 sub get_archive_version {
