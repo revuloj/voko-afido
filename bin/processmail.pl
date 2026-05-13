@@ -44,7 +44,7 @@ my $mail_folder  = "/var/spool/mail/$mi"; #/var/spool/mail/tomocero";
 # FARENDA: legu tiujn el sekreto(j)
 my $revoservo    = '[Revo-Servo]';
 my $revo_mailaddr= 'revo@reta-vortaro.de';
-my $redaktilo_from= 'redaktilo@reta-vortaro.de';
+my $redaktilo_from = 'redaktilo@reta-vortaro.de';
 ##$revolist     = 'wolfram';
 my $revo_from    = "Reta Vortaro <$revo_mailaddr>";
 my $signature    = "--\nRevo-Servo $revo_mailaddr\n"
@@ -198,7 +198,7 @@ if (-s $mail_send > 10) {
 
 ##send_newarts_report();
 print "puŝas ŝanĝojn al git...\n" if ($verbose);
-my ($lg,$err) = process::git_cmd("$git push origin master");
+($lg,$err) = process::git_cmd("$git push origin master");
 if ($err =~ m/fatal/ || $err =~ m/error/) {
 	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
 	# kun eraro-stato...
@@ -270,19 +270,19 @@ sub process_ent {
 
 	# chu temas pri helpkrio?
 	# tia helppeto validas nur en simplaj mesaghoj
-	if ($entity->mime_type =~ m|^text/plain|) {
-	    $IO = $entity->bodyhandle->open("r"); 
-	    $first_line = $IO->getline(); $IO->close;
-	    if ($first_line =~ /^\s*help/) {
-
-		cmd_help($entity->head->get('reply-to') 
-			 || $entity->head->get('from'));
-
-		print "komando \"helpo\"\n" 
-		    if ($verbose);
-		return;
-	    };
-	};
+##	if ($entity->mime_type =~ m|^text/plain|) {
+##	    $IO = $entity->bodyhandle->open("r"); 
+##	    $first_line = $IO->getline(); $IO->close;
+##	    if ($first_line =~ /^\s*help/) {
+##
+##		cmd_help($entity->head->get('reply-to') 
+##			 || $entity->head->get('from'));
+##
+##		print "komando \"helpo\"\n" 
+##		    if ($verbose);
+##		return;
+##	    };
+##	};
 	    
 	print "!!! ".$entity->head->get('from')." ne estas redaktoro "
 	     ."nek petas pri helpo !!!\n"
@@ -403,7 +403,8 @@ sub process_ent {
     }
 }
 
-
+# kontrolas ĉu unu el la retadresoj from: aŭ reply-to:
+# apartenas al registrita redaktanto
 sub is_editor {
     my $from_addr = shift;
     my $reply_addr = shift;
@@ -412,12 +413,17 @@ sub is_editor {
     chomp $from_addr;
     chomp $reply_addr;
 
-    my $pos1 = index($from_addr,$redaktilo_from1);
-    my $pos2 = index($from_addr,$redaktilo_from2);
+    my $pos1 = index($from_addr,$redaktilo_from);
+    #my $pos2 = index($from_addr,$redaktilo_from2);
 
 	my $email_addr;
 
-    if ($pos1 == 0 || $pos1 == 1 || $pos2 >= 0) {
+	# se la retpoŝto venas de la redaktilo,
+	# la redaktanto troviĝu en reply-to
+	# (ĉar intertempe la redaktilo submetas al
+	# la datumbazo kaj ne plu sendas redaktojn
+	# retpoŝte, tio ne devus okazi plu!
+    if ($pos1 == 0 || $pos1 == 1) {
 		$email_addr = $reply_addr;
     } else {
 		$email_addr = $from_addr;
@@ -723,7 +729,7 @@ sub send_reports {
 
 			# forsendu
 			unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
-				$log->warn("Ne povas forsendi retpoŝtan raporton!\n");
+				warn("Ne povas forsendi retpoŝtan raporton!\n");
 				next;
 			}
 
@@ -738,45 +744,45 @@ sub send_reports {
 ###################### komandoj kaj helpfunkcioj ##############
 
 
-sub cmd_help {
-    my $mail_addr = shift;
-    my ($mail_handle);
-    
-    # sendu helpdokumenton al la sendinto
-    $mail_handle = build MIME::Entity(Type=>"multipart/mixed",
-				      From=>$revo_from,
-				      To=>"$mail_addr",
-				      Subject=>"$revoservo - helpo");
-	    
-    $mail_handle->attach(Type=>"text/plain",
-			 Encoding=>"quoted-printable",
-			 Data=>"Saluton!\n\n"
-			."Jen informoj pri la uzo de Revo-Servo.");
-
-    $mail_handle->attach(Path=>$file,
-			 Type=>'text/plain',
-			 Encoding=>'quoted-printable',
-			 Disposition=>'attachment',
-			 Filename=>"$dok_dir/helpo.txt",
-			 Description=>"helpo pri Revo-servo");
-
-    # forsendu	
-    # unless (open SENDMAIL, "|$sendmail $mail_addr") {
-	# 	warn "Ne povas dukti al $sendmail: $!\n";
-	# 	return;
-    # }
-    # $mail_handle->print(\*SENDMAIL);
-    # close SENDMAIL;
-
-	# forsendu
-	my $mailer = mailsender::smtp_connect;
-	unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
-		$log->warn("Ne povas forsendi retpoŝtan raporton!\n");
-		return;
-	}
-	mailsender::smtp_quit($mailer);
-
-}
+## sub cmd_help {
+##     my $mail_addr = shift;
+##     my ($mail_handle);
+##     
+##     # sendu helpdokumenton al la sendinto
+##     $mail_handle = build MIME::Entity(Type=>"multipart/mixed",
+## 				      From=>$revo_from,
+## 				      To=>"$mail_addr",
+## 				      Subject=>"$revoservo - helpo");
+## 	    
+##     $mail_handle->attach(Type=>"text/plain",
+## 			 Encoding=>"quoted-printable",
+## 			 Data=>"Saluton!\n\n"
+## 			."Jen informoj pri la uzo de Revo-Servo.");
+## 
+##     $mail_handle->attach(Path=>$file,
+## 			 Type=>'text/plain',
+## 			 Encoding=>'quoted-printable',
+## 			 Disposition=>'attachment',
+## 			 Filename=>"$dok_dir/helpo.txt",
+## 			 Description=>"helpo pri Revo-servo");
+## 
+##     # forsendu	
+##     # unless (open SENDMAIL, "|$sendmail $mail_addr") {
+## 	# 	warn "Ne povas dukti al $sendmail: $!\n";
+## 	# 	return;
+##     # }
+##     # $mail_handle->print(\*SENDMAIL);
+##     # close SENDMAIL;
+## 
+## 	# forsendu
+## 	my $mailer = mailsender::smtp_connect;
+## 	unless (mailsender::smtp_send($mailer,$revo_from,$mail_addr,$mail_handle)) {
+## 		warn("Ne povas forsendi retpoŝtan raporton!\n");
+## 		return;
+## 	}
+## 	mailsender::smtp_quit($mailer);
+## 
+## }
 
 
 sub cmd_redakt {
