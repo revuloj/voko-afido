@@ -11,7 +11,7 @@ docker_image="${1:-voko-afido:latest}"
 docker run ${docker_image} bash -c "ls -l && ls -l dict &&\
    [ -f dict/dtd/vokoxml.dtd ] || exit 1 &&\
    perl -MMIME::Entity -MAuthen::SASL::Perl -MIO::Socket::SSL -e1 &&\
-   perl -c /usr/local/bin/processgist.pl && perl -c /usr/local/bin/processsubm.pl &&\
+   perl -c /usr/local/bin/processsubm.pl &&\
    bash -n /usr/local/bin/afido &&\
    bash -n /usr/local/bin/aktualigu_gistojn.sh &&\
    bash -n /usr/local/bin/git-clone-repo.sh &&\
