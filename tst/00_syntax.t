@@ -18,9 +18,6 @@ sub sintaks_kontrolo {
 # oni povas uzi 
 # perl -I./cgi/perllib -c cgi/<skripto...>.pl
 
-
-
-sintaks_kontrolo("./bin/processgist.pl");
 sintaks_kontrolo("./bin/processmail.pl");
 sintaks_kontrolo("./bin/processsubm.pl");
 
