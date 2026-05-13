@@ -265,6 +265,8 @@ sub report {
 	$detaloj->{sendinto} = $editor->{red_nomo}." <".$editor->{retadr}[0].">";
 	process::write_json_file(">>:encoding(utf-8)",$mail_send, $detaloj, $mail_send_sep);
 	$mail_send_sep = ',';
+
+	return;
 }
 
 sub send_reports {
@@ -360,6 +362,7 @@ sub send_reports {
 	}
 
 	#mailsender::smtp_quit($mailer);
+	return;
 }
 
 ###################### komandoj kaj helpfunkcioj ##############
@@ -790,6 +793,6 @@ sub submeto_rezulto {
 	} else {
 		$log->info("Aktualigo rezulto: ".$res->content)
 	}
-}	
 
-
+	return;
+}
