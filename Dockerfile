@@ -34,9 +34,13 @@ ENV LC_ALL C.UTF-8
 # https://serverfault.com/questions/815649/how-to-do-an-unattended-silent-cpan-install-setup
 
 COPY bin/* /usr/local/bin/
+COPY tst/* /usr/local/tst/
+
 #ENV PATH "$PATH:/usr/local/bin"
 
-RUN useradd -ms /bin/bash -u 1074 -G mail afido && mkdir -p /home/afido/.ssh
+RUN useradd -ms /bin/bash -u 1074 -G mail afido && mkdir -p /home/afido/.ssh \
+  && cd /usr/local && prove -v tst/00*.t
+  
 WORKDIR /home/afido
 #COPY --chown=afido:afido ssh/* .ssh/
 COPY --chown=afido:afido etc/* etc/
