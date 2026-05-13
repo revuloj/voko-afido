@@ -29,7 +29,10 @@ use mailsender;
 # kiom da informoj
 #$verbose      = 1;
 #$debug        = 1;
-$loglevel = 'info'; # 'debug'; 'info'...
+my $loglevel = 'info'; # 'debug'; 'info'...
+
+# se SERVILO ne estas aparte difinita ni uzas reta-vortaro.de
+my $submeto_url = 'https://reta-vortaro.de';
 my $netloc = 'reta-vortaro.de:443';
 my $realm = 'Restricted Content';
 
@@ -42,9 +45,6 @@ if ($ENV{REVO_HOST} eq "araneo" || $ENV{REVO_HOST} eq "cetonio:8080") {
 	# uzu HTTPS kun ekstera servilo
 	$submeto_url = "https://$ENV{REVO_HOST}";
 	$netloc = $ENV{REVO_HOST}.':443';
-} else {	
-	# se SERVILO ne estas aparte difinita ni uzas reta-vortaro.de
-  	$submeto_url = 'https://reta-vortaro.de';
 }
 
 if ($ENV{ADM_URL} && $ENV{REVO_HOST} !~ m/reta-?vortaro\.de/) {
@@ -55,39 +55,39 @@ if ($ENV{ADM_URL} && $ENV{REVO_HOST} !~ m/reta-?vortaro\.de/) {
 }
 
 #$afido_dir    = "/var/afido"; # tmp, log
-$dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
-$dict_base    = "$dict_home/dict"; # xml, dok, dtd
-$dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
+my $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
+my $dict_base    = "$dict_home/dict"; # xml, dok, dtd
+my $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
 #$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
-$xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo';
-$revo_url     = 'http://purl.oclc.org/NET/voko/revo';
+my $xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo';
+my $revo_url     = 'http://purl.oclc.org/NET/voko/revo';
 #$mail_folder  = "/var/spool/mail/tomocero";
 
-$revoservo    = '[Revo-Servo]';
-$revo_mailaddr= 'revo@reta-vortaro.de';
+my $revoservo    = '[Revo-Servo]';
+my $revo_mailaddr= 'revo@reta-vortaro.de';
 #$redaktilo_from= 'revo-servo@steloj.de';
-$revo_from    = "Reta Vortaro <$revo_mailaddr>";
-$signature    = "--\nRevo-Servo $revo_mailaddr\n"
+my $revo_from    = "Reta Vortaro <$revo_mailaddr>";
+my $signature    = "--\nRevo-Servo $revo_mailaddr\n"
     ."retposhta servo por redaktantoj de Reta Vortaro.\n";
 
 
 # programoj
-$git          = '/usr/bin/git';
+my $git          = '/usr/bin/git';
 
 # dosierujoj
-$tmp          = "$dict_base/tmp";
-$log_dir      = "$dict_base/log";
+my $tmp          = "$dict_base/tmp";
+my $log_dir      = "$dict_base/log";
 
-$mail_send    = "$tmp/mailsend";
+my $mail_send    = "$tmp/mailsend";
 
-$rez_dir      = "$dict_base/rez";
-$xml_dir      = "$dict_base/xml";
+my $rez_dir      = "$dict_base/rez";
+my $xml_dir      = "$dict_base/xml";
 #$git_repo     = $ENV{"GIT_REPO_REVO"} || "revo-fonto";
-$git_dir      = "$dict_base/revo-fonto";
+my $git_dir      = "$dict_base/revo-fonto";
 
-$editor_file  = "$dict_etc/redaktantoj.json"; #"$dict_etc/voko.redaktantoj";
+my $editor_file  = "$dict_etc/redaktantoj.json"; #"$dict_etc/voko.redaktantoj";
 
-$separator    = "=" x 80 . "\n";
+my $separator    = "=" x 80 . "\n";
 
 # preparu protokolon
 my $log = Log::Dispatch->new(
@@ -114,9 +114,9 @@ $log->debug("ADM_USER: $ENV{'ADM_USER'}\n");
 
 ################ la precipa masho de la programo ##############
 
-$editor     = '';
-$article_id = '';
-$shangho    = '';
+my $editor     = '';
+my $article_id = '';
+my $shangho    = '';
 
 # certigu, ke provizoraj dosierujoj ekzistu
 mkdir($tmp); 
@@ -126,7 +126,7 @@ mkdir($rez_dir);
 
 # legu redaktantojn el JSON-dosiero kaj transformu al HASH por 
 # trovi ilin facile laŭ numero (red_id)
-$editors=process::read_json_file($editor_file);
+my $editors=process::read_json_file($editor_file);
 
 process::write_file(">:encoding(utf-8)", $mail_send,"[\n"); my $mail_send_sep = '';
 
@@ -156,7 +156,7 @@ foreach my $subm (@submetoj) {
     $shangho = '';
     $article_id = '';
 
-	%subm_detaloj = pluku_submeton($subm->{'id'});
+	my %subm_detaloj = pluku_submeton($subm->{'id'});
     unless (%subm_detaloj) {
 		next;
     }
@@ -196,7 +196,7 @@ if (-s $mail_send > 10) {
 $log->info($separator);
 
 if (-s $mail_send > 10) {
-	$filename = "mail_sent_".`date +%Y%m%d_%H%M%S`;    
+	my $filename = "mail_sent_".`date +%Y%m%d_%H%M%S`;    
     $log->info("ŝovas $mail_send al $log_dir/$filename\n");
     `mv $mail_send $log_dir/$filename`;
 }  
@@ -238,7 +238,7 @@ sub is_editor {
     my $retadreso = shift;
 
 	# se ne troviĝis, trairu la liston kaj kalkulu dume la Sha-ojn
-	for $ed (@$editors) {
+	for my $ed (@$editors) {
 		for my $ra (@{$ed->{retadr}}) {
 			return $ed if ($retadreso eq $ra);
 		}
@@ -313,7 +313,7 @@ sub send_reports {
 		my $to = $maddr;
 		$to =~ s/.*<([a-z\.\_\-@]+)>.*/$1/;
 
-		$mail_handle = build MIME::Entity(Type=>"multipart/mixed",
+		my $mail_handle = build MIME::Entity(Type=>"multipart/mixed",
 						From=>$revo_from,
 						To=>$to,
 						Subject=>"$revoservo - raporto");
@@ -326,9 +326,10 @@ sub send_reports {
 		$log->debug("dosieroj{maddr}: ");
 		$log->debug(Dumper(@{$dosieroj{$maddr}}));
 
-		for $dos (@{$dosieroj{$maddr}}) {
-			$file = $dos->[0];
-			$art_id = $dos->[1];
+		for my $dos (@{$dosieroj{$maddr}}) {
+			my $file = $dos->[0];
+			my $art_id = $dos->[1];
+			my $marko;
 
 			if ($art_id) {
 				if ($art_id =~ /^\044([^\044]+)\044$/) {
@@ -422,7 +423,7 @@ sub cmd_aldon {
     $article_id = "\044Id: $art.xml,v\044";
 
     # kontrolu, ĉu la dosiernomo estas ankoraŭ uzebla
-	$xml_file = "$git_dir/revo/$art.xml";
+	my $xml_file = "$git_dir/revo/$art.xml";
     if (-e "$xml_file") {
 		report($subm, {
 			"rezulto"=>"eraro",
@@ -621,8 +622,8 @@ sub checkinnew_git {
 
 	process::init_ver("$xmlfile","$tmp/shanghoj.msg");
 
-	($log1,$err1) = process::git_cmd("$git add $xmlfile");
-	($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
+	my ($log1,$err1) = process::git_cmd("$git add $xmlfile");
+	my ($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco

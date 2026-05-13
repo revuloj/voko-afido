@@ -24,82 +24,82 @@ use MIME::Entity;
 ######################### agorda parto ##################
 
 # kiom da informoj
-$verbose      = 1;
-$debug        = $ENV{'DEBUG'}; #0;
+my $verbose      = 1;
+my $debug        = $ENV{'DEBUG'}; #0;
 
 # FARENDA: legu tiujn el /docker swarm config/
 # baza agordo
-$afido_dir    = "/var/afido"; # $ENV{"HOME"}; # tmp, log
-$dict_home    = $ENV{"HOME"};
-$dict_base    = "$dict_home/dict"; # xml, dok, dtd
-$dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
+my $afido_dir    = "/var/afido"; # $ENV{"HOME"}; # tmp, log
+my $dict_home    = $ENV{"HOME"};
+my $dict_base    = "$dict_home/dict"; # xml, dok, dtd
+my $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
 
 #$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
-$xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo';
-$revo_url     = "http://purl.oclc.org/NET/voko/revo";
+my $xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo';
+my $revo_url     = "http://purl.oclc.org/NET/voko/revo";
 
-chomp($mi = `id -un`);
-$mail_folder  = "/var/spool/mail/$mi"; #/var/spool/mail/tomocero";
+chomp(my $mi = `id -un`);
+my $mail_folder  = "/var/spool/mail/$mi"; #/var/spool/mail/tomocero";
 
 # FARENDA: legu tiujn el sekreto(j)
-$revoservo    = '[Revo-Servo]';
-$revo_mailaddr= 'revo@reta-vortaro.de';
-$redaktilo_from= 'redaktilo@reta-vortaro.de';
+my $revoservo    = '[Revo-Servo]';
+my $revo_mailaddr= 'revo@reta-vortaro.de';
+my $redaktilo_from= 'redaktilo@reta-vortaro.de';
 ##$revolist     = 'wolfram';
-$revo_from    = "Reta Vortaro <$revo_mailaddr>";
-$signature    = "--\nRevo-Servo $revo_mailaddr\n"
+my $revo_from    = "Reta Vortaro <$revo_mailaddr>";
+my $signature    = "--\nRevo-Servo $revo_mailaddr\n"
     ."retposhta servo por redaktantoj de Reta Vortaro.\n";
 
 
 # programoj
 #$xmlcheck     = '/usr/bin/rxp -V -s';
-$git          = '/usr/bin/git';
+my $git          = '/usr/bin/git';
 # -t ne subtenata de ssmtp
 #$rsync        = '/usr/bin/rsync -rv';
-$rsync        = '/usr/bin/rsync -r --stats';
+my $rsync        = '/usr/bin/rsync -r --stats';
 #$sendmail     = '/usr/lib/sendmail -t -i';
 #$sendmail     = '/usr/lib/sendmail -i';
 #$patch        = '/usr/bin/patch';
 
 # dosierujoj
-$tmp          = "$afido_dir/tmp";
-$log_mail     = "$afido_dir/log";
-$dtd_dir      = "$dict_base/dtd";
+my $tmp          = "$afido_dir/tmp";
+my $log_mail     = "$afido_dir/log";
+my $dtd_dir      = "$dict_base/dtd";
 
-$parts_dir    = "$afido_dir/tmp/mailparts";
-$mail_error   = "$tmp/mailerr";
-$mail_send    = "$tmp/mailsend";
-$xml_temp     = "$tmp/xml";
-$dtd_temp     = "$tmp/dtd";
+my $parts_dir    = "$afido_dir/tmp/mailparts";
+my $mail_error   = "$tmp/mailerr";
+my $mail_send    = "$tmp/mailsend";
+my $xml_temp     = "$tmp/xml";
+my $dtd_temp     = "$tmp/dtd";
 
-$old_mail     = "$log_mail/oldmail";
-$err_mail     = "$log_mail/errmail";
-$prc_mail     = "$log_mail/prcmail";
+my $old_mail     = "$log_mail/oldmail";
+my $err_mail     = "$log_mail/errmail";
+my $prc_mail     = "$log_mail/prcmail";
 
-$xml_dir      = "$dict_base/xml";
-$git_dir      = "$dict_base/revo-fonto";
-$dok_dir      = "$dict_base/dok";
+my $xml_dir      = "$dict_base/xml";
+my $git_dir      = "$dict_base/revo-fonto";
+my $dok_dir      = "$dict_base/dok";
 
-$mail_local   = "$tmp/mail";
-$editor_file  = "$dict_etc/voko.redaktantoj";
-$attachments  = "$tmp/mailatt/attchm".$$."_";
+my $mail_local   = "$tmp/mail";
+my $editor_file  = "$dict_etc/voko.redaktantoj";
+my $attachments  = "$tmp/mailatt/attchm".$$."_";
 
 # diversaj
-$mail_begin   = '^From[^:]';
-$possible_keys= 'komando|teksto|shangho';
-$commands     = 'redakt[oui]|help[oui]|aldon[oui]'; # .'|dokumento|artikolo|historio|propono'
-$separator    = "=" x 50 . "\n";
+my $mail_begin   = '^From[^:]';
+my $possible_keys= 'komando|teksto|shangho';
+my $commands     = 'redakt[oui]|help[oui]|aldon[oui]'; # .'|dokumento|artikolo|historio|propono'
+my $separator    = "=" x 50 . "\n";
 
 ################ la precipa masho de la programo ##############
 
 $| = 1;
-$the_mail   = '';
-$editor     = '';
-$article_id = '';
-$mail_date  = '';
-$shangho    = '';
-$komando    = '';
-$file_no    = 0;
+my $the_mail   = '';
+my $editor     = '';
+my $article_id = '';
+my $mail_date  = '';
+my $shangho    = '';
+my $komando    = '';
+my $file_no    = 0;
 ##@newarts    = ();
 #git_pull();
 my ($lg,$err) = process::git_cmd("$git pull");
@@ -118,6 +118,7 @@ print `$rsync $git_dir/revo/ $xml_dir/`;
 
 # vi povas retrakti specifan (antaŭan) poŝtdosieron, ekz-e se okazis
 # eraro kaj vi volas ripeti por ne perdi la redakton...
+my $mail_file = '';
 if ($ARGV[0]) {
     $mail_file = shift @ARGV;
 
@@ -140,7 +141,7 @@ if ($ARGV[0]) {
 
 open MAIL, "$mail_file" or die "Ne povis malfermi $mail_file: $!\n";
 
-while ($file = readmail()) {
+while (my $file = readmail()) {
 
     print '-' x 50, "\n" if ($verbose);
 
@@ -148,21 +149,21 @@ while ($file = readmail()) {
     $editor = '';
     $shangho = '';
     $article_id = '';
-    $parser = new MIME::Parser;
+    my $parser = new MIME::Parser;
     $parser->output_dir($parts_dir);
     $parser->output_prefix("part");
     $parser->output_to_core(20000);        
 
     # malfermu kaj enlegu la mesaghon
     open ML, $file; 
-    $entity = $parser->read(\*ML);
+    my $entity = $parser->read(\*ML);
     unless ($entity) {
 		warn "Ne eblis analizi la MIME-mesaghon.\n";
 		next;
     }
 
     # eligu iom da informo pri la mesagho
-    $header = $entity->head();
+    my $header = $entity->head();
     print "From    : ", $header->get('From') if ($verbose);
     print "Reply-To: ", $header->get('Reply-To') || "\n" if ($verbose); 
     print "Subject : ", $header->get('Subject'),
@@ -170,7 +171,7 @@ while ($file = readmail()) {
 	      if ($debug);
     $entity->dump_skeleton if ($debug);
 
-    $mail_date = $header->get('Date');
+    my $mail_date = $header->get('Date');
     chomp $mail_date;
 
     # analizu la enhavon de la mesagho
@@ -204,7 +205,7 @@ if ($err =~ m/fatal/ || $err =~ m/error/) {
 	exit 1;
 }
 
-$filename = `date +%Y%m%d_%H%M%S`;    
+my $filename = `date +%Y%m%d_%H%M%S`;    
 
 # arkivu la poshtdosieron
 if ($mail_file eq $mail_local) {
@@ -345,7 +346,7 @@ sub process_ent {
 	print "num of parts: ", $num_parts, "\n" if ($debug);
 
 	# trairu chiujn partojn
-	for ($i = 0; $i < $num_parts; $i++) {
+	for (my $i = 0; $i < $num_parts; $i++) {
 	    my $part = $entity->parts($i);
 	    print $part->mime_type, "\n" if ($debug);
 
@@ -408,11 +409,13 @@ sub is_editor {
     my $reply_addr = shift;
     my $res_addr = '';
 
-    chomp $email_addr;
+    chomp $from_addr;
     chomp $reply_addr;
 
     my $pos1 = index($from_addr,$redaktilo_from1);
     my $pos2 = index($from_addr,$redaktilo_from2);
+
+	my $email_addr;
 
     if ($pos1 == 0 || $pos1 == 1 || $pos2 >= 0) {
 		$email_addr = $reply_addr;
@@ -459,7 +462,7 @@ sub urlencoded_form {
     my ($key,$value);
 
     $text =~ s/!?\n//sg;
-	foreach $pair (split ('&',$text)) {
+	foreach my $pair (split ('&',$text)) {
 		if ($pair =~ /(.*?)=(.*)/) {
 			($key,$value) = ($1,$2);
 			if ($key =~ /^(?:$possible_keys)$/) {
@@ -777,9 +780,9 @@ sub cmd_help {
 
 
 sub cmd_redakt {
-    my ($shangh,$teksto) = @_;
-    my $id,$art,$err;
-    $shangho = $shangh; # memoru por poste
+    my ($shangh, $teksto) = @_;
+    my ($id, $art, $err);
+    my $shangho = $shangh; # memoru por poste
     $shangho =~ s/[\200-\377]/?/g; # forigu ne-askiajn signojn
 
     # uniksajn linirompojn!
@@ -957,8 +960,8 @@ sub checkin_git {
 
 
 sub cmd_aldon {
-    my ($art,$teksto) = @_;
-    my $id,$err;
+    my ($art, $teksto) = @_;
+    my ($id, $err);
 
     # kio estu la nomo de la nova artikolo
     $art =~ s/^\s+//s;
@@ -1025,8 +1028,8 @@ sub checkinnew_git {
 
 	process::init_ver("$xmlfile","$tmp/shanghoj.msg");
 
-	($log1,$err1) = process::git_cmd("$git add $xmlfile");
-	($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
+	my ($log1,$err1) = process::git_cmd("$git add $xmlfile");
+	my ($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco
