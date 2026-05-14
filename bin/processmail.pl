@@ -139,10 +139,13 @@ if ($ARGV[0]) {
     $mail_file = $mail_local;
 }
 
+## no critic (InputOutput::RequireBriefOpen)
 open my $MAIL, "<", "$mail_file" 
 	or die "Ne povis malfermi $mail_file: $!\n";
 
-while (my $file = readmail()) {
+# legu unu post al alia retpoŝtojn el $mail_file
+# komencon de retpoŝto readmail() rekonas per From:...
+while (my $file = readmail($MAIL)) {
 
     print '-' x 50, "\n" if ($verbose);
 
@@ -189,6 +192,8 @@ while (my $file = readmail()) {
 
 close $MAIL;
 
+## use critic
+
 # sendu raportojn
 print "elsendas raportojn...\n" if ($verbose);
 
@@ -232,18 +237,25 @@ exit 0;
 
 ###################### analizado de la mesaghoj ################
 
+# legas el $MAIL liniojn ĝis sekva FROM
+# konservas la legitajn liniojn en dosiero sub /tmp/ kaj
+# redonas ties nomon
 sub readmail {
+	my $MAIL = shift;
 	my $lastpos;
 	
-	$the_mail = <MAIL>;
+	# legu unuan linion de retpoŝto
+	$the_mail = <$MAIL>;
 
-	while (<MAIL>) {
+	# legu pliaj liniojn de retpoŝto
+	# ĝis aperas $mail_begin (From:)
+	while (<$MAIL>) {
 		if (/$mail_begin/) {
-		    seek(MAIL,$lastpos,0); # reiru unu linion
+		    seek($MAIL,$lastpos,0); # reiru unu linion
 		    last;
 		} else {
 		    $the_mail .= $_;
-		    $lastpos = tell(MAIL);
+		    $lastpos = tell($MAIL);
 		};
 	};
 
@@ -445,6 +457,7 @@ sub is_editor {
     }
 
     # serchu en la dosiero kun redaktoroj
+	## no critic (InputOutput::RequireBriefOpen)
     open my $edi, "<", $editor_file;
     while (<$edi>) {
 		chomp;
@@ -465,6 +478,7 @@ sub is_editor {
 	    }
     }
 	close $edi;
+	## use critic
 		
     return; # ne trovita
 }
@@ -615,19 +629,14 @@ MOVE_FILE:
     }
 
     # skribu informon en $mail_send por poste sendi raporton al $editor
-    open my $smail, ">>", "$mail_send" or do {
-		warn "Ne povis malfermi $mail_send: $!\n";
-		return;
-    };
+    open my $smail, ">>", "$mail_send" 
+		or do { warn "Ne povis malfermi $mail_send: $!\n"; return; };
 
     print $smail "sendinto: $editor\n";
     print $smail "dosieroj: $attachment\n" if ($file);
-    print $smail "senddato: $mail_date\n";
-    print $smail "artikolo: $article_id\n";
+    print $smail "senddato: $mail_date\nartikolo: $article_id\n";
     print $smail "shanghoj: $shangho\n" if ($shangho);
-    print $smail "$msg\n";
-    print $smail $separator;
-
+    print $smail "$msg\n$separator";
     close $smail;
 
 	return;
