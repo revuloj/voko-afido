@@ -156,10 +156,10 @@ while (my $file = readmail()) {
     $parser->output_to_core(20000);        
 
     # malfermu kaj enlegu la mesaghon
-    open $ML, "<", $file or do {
+    open my $ML, "<", $file or do {
 		"Ne eblis malfermi la mesaĝon por legi ĝin: $file\n";
 		next;
-	}
+	};
 
     my $entity = $parser->read($ML);
     unless ($entity) {
