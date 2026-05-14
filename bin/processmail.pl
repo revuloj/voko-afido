@@ -139,7 +139,8 @@ if ($ARGV[0]) {
     $mail_file = $mail_local;
 }
 
-open MAIL, "$mail_file" or die "Ne povis malfermi $mail_file: $!\n";
+open my $MAIL, "<", "$mail_file" 
+	or die "Ne povis malfermi $mail_file: $!\n";
 
 while (my $file = readmail()) {
 
@@ -149,14 +150,18 @@ while (my $file = readmail()) {
     $editor = '';
     $shangho = '';
     $article_id = '';
-    my $parser = new MIME::Parser;
+    my $parser = MIME::Parser->new;
     $parser->output_dir($parts_dir);
     $parser->output_prefix("part");
     $parser->output_to_core(20000);        
 
     # malfermu kaj enlegu la mesaghon
-    open ML, $file; 
-    my $entity = $parser->read(\*ML);
+    open $ML, "<", $file or do {
+		"Ne eblis malfermi la mesaĝon por legi ĝin: $file\n";
+		next;
+	}
+
+    my $entity = $parser->read($ML);
     unless ($entity) {
 		warn "Ne eblis analizi la MIME-mesaghon.\n";
 		next;
@@ -179,10 +184,10 @@ while (my $file = readmail()) {
 
     # purigado
     $entity->purge();
-    close ML;
+    close $ML;
 }
 
-close MAIL;
+close $MAIL;
 
 # sendu raportojn
 print "elsendas raportojn...\n" if ($verbose);
@@ -245,9 +250,9 @@ sub readmail {
 	if ($the_mail) {
 
 	    my $fn = "/tmp/".$$."mail";
-	    open OUT, ">$fn";
-	    print OUT $the_mail;
-	    close OUT;
+	    open my $out, ">", "$fn";
+	    print $out $the_mail;
+	    close $out;
 	    return $fn;
 
 	} else { 
@@ -440,8 +445,8 @@ sub is_editor {
     }
 
     # serchu en la dosiero kun redaktoroj
-    open EDI, $editor_file;
-    while (<EDI>) {
+    open my $edi, "<", $editor_file;
+    while (<$edi>) {
 		chomp;
 		unless (/^#/) {
 			if (index(lc($_),lc($email_addr)) >= 0) {
@@ -459,6 +464,7 @@ sub is_editor {
 			}
 	    }
     }
+	close $edi;
 		
     return; # ne trovita
 }
@@ -519,13 +525,13 @@ sub normal_message {
 
     } else {
 		# sekurigu la dosieron
-		unless (open MSG,">$tmp/_err_msg") {
+		open my $msg, ">", "$tmp/_err_msg" or do {
 			warn "Ne povis malfermi $tmp/_err_msg: $!\n";
 			report("ERARO   : nekonata komando en la poshtajho");
 			return;
-		}
-		print MSG $text;
-		close MSG;
+		};
+		print $msg $text;
+		close $msg;
 
 		# kelkaj pseudaj variabloj necesaj
 		$article_id = "???.xml";
@@ -560,12 +566,12 @@ sub komando {
 }
 
 sub save_errmail {
-    unless( open ERRMAIL, ">>$mail_error") {
-	warn "Ne povis malfermi $mail_error: $!\n";
-	return;
-    }
-    print ERRMAIL $the_mail;
-    close ERRMAIL;
+    open my $errmail, ">>", "$mail_error" or do {
+		warn "Ne povis malfermi $mail_error: $!\n";
+		return;
+    };
+    print $errmail $the_mail;
+    close $errmail;
     print "erara mesagho sekurigita al $mail_error\n" if ($verbose);
 
 	return;
@@ -585,19 +591,20 @@ sub report {
 
 		# enmetu "redakto: $shanghoj" komence
 		if ($file =~ /\.xml$/) {
-			unless (open FILE, $file) {
+			open my $in, "<", $file or do {
 				warn "Ne povis malfermi $file: $!\n";
 				goto "MOVE_FILE";
-			}
-			$text = join('',<FILE>);
-			close FILE;
-			unless (open FILE, ">$file") {
+			};
+			$text = join('',<$in>);
+			close $in;
+
+			open my $out, ">", "$file" or do {
 				warn "Ne povis malfermi $file: $!\n";
 				goto "MOVE_FILE";
-			}
-			print FILE "$komando: $shangho\n\n";
-			print FILE $text;
-			close FILE;
+			};
+			print $out "$komando: $shangho\n\n";
+			print $out $text;
+			close $out;
 		}
 		
 MOVE_FILE:
@@ -608,20 +615,20 @@ MOVE_FILE:
     }
 
     # skribu informon en $mail_send por poste sendi raporton al $editor
-    unless (open SMAIL, ">>$mail_send") {
+    open my $smail, ">>", "$mail_send" or do {
 		warn "Ne povis malfermi $mail_send: $!\n";
 		return;
-    }
+    };
 
-    print SMAIL "sendinto: $editor\n";
-    print SMAIL "dosieroj: $attachment\n" if ($file);
-    print SMAIL "senddato: $mail_date\n";
-    print SMAIL "artikolo: $article_id\n";
-    print SMAIL "shanghoj: $shangho\n" if ($shangho);
-    print SMAIL "$msg\n";
-    print SMAIL $separator;
+    print $smail "sendinto: $editor\n";
+    print $smail "dosieroj: $attachment\n" if ($file);
+    print $smail "senddato: $mail_date\n";
+    print $smail "artikolo: $article_id\n";
+    print $smail "shanghoj: $shangho\n" if ($shangho);
+    print $smail "$msg\n";
+    print $smail $separator;
 
-    close SMAIL;
+    close $smail;
 
 	return;
 }
@@ -638,12 +645,12 @@ sub send_reports {
     if (-e $mail_send) {
 		
 		local $/ = $separator;
-		unless (open SMAIL, $mail_send) {
+		open my $smail, "<", $mail_send or do {
 			warn "Ne povis malfermi $mail_send: $!\n";
 			return;
-		}
+		};
 
-		while (<SMAIL>) {
+		while (<$smail>) {
 			# elprenu la sendinton
 			if (s/^sendinto: *([^\n]+)\n//) {
 				$mail_addr = $1;
@@ -663,7 +670,7 @@ sub send_reports {
 				next;
 			}
 		}
-		close SMAIL;
+		close $smail;
 		local $/ = $newline;
 
 		# forsendu la raportojn
@@ -689,7 +696,7 @@ sub send_reports {
 			
 			# alpendigu dosierojn
 			if ($dos) {
-				for $file (split (/\|/,$dos)) {
+				for my $file (split (/\|/,$dos)) {
 					if ($file =~ /^\s*([^\s]+)\s+(.+?)\s*$/) {
 						$file = $1;
 						$art_id = $2;
@@ -831,12 +838,13 @@ sub check_xml {
 #	|| warn "Ne povis ligi de $dtd_dir al $xml_temp/../dtd\n";
 
     # skribu la dosieron provizore al tmp
-    unless (open XML,">$xml_temp/xml.xml") {
+    open my $xml,">", "$xml_temp/xml.xml" or do {
 		warn "Ne povis malfermi $xml_temp/xml.xml: $!\n";
 		return;
-    }
-    print XML $teksto;
-    close XML;
+    };
+
+    print $xml $teksto;
+    close $xml;
 
 	my $err = process::checkxml('xml',$fname,$nova);
 
@@ -870,9 +878,9 @@ sub checkin {
     $edtr = $editor;
     $edtr =~ s/\s*<(.*?)>\s*//;
 
-    open MSG,">$tmp/shanghoj.msg";
-    print MSG "$edtr: $shangho";
-    close MSG;
+    open my $msg,">", "$tmp/shanghoj.msg";
+    print $msg "$edtr: $shangho";
+    close $msg;
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
     my $ark_id = get_archive_version($art);
@@ -995,9 +1003,9 @@ sub checkinnew {
     $edtr = $editor;
     $edtr =~ s/\s*<(.*?)>\s*//;
 
-    open MSG,">$tmp/shanghoj.msg";
-    print MSG "$edtr: $shangho";
-    close MSG;
+    open my $msg,">", "$tmp/shanghoj.msg";
+    print $msg "$edtr: $shangho";
+    close $msg;
 
 	# checkin in Git
     my $repo_art_file = "$git_dir/revo/$art.xml";
@@ -1057,13 +1065,13 @@ sub get_archive_version {
 
     # legu la ghisnunan artikolon
 	# KOREKTU: ĉe nova dosiero tiu atendeble ne ekzistas
-    unless (open XMLFILE, $xmlfile) {
+	open my $xml, "<", $xmlfile or do {
 		warn "Ne povis legi $xmlfile: $!\n";
 		return;
-    }
+    };
 
-    my $txt = join('',<XMLFILE>);
-    close XMLFILE;
+    my $txt = join('',<$xml>);
+    close $xml;
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
     $txt =~ /(<art[^>]*>)/s;
