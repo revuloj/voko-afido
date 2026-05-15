@@ -78,7 +78,7 @@ $CFG->{git_dir}   =  "$CFG->{dict_base}/revo-fonto";
 $CFG->{editor_file} =  "$CFG->{dict_etc}/redaktantoj.json"; #"$CFG->{dict_etc}/voko.redaktantoj";
 
 # agordo de servilo-konekto
-if ($ENV{REVO_HOST} eq "araneo" || $ENV{REVO_HOST} eq "cetonio:8080") {
+if ( $ENV{REVO_HOST} && ($ENV{REVO_HOST} eq "araneo" || $ENV{REVO_HOST} eq "cetonio:8080") ) {
 	# ene de docker-medio ni uzas nur HTTP
 	$CFG->{submeto_url} = "http://$ENV{REVO_HOST}";
 	$CFG->{netloc} = $ENV{REVO_HOST};
@@ -106,7 +106,7 @@ our $LOG = Log::Dispatch->new(
 ###
 $LOG->debug("realm: $CFG->{realm}\n");
 $LOG->debug("netloc: $CFG->{netloc}\n");
-$LOG->debug("ADM_USER: $ENV{'ADM_USER'}\n");
+$LOG->debug("ADM_USER: ".( $ENV{'ADM_USER'}? "$ENV{'ADM_USER'}\n" : "\n" ));
 #$LOG->debug("netloc: ".substr($CFG->{netloc},0,10)."...\n");
 #$LOG->debug("ADM_USER: ".substr($ENV{'ADM_USER'},0,3)."...\n");
 
@@ -406,8 +406,8 @@ sub cmd_redakt {
 	$LOG->debug("redakto: ".$subm->{desc}."\n"); # encode('utf-8',$subm->{desc})."\n");
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
-	my $CTX->{article_id} = process::get_art_id($fname);
-    my $art = extract_article($subm,$CTX->{article_id});
+	$CTX->{article_id} = process::get_art_id($fname);
+    my $art = extract_article($subm, $CTX->{article_id});
 
     unless ($art =~ /^[a-z0-9_]+$/ix) {
 		report($subm,

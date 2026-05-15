@@ -3,7 +3,7 @@
 # (c) 1999 - 2021 ĉe Wolfram Diestel
 # laŭ GPL 2.0
 
-use strict;
+use strict; use warnings;
 use utf8;
 
 package process;
@@ -46,7 +46,7 @@ my $xmlcheck     = '/usr/bin/rxp -V -s';
 
 
 # forigu spacojn komence kaj fine de signoĉeno
-sub trim { my $s = shift; $s =~ s/^\s+|\s+$//g; return $s };
+sub trim { my $s = shift; $s =~ s/^\s+|\s+$//gx; return $s };
 
 ################ helpfukcioj por ruli, legi kaj skribi dosierojn ##############
 
@@ -73,15 +73,15 @@ sub timestamp {
 # legi dosieron
 sub read_file {
 	my $file = shift;
-	unless (open FILE, $file) {
-		$log->warn("Ne povis malfermi '$file': $!\n"); return;
-	}
-	# ĝenerala trakto kiel utf8 kaŭzas problemon en forsendo de raportoj...
+	# NOTO: ĝenerala trakto kiel utf8 kaŭzas problemon en forsendo de raportoj...
 	# open body: Invalid argument at /usr/share/perl5/MIME/Entity.pm line 1892
 	# do faru tion prefere post voko de read_file, kie necesas
-	# my $text = decode('utf8', join('',<FILE>));
-	my $text = join('',<FILE>);
-	close FILE;
+	# my $text = decode('utf8', join('',<$FILE>));
+	open my $FILE, "<", $file or do {
+		$log->warn("Ne povis malfermi '$file': $!\n"); return;
+	};
+	my $text = do { local $/ = undef, <$FILE>};
+	close $FILE;
 	return $text;
 }
 
@@ -91,11 +91,13 @@ sub write_file {
 	my ($mode, $file, $text) = @_;
 
     $log->debug("Skribas ".length($text)." bitokojn al: ".$file."\n");
-	unless (open FILE, $mode, $file) {
+	open my $FILE, $mode, $file or do {
 		$log->warn("Ne povis malfermi '$file': $!\n"); return;
-	}
-	print FILE $text;
-	close FILE;
+	};
+	print $FILE $text;
+	close $FILE;
+
+	return;
 }
 
 # legi JSON-dosieron
@@ -123,7 +125,7 @@ sub read_json_file {
 		return;
 	};
 
-	return $parsed;	  
+	return $parsed;
 }
 
 
@@ -132,14 +134,14 @@ sub write_json_file {
 	my ($mode,$file,$content,$sep) = @_;
     my $json = $json_parser->encode($content);
 
-    unless (open JSN, $mode, $file) {
-		$log->warn("Ne povis malfermi $file: $!\n");
-		return;
-    }
+    open my $JSN, $mode, $file or do {
+		$log->warn("Ne povis malfermi $file: $!\n"); return;
+    };
+	print $JSN $sep if ($sep);
+	print $JSN $json;
+	close $JSN; 
 
-	print JSN $sep if ($sep);
-	print JSN $json;
-	close JSN;  
+	return; 
 }
 
 # legu linion post linio el CSV-teksto kaj redonu kiel listo de vortaretoj 
@@ -200,8 +202,8 @@ sub rep_str {
 	my $msg = 
 		"senddato: $rep->{senddato}\n"
 		."artikolo: $rep->{artikolo}\n"
-		.uc($rep->{rezulto}).": "	
-		.$rep->{mesagho}."\n";	
+		.uc($rep->{rezulto}).": "
+		.$rep->{mesagho}."\n";
 	return $msg;
 }
 
@@ -222,24 +224,34 @@ sub checkxml {
 
 	my $teksto = read_file("$fname");
     # uniksajn linirompojn!
-    $teksto =~ s/\r\n/\n/sg;
+    $teksto =~ s/\r\n/\n/sgx;
 
 	# ĉe nova artikolo, enŝovu Id, se mankas...
-	if ($nova) { $teksto =~ s/<art[^>]*>/<art mrk="\044Id\044">/s };
+	if ($nova) { 
+		$teksto =~ s{<art[^>]*>}{<art mrk="\044Id\044">}sx
+	};
 
     # enmetu Log se ankorau mankas...
-    unless ($teksto =~ /<!--\s+\044Log/s) {
-		$teksto =~ s/(<\/vortaro>)/\n<!--\n\044Log\044\n-->\n$1/s;
+    unless ($teksto =~ /<!--\s+\044Log/sx) {
+		$teksto =~ s{
+			(<\/vortaro>)
+		}{\n<!--\n\044Log\044\n-->\n$1}sx;
     }
 
     # mallongigu Log al 20 linioj
-    $teksto =~ s/(<!--\s+\044Log(?:[^\n]*\n){20})(?:[^\n]*\n)*(-->)/$1$2/s;
+    $teksto =~ s{
+		(<!--\s+
+		\044Log
+		(?:[^\n]*\n){20})
+		(?:[^\n]*\n)*
+		(-->)
+	}{$1$2}sx;
 
     # reskribu la dosieron
     unless (write_file(">",$fname,$teksto)) { return; }
 
     # kontrolu la sintakson de la XML-teksto
-    `$xmlcheck $fname 2> $lname`;
+    sys_run($xmlcheck,$fname,'2>',$lname);
 
     # legu la erarojn
     my $err = read_file($lname);
@@ -255,18 +267,16 @@ sub get_art_id {
     # legu la ghisnunan artikolon
 	my $xml = read_file($artfile);
 
-	if ($xml) {
-		# pri kiu artikolo temas, trovighas en <art mrk="...">
-		$xml =~ /(<art[^>]*>)/s;
-		$1 =~ /mrk="([^\"]*)"/s; 
-		my $id = $1;
-		$log->debug("Id: $id\n");  
-
-		return $id;
-
-	} else {
-		return;
+	if ( $xml && (my ($id) = $xml =~ m{
+		<art[^>]*
+		\bmrk\s*=\s*
+		"([^"]*)"
+	}sx) ) {
+    	$log->debug("Id: $id\n");  
+    	return $id;
 	}
+	
+	return;
 }
 
 # La version ni eltrovos kaj altigos je unu kaj reskribas en la artikolon
@@ -278,13 +288,32 @@ sub incr_ver {
 	# $Id: test.xml,v 1.51 2019/12/01 16:57:36 afido Exp $
     my $art = read_file("$artfile");
 
-	$art =~ m/\$Id:\s+([^\.]+)\.xml,v\s+(\d)\.(\d+)\s+(?:\d\d\d\d\/\d\d\/\d\d\s+\d\d:\d\d:\d\d)(.*?)\$/s;	
-	my $ver = id_incr($2,$3);
-	my $id = '$Id: '.$1.'.xml,v '.$ver.$4.'$';
-	$art =~ s/\$Id:[^\$]+\$/$id/;
-	$art =~ s/\$Log[^\$]*\$(.*?)-->/log_incr($1,$ver,$shangh_file)/se;
+	if ( $art =~ m{
+		\$Id:\s+
+		([^\.]+)\.xml,v\s+        # dosiero
+		(\d)\.(\d+)\s+            # versio
+		(?:\d{4}\/\d{2}\/\d{2}\s+ # dato
+		\d\d:\d\d:\d\d)           # tempo
+		(.*?)\$
+	}sx ) {
 
-	write_file(">",$artfile,$art);
+		my $ver = id_incr($2,$3);
+		my $id = '$Id: '.$1.'.xml,v '.$ver.$4.'$';
+		$art =~ s{
+			\$Id:
+			[^\$]+\$
+		}{$id}x;
+
+		$art =~ s{
+			\$Log
+			[^\$]*\$
+			(.*?)
+			-->
+		}{log_incr($1,$ver,$shangh_file)}sex;
+
+		write_file(">",$artfile,$art);
+	}
+	return;
 }
 
 # altigi la version je .1 kaj alpendigi la aktualan daton 
@@ -302,7 +331,7 @@ sub log_incr {
 	my ($alog,$ver,$shangh_file) = @_;
 
 	# mallongigu je maks. 10 linioj
-	my @lines = split(/\n/,$alog);
+	my @lines = split(/\n/x,$alog);
 	$alog = join("\n",splice(@lines,0,20));
 
 	my $shg = decode('utf8', read_file($shangh_file));
@@ -318,16 +347,22 @@ sub init_ver {
     my $art = read_file("$artfile");
 	my $shg = decode('utf8', read_file($shangh_file));
 
-	$artfile =~ m|/([^/]+\.xml)|;
-	my $fn = $1;
-	my $ver = id_incr("1","0");
-	my $id = '$Id: '.$fn.',v '.$ver.' afido Exp $';
-	my $alog = "\n<!--\n\$Log: $fn,v \$\nversio $ver\n$shg\n-->\n";
+	if ( $artfile =~ m{
+		/([^/]+\.xml) # dosiernomo sen pado
+	}x ) {
 
-	$art =~ s/\$Id[^\$]*\$/$id/;
-	$art =~ s/<\/vortaro>/$alog<\/vortaro>/s;
+		my $fn = $1;
+		my $ver = id_incr("1","0");
+		my $id = '$Id: '.$fn.',v '.$ver.' afido Exp $';
+		my $alog = "\n<!--\n\$Log: $fn,v \$\nversio $ver\n$shg\n-->\n";
 
-	write_file(">",$artfile,$art);
+		$art =~ s{\$Id[^\$]*\$}{$id}x;
+		$art =~ s{<\/vortaro>}{$alog<\/vortaro>}sx;
+
+		write_file(">",$artfile,$art);
+	}
+
+	return;
 }
 
 # Se la sintakskontrolo trovis erarojn, ni ricevas ĝin kun linio kaj pozicio ĉe
@@ -337,33 +372,38 @@ sub xml_context {
     my ($err,$file) = @_;
     my ($line, $char,$result,$n,$txt);
 
-	if ($err =~ /line\s+([0-9]+)\s+char\s+([0-9]+)\s+/s) {
+	if ( $err =~ m{
+			line\s+
+			([0-9]+)\s+
+			char\s+
+			([0-9]+)\s+
+	}sx ) {
 		$line = $1;
 		$char = $2;
 
-		unless (open XML,$file) {
+		open my $XML, "<", $file or do {
 			$log->warn("Ne povis malfermi $file:$!\n");
 			return '';
-		}
+		};
 
 		# la linio antau la eraro
 		if ($line > 1) {
-			for ($n=1; $n<$line-1; $n++) { <XML>; }	    
-			$result .= "$n: ".<XML>;
-			$result =~ s/\n?$/\n/s;
+			for ($n=1; $n<$line-1; $n++) { <$XML>; }
+			$result .= "$n: ".<$XML>;
+			$result =~ s/\n?$/\n/sx;
 		}
 
-		$result .= "$line: ".<XML>;
-		$result =~ s/\n?$/\n/s;
+		$result .= "$line: ".<$XML>;
+		$result =~ s/\n?$/\n/sx;
 		$result .= "-" x ($char + length($line) + 1) . "^\n";
 
-		if (defined($txt=<XML>)) {
+		if (defined($txt=<$XML>)) {
 			$line++;
 			$result .= "$line: $txt";
-			$result =~ s/\n?$/\n/s;
+			$result =~ s/\n?$/\n/sx;
 		}
 
-		close XML;			
+		close $XML;
 		return $result;
     }
 
@@ -393,10 +433,12 @@ sub git_cmd {
 	unlink("$tmp/git.err");
 	chdir($dict_base);
 
+	## no critic (RegularExpressions::RequireExtendedFormatting)
 	$git_log =~ s/\[master\s+/[m /;
 	$git_log =~ s/file changed/dosiero/;
 	$git_log =~ s/insertions/enmetoj/;
 	$git_log =~ s/deletions+/forigoj/;
+	## use critic
 
 	return ($git_log,$git_err);
 }
