@@ -8,6 +8,9 @@ use utf8;
 
 package process;
 
+# debian/ubuntu: libipc-run-perl
+use IPC::Run qw(run); 
+
 use JSON;
 my $json_parser = JSON->new->allow_nonref;
 #$json_parser->allow_tags(true);
@@ -45,7 +48,27 @@ my $xmlcheck     = '/usr/bin/rxp -V -s';
 # forigu spacojn komence kaj fine de signoĉeno
 sub trim { my $s = shift; $s =~ s/^\s+|\s+$//g; return $s };
 
-################ helpfukcioj por legi kaj skribi dosierojn ##############
+################ helpfukcioj por ruli, legi kaj skribi dosierojn ##############
+
+sub sys_run {
+  my @command = @_;
+
+  my ($out, $err);
+  run \@command, \undef, \$out, \$err or do {
+    warn(join(' ',@command). ": $!\n$err\n");
+  };
+  return $out;
+}
+
+sub my_name {
+	chomp (my $mi = sys_run('id','-un'));
+	return $mi;
+}
+
+sub timestamp {
+	chomp(my $ts = sys_run('date','+%Y%m%d_%H%M%S'));
+	return $ts;
+}
 
 # legi dosieron
 sub read_file {

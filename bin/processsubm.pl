@@ -13,198 +13,210 @@ use strict; use warnings;
 use MIME::Entity;
 use Log::Dispatch;
 use LWP::UserAgent;
+
 use Encode;
 use utf8; use open ':std', ':encoding(UTF-8)';
 
+use File::Copy qw(copy);
 use Data::Dumper;
 
 use lib("/usr/local/bin");
 use lib("./bin");
-use process qw( trim );
+use process qw( timestamp trim );
 use mailsender;
-
 
 ######################### agorda parto ##################
 
-# kiom da informoj
-#$verbose      = 1;
-#$debug        = 1;
-my $loglevel = 'info'; # 'debug'; 'info'...
+our $CFG = {
+	# kiom da informoj
+	#verbose      => 1,
+	#debug        => 1,
+	loglevel     => 'info', # 'debug', 'info'...
 
-# se SERVILO ne estas aparte difinita ni uzas reta-vortaro.de
-my $submeto_url = 'https://reta-vortaro.de';
-my $netloc = 'reta-vortaro.de:443';
-my $realm = 'Restricted Content';
+	# se SERVILO ne estas aparte difinita ni uzas reta-vortaro.de
+	submeto_url  => 'https://reta-vortaro.de',
+	netloc       => 'reta-vortaro.de:443',
+	realm        => 'Restricted Content',
 
-# baza agordo
+
+	#$afido_dir    => "/var/afido"; # tmp, log
+	dict_home     => $ENV{"HOME"}, # por testi: $ENV{'PWD'},
+	dict_etc      => $ENV{"HOME"}."/etc", #"/run/secrets", # redaktantoj
+	#$vokomail_url => "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
+	xml_source_url  => 'https://github.com/revuloj/revo-fonto/blob/master/revo',
+	revo_url      => 'http://purl.oclc.org/NET/voko/revo',
+	#$mail_folder  => "/var/spool/mail/tomocero";
+
+	revoservo     => '[Revo-Servo]',
+	revo_mailaddr => 'revo@reta-vortaro.de',
+	#$redaktilo_from=> 'revo-servo@steloj.de';
+
+	separator    => " => " x 80 . "\n",
+
+	# programoj
+	git           => '/usr/bin/git'
+
+};
+
+$CFG->{revo_from} =  "Reta Vortaro <$CFG->{revo_mailaddr}>";
+$CFG->{signature} = "--\nRevo-Servo $CFG->{revo_mailaddr}\n"
+		."retposhta servo por redaktantoj de Reta Vortaro.\n";
+
+
+	# dosierujoj
+$CFG->{dict_base} =  "$CFG->{dict_home}/dict"; # xml, dok, dtd
+$CFG->{tmp}       =  "$CFG->{dict_base}/tmp";
+$CFG->{log_dir}   =  "$CFG->{dict_base}/log";
+
+$CFG->{mail_send} =  "$CFG->{tmp}/mailsend";
+
+$CFG->{rez_dir}   =  "$CFG->{dict_base}/rez";
+$CFG->{xml_dir}   =  "$CFG->{dict_base}/xml";
+	#$git_repo     => $ENV{"GIT_REPO_REVO"} || "revo-fonto";
+$CFG->{git_dir}   =  "$CFG->{dict_base}/revo-fonto";
+
+$CFG->{editor_file} =  "$CFG->{dict_etc}/redaktantoj.json"; #"$CFG->{dict_etc}/voko.redaktantoj";
+
+# agordo de servilo-konekto
 if ($ENV{REVO_HOST} eq "araneo" || $ENV{REVO_HOST} eq "cetonio:8080") {
 	# ene de docker-medio ni uzas nur HTTP
-	$submeto_url = "http://$ENV{REVO_HOST}";
-	$netloc = $ENV{REVO_HOST};
+	$CFG->{submeto_url} = "http://$ENV{REVO_HOST}";
+	$CFG->{netloc} = $ENV{REVO_HOST};
 } elsif ($ENV{REVO_HOST}) {
 	# uzu HTTPS kun ekstera servilo
-	$submeto_url = "https://$ENV{REVO_HOST}";
-	$netloc = $ENV{REVO_HOST}.':443';
+	$CFG->{submeto_url} = "https://$ENV{REVO_HOST}";
+	$CFG->{netloc} = $ENV{REVO_HOST}.':443';
 }
 
-if ($ENV{ADM_URL} && $ENV{REVO_HOST} !~ m/reta-?vortaro\.de/) {
-	$submeto_url .= $ENV{ADM_URL}.'/submeto.pl';
-	$realm = 'submetoj';
+if ($ENV{ADM_URL} && $ENV{REVO_HOST} !~ m/reta-?vortaro\.de/x) {
+	$CFG->{submeto_url} .= $ENV{ADM_URL}.'/submeto.pl';
+	$CFG->{realm} = 'submetoj';
 } else {
-	$submeto_url .= '/cgi-bin/admin/submeto.pl';
+	$CFG->{submeto_url} .= '/cgi-bin/admin/submeto.pl';
 }
-
-#$afido_dir    = "/var/afido"; # tmp, log
-my $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
-my $dict_base    = "$dict_home/dict"; # xml, dok, dtd
-my $dict_etc     = $ENV{"HOME"}."/etc"; #"/run/secrets"; # redaktantoj
-#$vokomail_url = "http://www.reta-vortaro.de/cgi-bin/vokomail.pl";
-my $xml_source_url = 'https://github.com/revuloj/revo-fonto/blob/master/revo';
-my $revo_url     = 'http://purl.oclc.org/NET/voko/revo';
-#$mail_folder  = "/var/spool/mail/tomocero";
-
-my $revoservo    = '[Revo-Servo]';
-my $revo_mailaddr= 'revo@reta-vortaro.de';
-#$redaktilo_from= 'revo-servo@steloj.de';
-my $revo_from    = "Reta Vortaro <$revo_mailaddr>";
-my $signature    = "--\nRevo-Servo $revo_mailaddr\n"
-    ."retposhta servo por redaktantoj de Reta Vortaro.\n";
-
-
-# programoj
-my $git          = '/usr/bin/git';
-
-# dosierujoj
-my $tmp          = "$dict_base/tmp";
-my $log_dir      = "$dict_base/log";
-
-my $mail_send    = "$tmp/mailsend";
-
-my $rez_dir      = "$dict_base/rez";
-my $xml_dir      = "$dict_base/xml";
-#$git_repo     = $ENV{"GIT_REPO_REVO"} || "revo-fonto";
-my $git_dir      = "$dict_base/revo-fonto";
-
-my $editor_file  = "$dict_etc/redaktantoj.json"; #"$dict_etc/voko.redaktantoj";
-
-my $separator    = "=" x 80 . "\n";
 
 # preparu protokolon
-my $log = Log::Dispatch->new(
-    outputs => [
-        #[ 'File',   min_level => 'debug', filename => 'logfile' ],
-        [ 'Screen', min_level => $loglevel ],
-    ],
-);
-
-# preparu UserAgent
-my $ua = LWP::UserAgent->new();
-$ua->agent('Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:36.0) Gecko/20100101 Firefox/36.0');
-$ua->credentials( # vd https://perlmaven.com/lwp-useragent-and-basic-authentication
-    $netloc,$realm,
-    $ENV{'ADM_USER'} => $ENV{'ADM_PASSWORD'}
+our $LOG = Log::Dispatch->new(
+	outputs => [
+		#[ 'File',   min_level => 'debug', filename => 'logfile' ],
+		[ 'Screen', min_level => $CFG->{loglevel} ],
+	],
 );
 
 ###
-$log->debug("realm: $realm\n");
-$log->debug("netloc: $netloc\n");
-$log->debug("ADM_USER: $ENV{'ADM_USER'}\n");
-#$log->debug("netloc: ".substr($netloc,0,10)."...\n");
-#$log->debug("ADM_USER: ".substr($ENV{'ADM_USER'},0,3)."...\n");
+$LOG->debug("realm: $CFG->{realm}\n");
+$LOG->debug("netloc: $CFG->{netloc}\n");
+$LOG->debug("ADM_USER: $ENV{'ADM_USER'}\n");
+#$LOG->debug("netloc: ".substr($CFG->{netloc},0,10)."...\n");
+#$LOG->debug("ADM_USER: ".substr($ENV{'ADM_USER'},0,3)."...\n");
+
+# preparu UserAgent
+our $UA = LWP::UserAgent->new();
+$UA->agent('Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:36.0) Gecko/20100101 Firefox/36.0');
+$UA->credentials( # vd https://perlmaven.com/lwp-useragent-and-basic-authentication
+	$CFG->{netloc},$CFG->{realm},
+	$ENV{'ADM_USER'} => $ENV{'ADM_PASSWORD'}
+);
 
 ################ la precipa masho de la programo ##############
 
-my $editor     = '';
-my $article_id = '';
-my $shangho    = '';
+our $CTX = {
+	editor     => undef, # aktuala submetinto
+	editors    => undef, # listo de registritaj
+	article_id => '',
+	shangho    => '',
+	mail_send_sep => '',
+};
 
-# certigu, ke provizoraj dosierujoj ekzistu
-mkdir($tmp); 
-mkdir($log_dir);
-mkdir($rez_dir); 
+# tiel ni povas testi sub-funkciojn de ekstere:
+MAIN() unless caller(); sub MAIN {
+
+	# certigu, ke provizoraj dosierujoj ekzistu
+	mkdir($CFG->{tmp}); 
+	mkdir($CFG->{log_dir});
+	mkdir($CFG->{rez_dir}); 
+
+	# legu redaktantojn el JSON-dosiero kaj transformu al HASH por 
+	# trovi ilin facile laŭ numero (red_id)
+	$CTX->{editors} = process::read_json_file($CFG->{editor_file});
+
+	process::write_file(">:encoding(utf-8)", $CFG->{mail_send},"[\n"); 
+
+	my @submetoj = submeto_listo();
+	#$LOG->info(Dumper(@submetoj));
+
+	$LOG->info("Trovitaj novaj submetoj: ".($#submetoj+1)."\n");
+	exit unless (@submetoj && $#submetoj >= 0 && $submetoj[0]->{id});
+
+	foreach my $subm (@submetoj) {
+
+		$LOG->info($CFG->{separator});
+
+		$LOG->debug(join(',',keys %$subm)."\n");
+		$LOG->debug(join(',',values %$subm)."\n");
+		#$LOG->debug(encode('utf-8',join(',',values %$subm))."\n");
+
+		# eligu iom da informo pri la submeto
+		$LOG->info(
+			"id:".$subm->{"id"}."\n".
+			"date:",$subm->{"time"}."\n".
+			"desc:",$subm->{"desc"}."\n"); #encode('utf-8',$subm->{"desc"})."\n");
 
 
-# legu redaktantojn el JSON-dosiero kaj transformu al HASH por 
-# trovi ilin facile laŭ numero (red_id)
-my $editors=process::read_json_file($editor_file);
+		# preparu por la nova mesagho
+		$CTX->{editor} = undef;
+		$CTX->{article_id} = '';
 
-process::write_file(">:encoding(utf-8)", $mail_send,"[\n"); my $mail_send_sep = '';
+		my %subm_detaloj = pluku_submeton($subm->{'id'});
+		unless (%subm_detaloj) {
+			next;
+		}
 
-my @submetoj = submeto_listo();
-#$log->info(Dumper(@submetoj));
+		$LOG->debug("subm_det: ".join(',',keys %subm_detaloj)."; xml: ".length($subm_detaloj{xml})." bitokoj\n");
 
-$log->info("Trovitaj novaj submetoj: ".($#submetoj+1)."\n");
-exit unless (@submetoj && $#submetoj >= 0 && $submetoj[0]->{id});
+		# analizu la enhavon de la mesagho
+		process_subm($subm,\%subm_detaloj);
+	}
 
-foreach my $subm (@submetoj) {
+	process::write_file(">>:encoding(utf-8)",$CFG->{mail_send},"\n]\n");
 
-    $log->info($separator);
+	$LOG->info($CFG->{separator});
+	#git_push();
+	my ($lg,$err) = process::git_cmd("$CFG->{git} push origin master");
 
-	$log->debug(join(',',keys %$subm)."\n");
-	$log->debug(join(',',values %$subm)."\n");
-	#$log->debug(encode('utf-8',join(',',values %$subm))."\n");
+	if ($err =~ m/fatal/ || $err =~ m/error/) {
+		# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
+		# kun eraro-stato
+		# PLIBONIGU: tiuokaze ni fakte ankaŭ devus remeti la staton de submetoj de 'trakt' al 'nov'!
+		# por ebligi retrakton venonantan fojon...
+		exit 1;
+	}
 
-	# eligu iom da informo pri la submeto
-	$log->info(
-		"id:".$subm->{"id"}."\n".
-		"date:",$subm->{"time"}."\n".
-		"desc:",$subm->{"desc"}."\n"); #encode('utf-8',$subm->{"desc"})."\n");
+	$LOG->info($CFG->{separator});
 
+	# sendu raportojn
+	# provizore jam nun konektu al SMTP, por trovi eraron en ->auth
+	#$IO::Socket::SSL::DEBUG=3;
+	if (-s $CFG->{mail_send} > 10) {
+		my $mailer = mailsender::smtp_connect;
+		send_reports($mailer);
+		mailsender::smtp_quit($mailer);
+	}
 
-    # preparu por la nova mesagho
-    $editor = '';
-    $shangho = '';
-    $article_id = '';
+	#send_newarts_report();
+	$LOG->info($CFG->{separator});
 
-	my %subm_detaloj = pluku_submeton($subm->{'id'});
-    unless (%subm_detaloj) {
-		next;
-    }
+	if (-s $CFG->{mail_send} > 10) {
+		my $filename = "mail_sent_".timestamp();    
+		$LOG->info("ŝovas $CFG->{mail_send} al $CFG->{log_dir}/$filename\n");
+		rename($CFG->{mail_send},$CFG->{log_dir}."/$filename");
+	}  
 
-	$log->debug("subm_det: ".join(',',keys %subm_detaloj)."; xml: ".length($subm_detaloj{xml})." bitokoj\n");
+	$LOG->info($CFG->{separator});
 
-    # analizu la enhavon de la mesagho
-    process_subm($subm,\%subm_detaloj);	
-}
+	exit;
 
-process::write_file(">>:encoding(utf-8)",$mail_send,"\n]\n");
-
-$log->info($separator);
-#git_push();
-my ($lg,$err) = process::git_cmd("$git push origin master");
-
-if ($err =~ m/fatal/ || $err =~ m/error/) {
-	# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
-	# kun eraro-stato
-	# PLIBONIGU: tiuokaze ni fakte ankaŭ devus remeti la staton de submetoj de 'trakt' al 'nov'!
-	# por ebligi retrakton venonantan fojon...
-	exit 1;
-}
-
-$log->info($separator);
-
-# sendu raportojn
-# provizore jam nun konektu al SMTP, por trovi eraron en ->auth
-#$IO::Socket::SSL::DEBUG=3;
-if (-s $mail_send > 10) {
-	my $mailer = mailsender::smtp_connect;
-	send_reports($mailer);
-	mailsender::smtp_quit($mailer);
-}
-
-#send_newarts_report();
-$log->info($separator);
-
-if (-s $mail_send > 10) {
-	my $filename = "mail_sent_".`date +%Y%m%d_%H%M%S`;    
-    $log->info("ŝovas $mail_send al $log_dir/$filename\n");
-    `mv $mail_send $log_dir/$filename`;
-}  
-
-$log->info($separator);
-
-exit;
-
+} # MAIN
 
 ###################### analizado de la mesaghoj ################
 
@@ -213,15 +225,15 @@ sub process_subm {
 	my $detaloj = shift;
 
 	unless ($subm->{desc}) {
-		$log->warn("Mankas priskribo en: ".$subm->{id}."\n");
+		$LOG->warn("Mankas priskribo en: ".$subm->{id}."\n");
 		return;
 	}
    
     # kontrolu, ĉu temas pri registrita redaktoro 
-	$editor = is_editor($detaloj->{redaktanto});
-    unless ($editor) 
+	$CTX->{editor} = is_editor($detaloj->{redaktanto});
+    unless ($CTX->{editor}) 
     { 
-		$log->warn("Ne registrita redaktanto: ".$detaloj->{redaktanto}."\n");
+		$LOG->warn("Ne registrita redaktanto: ".$detaloj->{redaktanto}."\n");
 		return;
 	}    
 	
@@ -238,7 +250,7 @@ sub is_editor {
     my $retadreso = shift;
 
 	# se ne troviĝis, trairu la liston kaj kalkulu dume la Sha-ojn
-	for my $ed (@$editors) {
+	for my $ed (@$CTX->{editors}) {
 		for my $ra (@{$ed->{retadr}}) {
 			return $ed if ($retadreso eq $ra);
 		}
@@ -255,16 +267,16 @@ sub report {
     my ($subm, $detaloj) = @_;
     
 	#$detaloj->{mesagho} = encode('utf-8',$detaloj->{mesagho});
-    $log->info($detaloj->{mesagho}."\n");
+    $LOG->info($detaloj->{mesagho}."\n");
 
 	$detaloj->{subm_id} = $subm->{id};
     $detaloj->{senddato} = $subm->{time};
-	#write_json_file(">","$rez_dir/$subm->{id}", $detaloj);
+	#write_json_file(">","$CFG->{rez_dir}/$subm->{id}", $detaloj);
 	#submeto_rezulto($subm->{id},$detaloj);
 
-	$detaloj->{sendinto} = $editor->{red_nomo}." <".$editor->{retadr}[0].">";
-	process::write_json_file(">>:encoding(utf-8)",$mail_send, $detaloj, $mail_send_sep);
-	$mail_send_sep = ',';
+	$detaloj->{sendinto} = $CTX->{editor}->{red_nomo}." <".$CTX->{editor}->{retadr}[0].">";
+	process::write_json_file(">>:encoding(utf-8)",$CFG->{mail_send}, $detaloj, $CTX->{mail_send_sep});
+	$CTX->{mail_send_sep} = ',';
 
 	return;
 }
@@ -276,10 +288,10 @@ sub send_reports {
     my %dosieroj = ();
     my $mail_addr;
 
-	$log->info("sendas raportojn al redaktintoj...\n");
+	$LOG->info("sendas raportojn al redaktintoj...\n");
 
 	# kolektu raportojn laŭ retadreso
-	my $reps = process::read_json_file($mail_send);
+	my $reps = process::read_json_file($CFG->{mail_send});
 	for my $rep (@$reps) {
 		
 		# aktualigu submeton
@@ -296,7 +308,7 @@ sub send_reports {
 			push(@{$reports{$mail_addr}},$rep);
 
 		} else {
-			$log->warn("Ne povis elpreni sendinton el $_\n");
+			$LOG->warn("Ne povis elpreni sendinton el $_\n");
 			next;
 		}
 	}
@@ -308,25 +320,31 @@ sub send_reports {
 
 		my $message = "Saluton!\nJen raporto pri via(j) sendita(j) artikolo(j).\n\n";
 		for (@$report) {
-			$message .= $separator.process::rep_str($_);
+			$message .= $CFG->{separator}.process::rep_str($_);
 		}
-		$message .= $separator."\n\n".$signature;
+		$message .= $CFG->{separator}."\n\n".$CFG->{signature};
 		
 		my $to = $maddr;
-		$to =~ s/.*<([a-z\.\_\-@]+)>.*/$1/;
+		$to =~ s{
+			.*
+			<
+			([a-z\.\_\-@]+)
+			>
+			.*
+		}{$1}x;
 
 		my $mail_handle = build MIME::Entity(Type=>"multipart/mixed",
-						From=>$revo_from,
+						From=>$CFG->{revo_from},
 						To=>$to,
-						Subject=>"$revoservo - raporto");
+						Subject=>"$CFG->{revoservo} - raporto");
 		
 		$mail_handle->attach(Type=>"text/plain",
 				Encoding=>"quoted-printable",
 				Data=>$message);
 		
 		# alpendigu dosierojn
-		$log->debug("dosieroj{maddr}: ");
-		$log->debug(Dumper(@{$dosieroj{$maddr}}));
+		$LOG->debug("dosieroj{maddr}: ");
+		$LOG->debug(Dumper(@{$dosieroj{$maddr}}));
 
 		for my $dos (@{$dosieroj{$maddr}}) {
 			my $file = $dos->[0];
@@ -334,16 +352,26 @@ sub send_reports {
 			my $marko;
 
 			if ($art_id) {
-				if ($art_id =~ /^\044([^\044]+)\044$/) {
+				if ( $art_id =~ m{
+					^\044       # $
+					([^\044]+)
+					\044        # $
+				$}x ) {
 					$art_id = $1;
-					$art_id =~ /^Id: ([^ ,\.]+\.xml),v/;
-					$marko = $1;
+					if ( $art_id =~ m{
+						^Id:\s+     # Id:
+						([^ ,\.]+   # dosiernomo
+						\.xml),v    # fino
+					}x ) { 
+						$marko = $1;
+					};
+
 				} else {
 					$marko=$art_id;
 				}
 			} else { $art_id = $file; $marko=$file; }
 				
-			$log->debug("attach: $file\n");
+			$LOG->debug("attach: $file\n");
 			if (-e $file) {
 				$mail_handle->attach(Path=>$file,
 						Type=>'text/plain',
@@ -351,12 +379,12 @@ sub send_reports {
 						Disposition=>'attachment',
 						Filename=>$marko,
 						Description=>$art_id);
-			}		
+			}
 		}
 		
 		# forsendu
-		unless (mailsender::smtp_send($mailer,$revo_from,$to,$mail_handle)) {
-			$log->warn("Ne povas forsendi retpoŝtan raporton!\n");
+		unless (mailsender::smtp_send($mailer,$CFG->{revo_from},$to,$mail_handle)) {
+			$LOG->warn("Ne povas forsendi retpoŝtan raporton!\n");
 			next;
 		}
 	}
@@ -370,32 +398,32 @@ sub send_reports {
 # redakto de jam ekzistanta artikolo
 sub cmd_redakt {
     my ($subm,$detaloj) = @_;
-	my $fname = "$xml_dir/".$subm->{fname}.".xml";
+	my $fname = "$CFG->{xml_dir}/".$subm->{fname}.".xml";
 	process::write_file(">:encoding(utf-8)",$fname,$detaloj->{xml});
 
-    #$shangho = $shangh; # memoru por poste
-    #$shangho =~ s/[\200-\377]/?/g; # forigu ne-askiajn signojn
-	$log->debug("redakto: ".$subm->{desc}."\n"); # encode('utf-8',$subm->{desc})."\n");
+    #$CTX->{shangho} = $shangh; # memoru por poste
+    #$CTX->{shangho} =~ s/[\200-\377]/?/g; # forigu ne-askiajn signojn
+	$LOG->debug("redakto: ".$subm->{desc}."\n"); # encode('utf-8',$subm->{desc})."\n");
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
-	my $article_id = process::get_art_id($fname);
-    my $art = extract_article($subm,$article_id);
+	my $CTX->{article_id} = process::get_art_id($fname);
+    my $art = extract_article($subm,$CTX->{article_id});
 
-    unless ($art =~ /^[a-z0-9_]+$/i) {
+    unless ($art =~ /^[a-z0-9_]+$/ix) {
 		report($subm,
 			{
 				"rezulto"=>"eraro",
 				"mesagho" => "Ne valida artikolmarko $art. Ĝi povas enhavi nur "
 	      				."literojn, ciferojn kaj substrekon.",
 				"dosiero" => $fname,
-				"artikolo" => $article_id
+				"artikolo" => $CTX->{article_id}
 			});
 		return;
     }
 
     # kontroli la sintakson kaj arĥivi
-    if (check_xml($subm,$fname,$article_id,0)) {
-		return checkin($subm,$art,$article_id,$fname);
+    if (check_xml($subm,$fname,$CTX->{article_id},0)) {
+		return checkin($subm,$art,$CTX->{article_id},$fname);
     }
 	return;
 }
@@ -406,10 +434,10 @@ sub cmd_aldon {
 
     # kio estu la nomo de la nova artikolo
 	my $art = process::trim($subm->{fname}); 
-	my $fname = "$xml_dir/".$subm->{fname}.".xml";
+	my $fname = "$CFG->{xml_dir}/".$subm->{fname}.".xml";
 	process::write_file(">:encoding(utf-8)",$fname,$detaloj->{xml});
    
-    unless ($art =~ /^[a-z0-9_]+$/s) {
+    unless ($art =~ /^[a-z0-9_]+$/sx) {
 		report($subm, { 
 			"rezulto"=>"eraro",
 			"mesagho" => "Ne valida nomo por artikolo. \"$art\".\n"
@@ -419,28 +447,27 @@ sub cmd_aldon {
 		});
 		return;
     }
-    my $shangho = $art; # memoru por poste
-    $log->info("nova artikolo: $art\n");
+    $LOG->info("nova artikolo: $art\n");
 
     # bezonighas article_id en kazo de eraro
-    $article_id = "\044Id: $art.xml,v\044";
+    $CTX->{article_id} = "\044Id: $art.xml,v\044";
 
     # kontrolu, ĉu la dosiernomo estas ankoraŭ uzebla
-	my $xml_file = "$git_dir/revo/$art.xml";
+	my $xml_file = "$CFG->{git_dir}/revo/$art.xml";
     if (-e "$xml_file") {
 		report($subm, {
 			"rezulto"=>"eraro",
 			"mesagho" => "Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
 			   			."Bv. elekti alian nomon por la nova artikolo.",
 			"dosiero" => $fname,
-			"artikolo" => $article_id
+			"artikolo" => $CTX->{article_id}
 		});
 		return;
     }
 
     # kontroli la sintakson kaj arĥivi
-    if (check_xml($subm,$fname,$article_id,1)) {
-		return checkinnew($subm,$art,$article_id,$fname);
+    if (check_xml($subm,$fname,$CTX->{article_id},1)) {
+		return checkinnew($subm,$art,$CTX->{article_id},$fname);
     }
 	return;
 }
@@ -452,7 +479,7 @@ sub check_xml {
 
 	if ($err) {
 		$err .= "\nkunteksto:\n".process::xml_context($err,"$fname");
-		$log->info("XML-eraroj:\n$err");
+		$LOG->info("XML-eraroj:\n$err");
 
 		report($subm, {
 			"rezulto" => "eraro",
@@ -463,7 +490,7 @@ sub check_xml {
 		});
 		return;
     } else {
-		$log->debug("XML: en ordo\n");
+		$LOG->debug("XML: en ordo\n");
 		return 1;
     }
 }
@@ -483,16 +510,16 @@ sub checkin {
 	  	});
       	return;
     } 
-    $log->info("ŝanĝoj: ".$shangho."\n");
+    $LOG->info("ŝanĝoj: ".$shangho."\n");
 
     # skribu la shanghojn en dosieron
-    my $edtr = $editor->{red_nomo};
+    my $edtr = $CTX->{editor}->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
-	process::write_file(">:encoding(utf-8)","$tmp/shanghoj.msg","$edtr: $subm->{desc}");
+	process::write_file(">:encoding(utf-8)","$CFG->{tmp}/shanghoj.msg","$edtr: $subm->{desc}");
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
-	my $repo_art_file = "$git_dir/revo/$art.xml";
+	my $repo_art_file = "$CFG->{git_dir}/revo/$art.xml";
 
 	unless (-e $repo_art_file) {
 		report($subm, {
@@ -501,7 +528,7 @@ sub checkin {
 	       		 		."kiun vi redaktis ($art), ĉu temas pri nova?\n"
 	       				."Se jes, sendu kun indiko \"aldono:\". Se ne, bv.\n"
 						."serĉu la artikolon kun la ĝusta nomo kaj versio en la TTT-ejo. "
-	       				."($revo_url)",
+	       				."($CFG->{revo_url})",
 			"shangho" => $shangho,
 			"dosiero" => $fname,
 			"artikolo" => $id
@@ -520,7 +547,7 @@ sub checkin {
 	       		 		."ne baziĝas sur la aktuala arkiva versio\n"
 	       				."($ark_id)\n"
 	       				."Bonvolu preni aktualan version el la TTT-ejo. "
-	       				."($xml_source_url/$art.xml)",
+	       				."($CFG->{xml_source_url}/$art.xml)",
 			"shangho" => $shangho,
 			"dosiero" => $fname,
 			"artikolo" => $id
@@ -529,12 +556,12 @@ sub checkin {
     }
 
 	# checkin in Git
-	$log->info("cp ${fname} $repo_art_file\n");
-    `cp ${fname} $repo_art_file`;
+	$LOG->info("cp ${fname} $repo_art_file\n");
+    copy($fname,$repo_art_file);
 
 	my $ok = checkin_git($subm,$repo_art_file,$edtr,$id);
 
-	unlink("$tmp/shanghoj.msg");
+	unlink("$CFG->{tmp}/shanghoj.msg");
 
 	return $ok;
 }
@@ -544,10 +571,10 @@ sub checkin_git {
 	my ($subm,$xmlfile,$edtr,$id) = @_;
 	my $shangho = encode('utf-8',$subm->{desc});
 
-	process::incr_ver("$xmlfile","$tmp/shanghoj.msg");
+	process::incr_ver("$xmlfile","$CFG->{tmp}/shanghoj.msg");
 
-	my ($log1,$err1) = process::git_cmd("$git add $xmlfile");
-	my ($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
+	my ($log1,$err1) = process::git_cmd("$CFG->{git} add $xmlfile");
+	my ($log2,$err2) = process::git_cmd("$CFG->{git} commit -F $CFG->{tmp}/shanghoj.msg");
 
 	# chu 'commit' sukcesis?
 
@@ -567,11 +594,15 @@ sub checkin_git {
     # se log enhavas 'nothing to commit', la dosiero ne estas shanghita   
 
     # raportu erarojn
-    if ($log2 =~ /nothing\sto\scommit/s) {
+    if ( $log2 =~ m{
+		nothing\s
+		to\s
+		commit
+	}sx ) {
 		report("ERARO   : La sendita artikolo shajne ne diferencas de "
 			."la aktuala versio.");
 		return;
-    } elsif ($err2 !~ /^\s*$/s) {
+    } elsif ($err2 !~ /^\s*$/sx) {
 		report($subm, {
 			"rezulto" => "eraro",
 			"mesagho" => "Eraro dum arkivado de la nova artikolversio:\n"
@@ -598,23 +629,23 @@ sub checkinnew {
 	my $shangho = encode('utf-8',$subm->{desc});
 
     $shangho = "nova artikolo";
-    $log->info("shanghoj: $shangho\n");
+    $LOG->info("shanghoj: $shangho\n");
 
     # skribu la shanghojn en dosieron
-    my $edtr = $editor->{red_nomo};
+    my $edtr = $CTX->{editor}->{red_nomo};
     #$edtr =~ s/\s*<(.*?)>\s*//;
 
-    process::write_file(">:encoding(utf-8)","$tmp/shanghoj.msg","$edtr: $shangho");
+    process::write_file(">:encoding(utf-8)","$CFG->{tmp}/shanghoj.msg","$edtr: $shangho");
 
-	my $repo_art_file = "$git_dir/revo/$art.xml";
+	my $repo_art_file = "$CFG->{git_dir}/revo/$art.xml";
 
 	# checkin in Git
-    $log->debug("cp $fname $repo_art_file\n");
-    `cp $fname $repo_art_file`;
+    $LOG->debug("cp $fname $repo_art_file\n");
+    copy($fname,$repo_art_file);
 
 	my $ok = checkinnew_git($subm,$repo_art_file,$edtr,$id);
 
-	unlink("$tmp/shanghoj.msg");
+	unlink("$CFG->{tmp}/shanghoj.msg");
 
 	return $ok;
 }
@@ -623,10 +654,10 @@ sub checkinnew {
 sub checkinnew_git {
 	my ($subm,$xmlfile,$edtr,$id) = @_;
 
-	process::init_ver("$xmlfile","$tmp/shanghoj.msg");
+	process::init_ver("$xmlfile","$CFG->{tmp}/shanghoj.msg");
 
-	my ($log1,$err1) = process::git_cmd("$git add $xmlfile");
-	my ($log2,$err2) = process::git_cmd("$git commit -F $tmp/shanghoj.msg");
+	my ($log1,$err1) = process::git_cmd("$CFG->{git} add $xmlfile");
+	my ($log2,$err2) = process::git_cmd("$CFG->{git} commit -F $CFG->{tmp}/shanghoj.msg");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco
@@ -644,11 +675,15 @@ sub checkinnew_git {
     # se log enhavas 'nothing to commit', la dosiero ne estas shanghita   
 
     # raportu erarojn
-    if ($log2 =~ /nothing\sto\scommit/s) {
+    if ( $log2 =~ m{
+		nothing\s
+		to\s
+		commit
+	}sx ) {
 		report("ERARO   : La sendita artikolo shajne ne diferencas de "
 			."la aktuala versio.");
 		return;
-    } elsif ($err2 !~ /^\s*$/s) {
+    } elsif ($err2 !~ /^\s*$/sx) {
 		report($subm, {
 			"rezulto" => "eraro",
 			"mesagho" => "Eraro dum arkivado de la nova artikolversio:\n"
@@ -671,13 +706,18 @@ sub checkinnew_git {
 sub extract_article {
     my ($subm,$id) = @_;
     # ekstraktu dosiernomon el $Id: ...
-    unless ($id =~ /^\044Id: ([^ ,\.]+)\.xml,v\s+[0-9\.]+/) {
+    unless ( $id =~ m{
+		^\044Id:\s+  # Id:
+		([^\ ,\.]+)  # dosiernomo
+		\.xml,v\s+   # fino
+		[0-9\.]+     # versio
+	}x ) {
 		report($subm, {
 			"rezulto" => "eraro",
 			"mesagho" => "Artikol-marko havas malĝustan sintakson",
 			"artikolo" => $id
 		});
-		$log->warn("$id ne enhavas dosiernomon\n");
+		$LOG->warn("$id ne enhavas dosiernomon\n");
 		return '???';
     } else {
 		return $1;
@@ -690,14 +730,13 @@ sub extract_article {
 # legado kaj aktualigado de submetoj en la servilo/datumbazo
 
 sub submeto_listo {
-	my @records;
-	my $result = $ua->post($submeto_url,[format=>'text']);
+	my $result = $UA->post($CFG->{submeto_url},[format=>'text']);
 
 	if ($result->is_success) {
 		my $csv = $result->decoded_content(); # decode('utf8', $result->content);
 		return process::csv2arr($csv);
 	} else {
-		$log->error("Ne eblis preni liston de submetoj el $submeto_url.\n".$result->status_line."\n");
+		$LOG->error("Ne eblis preni liston de submetoj el $CFG->{submeto_url}.\n".$result->status_line."\n");
 		#return 0;
 		exit 1;
 	}
@@ -705,11 +744,11 @@ sub submeto_listo {
 
 sub pluku_submeton {
 	my $id = shift;
-	my ($redaktanto,$cmd,$shangho,$xml);
+	my ($redaktanto,$shangho,$xml);
 
-	$log->info("submeto: $id\n");
+	$LOG->info("submeto: $id\n");
 
-	my $result = $ua->post($submeto_url,[
+	my $result = $UA->post($CFG->{submeto_url},[
 		id=>$id, 
 		state=>'trakt'
 	]);
@@ -717,19 +756,19 @@ sub pluku_submeton {
 	if ($result->is_success) {
  		my @lines = split("\n",$result->decoded_content()); # decode('utf8', $result->content));
 
-		$log->debug("first line:".$lines[0]."\n");
+		$LOG->debug("first line:".$lines[0]."\n");
 		# prenu redaktanton
 		my ($key,$value) = split(':',shift @lines);
 		if ($key eq 'From') {
 			$redaktanto = process::trim($value);
 		} else {
-			$log->warn("Submeto ne enhavas redaktanton en la unua linio.\n");
+			$LOG->warn("Submeto ne enhavas redaktanton en la unua linio.\n");
 			return 0;
 		}
-		while ($lines[0] =~ m/^\s*$/s) {
+		while ($lines[0] =~ m/^\s*$/sx) {
 			shift @lines;
 		}
-		$log->debug("next line:".$lines[0]."\n");
+		$LOG->debug("next line:".$lines[0]."\n");
 
 		# prenu komandon kaj ŝanĝon
 		#my $line = shift @lines;
@@ -738,7 +777,7 @@ sub pluku_submeton {
 		#	$cmd = $1;
 		#	$shangho = $2;
 		#} else {
-		#	$log->warn("En la submeto ne troviĝis komando aŭ enestas nekonata komando.\n");
+		#	$LOG->warn("En la submeto ne troviĝis komando aŭ enestas nekonata komando.\n");
 		#	return 0;
 		#}
 		#while (@lines[0] =~ m/\s*\n/) {
@@ -746,10 +785,10 @@ sub pluku_submeton {
 		#}
 
 		# trovu la komencon de XML kaj kunkolektu ties liniojn
-		if ($lines[0] =~ m/^\s*<\?xml/) {
+		if ($lines[0] =~ m/^\s*<\?xml/x) {
 			$xml = join("\n",@lines);
 		} else {
-			$log->warn("En la submeto ne troviĝis XML-teksto.\n");
+			$LOG->warn("En la submeto ne troviĝis XML-teksto.\n");
 			return 0;
 		}
 
@@ -759,7 +798,7 @@ sub pluku_submeton {
 			xml => $xml);
 
 	} else {
-		$log->warn("Ne eblis preni submeton '$id'.\n".$result->status_line);
+		$LOG->warn("Ne eblis preni submeton '$id'.\n".$result->status_line);
 		return 0;
 	}
 }
@@ -774,9 +813,9 @@ sub submeto_rezulto {
 		$state = 'erar';
 	}
     # vd. https://www.perl.com/pub/2002/08/20/perlandlwp.html/
-	#$log->info("Aktualigo de submeto ".$subm_id.", stat: $state [".decode('utf-8',$detaloj->{mesagho})."]\n");
-	$log->info("Aktualigo de submeto ".$subm_id.", stat: $state [".$detaloj->{mesagho}."]\n");
-	my $res = $ua->post($submeto_url,
+	#$LOG->info("Aktualigo de submeto ".$subm_id.", stat: $state [".decode('utf-8',$detaloj->{mesagho})."]\n");
+	$LOG->info("Aktualigo de submeto ".$subm_id.", stat: $state [".$detaloj->{mesagho}."]\n");
+	my $res = $UA->post($CFG->{submeto_url},
 		[
 			id => $subm_id, 
 			state => $state,
@@ -788,11 +827,14 @@ sub submeto_rezulto {
 #		);
 
  	if (not $res->is_success) {
-		$log->warn("Ne eblis aktualigi la rezulton de la submeto '".$subm_id."'\n".$res->status_line);
-		return;		
+		$LOG->warn("Ne eblis aktualigi la rezulton de la submeto '".$subm_id."'\n".$res->status_line);
+		return;
 	} else {
-		$log->info("Aktualigo rezulto: ".$res->content)
+		$LOG->info("Aktualigo rezulto: ".$res->content)
 	}
 
 	return;
 }
+
+# fino
+1;
