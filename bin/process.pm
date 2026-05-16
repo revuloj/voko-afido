@@ -28,7 +28,7 @@ our $CFG = {
 	loglevel   => 'info',
 	dict_home  => $ENV{"HOME"}, # por testi: $ENV{'PWD'},
 	# git     => '/usr/bin/git',
-	xmlcheck   => '/usr/bin/rxp -V -s',
+	xmlcheck   => '/usr/bin/rxp -Vs',
 };
 
 $CFG->{dict_base}= "$CFG->{dict_home}/dict"; # xml, dok, dt,
@@ -69,7 +69,10 @@ sub sys_run_err {
   my @command = @_;
 
   my ($out, $err);
+  # $log->info("cmd:".join(' ',@command));
   run \@command, \undef, \$out, \$err;
+  # $log->info("cmd-out:".$out);
+  # $log->info("cmd-err:".$err);
   return $err;
 }
 
@@ -263,9 +266,8 @@ sub checkxml {
     unless (write_file(">",$fname,$teksto)) { return; }
 
     # kontrolu la sintakson de la XML-teksto
-    return
-		sys_run_err(split(/ /,$CFG->{xmlcheck}),$fname);
-
+    my $errors = sys_run_err(split(/ /,$CFG->{xmlcheck}),$fname);
+	return $errors;
 }
 
 # en la artikolo troviĝas $Id....$, kiu enhavas i.a. version kaj tempon
@@ -320,6 +322,8 @@ sub incr_ver {
 		}{log_incr($1,$ver,$shangh_file)}sex;
 
 		write_file(">",$artfile,$art);
+
+		return 1;
 	}
 	return;
 }
@@ -365,9 +369,11 @@ sub init_ver {
 		my $alog = "\n<!--\n\$Log: $fn,v \$\nversio $ver\n$shg\n-->\n";
 
 		$art =~ s{\$Id[^\$]*\$}{$id}x;
-		$art =~ s{<\/vortaro>}{$alog<\/vortaro>}sx;
+		$art =~ s{<!--\s*\$Log[^>]+-->\s*<\/vortaro>}{$alog<\/vortaro>}sx;
 
 		write_file(">",$artfile,$art);
+
+		return 1;
 	}
 
 	return;
@@ -420,35 +426,32 @@ sub xml_context {
 
 ################ helpfukcioj por Git ##############
 
+
 sub git_cmd {
-	my $git_cmd = shift;
+	my @git_cmd = @_;
 
 	chdir($CFG->{git_dir});
 	$log->info("------------------------------\n");
-	# `$git commit -F $CFG->{tmp}/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $CFG->{tmp}/git.log 2> $CFG->{tmp}/git.err`;
-	$log->info("$git_cmd\n");
-	`$git_cmd 1> $CFG->{tmp}/git.log 2> $CFG->{tmp}/git.err`;
+	$log->info(join(' ',@git_cmd)."\n");
+
+  	my ($out, $err);
+  	run \@git_cmd, \undef, \$out, \$err;
 
 	# chu 'commit' sukcesis?
-	my $git_log = read_file("$CFG->{tmp}/git.log");
-    $log->info("git-out:\n$git_log\n") if ($git_log);
-
-    my $git_err = read_file("$CFG->{tmp}/git.err");
-    $log->error("git-err:\n$git_err\n") if ($git_err);
+    $log->info("git-out:\n$out\n") if ($out);
+    $log->error("git-err:\n$err\n") if ($err);
 	$log->info("------------------------------\n");
 
-    unlink("$CFG->{tmp}/git.log");
-	unlink("$CFG->{tmp}/git.err");
 	chdir($CFG->{dict_base});
 
 	## no critic (RegularExpressions::RequireExtendedFormatting)
-	$git_log =~ s/\[master\s+/[m /;
-	$git_log =~ s/file changed/dosiero/;
-	$git_log =~ s/insertions/enmetoj/;
-	$git_log =~ s/deletions+/forigoj/;
+	$out =~ s/\[master\s+/[m /;
+	$out =~ s/file changed/dosiero/;
+	$out =~ s/insertions/enmetoj/;
+	$out =~ s/deletions+/forigoj/;
 	## use critic
 
-	return ($git_log,$git_err);
+	return ($out,$err);
 }
 
 return 1;

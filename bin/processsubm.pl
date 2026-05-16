@@ -182,7 +182,7 @@ MAIN() unless caller(); sub MAIN {
 
 	$LOG->info($CFG->{separator});
 	#git_push();
-	my ($lg,$err) = process::git_cmd("$CFG->{git} push origin master");
+	my ($lg,$err) = process::git_cmd($CFG->{git},'push','origin','master');
 
 	if ($err =~ m/fatal/ || $err =~ m/error/) {
 		# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
@@ -573,8 +573,8 @@ sub checkin_git {
 
 	process::incr_ver("$xmlfile","$CFG->{tmp}/shanghoj.msg");
 
-	my ($log1,$err1) = process::git_cmd("$CFG->{git} add $xmlfile");
-	my ($log2,$err2) = process::git_cmd("$CFG->{git} commit -F $CFG->{tmp}/shanghoj.msg");
+	my ($log1,$err1) = process::git_cmd($CFG->{git},'add',$xmlfile);
+	my ($log2,$err2) = process::git_cmd($CFG->{git},'commit','-F',"$CFG->{tmp}/shanghoj.msg");
 
 	# chu 'commit' sukcesis?
 
@@ -656,8 +656,8 @@ sub checkinnew_git {
 
 	process::init_ver("$xmlfile","$CFG->{tmp}/shanghoj.msg");
 
-	my ($log1,$err1) = process::git_cmd("$CFG->{git} add $xmlfile");
-	my ($log2,$err2) = process::git_cmd("$CFG->{git} commit -F $CFG->{tmp}/shanghoj.msg");
+	my ($log1,$err1) = process::git_cmd($CFG->{git},'add',$xmlfile);
+	my ($log2,$err2) = process::git_cmd($CFG->{git},'commit','-F',"$CFG->{tmp}/shanghoj.msg");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco

@@ -109,6 +109,17 @@ is( process::rep_str({
 `cp test-repo/revo/*.xml $CFG->{xml_temp}/`;
 ok(!process::checkxml('artefakt',"$CFG->{xml_temp}/artefakt.xml",0),"Kontrolo de artefakt.xml ne donas erarojn");
 
+# doni plenan identigilon al ĝi
+`echo "testshangho" > $CFG->{xml_temp}/shangho.txt`;
+ok( process::init_ver("$CFG->{xml_temp}/artefakt.xml","$CFG->{xml_temp}/shangho.txt"), "Identigilo al artefakt.xml" );
+
+like( process::get_art_id("$CFG->{xml_temp}/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.1 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.1 de artefakt.xml" );
+
+ok( process::incr_ver("$CFG->{xml_temp}/artefakt.xml","$CFG->{xml_temp}/shangho.txt"), "Versialtigo al artefakt.xml" );
+
+like( process::get_art_id("$CFG->{xml_temp}/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.2 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.2 de artefakt.xml" );
+
+
 like(process::sys_run_err('rxp','-Vs','dict/tmp/xml/erar.xml'),qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per rxp donas erarojn");
 
 #Warning: Required attribute mrk for element drv is not present
@@ -120,8 +131,13 @@ like(process::sys_run_err('rxp','-Vs','dict/tmp/xml/erar.xml'),qr/^Warning: Requ
 #Error: Mismatched end tag: expected </sncx>, got </snc>
 # in unnamed entity at line 42 char 8 of file:///home/wolfram/work/voko/voko-afido/dict/tmp/xml/erar.xml
 
-like(process::checkxml('erar',"$CFG->{xml_temp}/erar.xml",0),qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per checkxml donas erarojn");
+my $errors = process::checkxml('erar',"$CFG->{xml_temp}/erar.xml",0);
+diag($errors);
+like($errors,qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per checkxml donas erarojn");
 
-like( process::get_art_id("$CFG->{xml_temp}/erar.xml"),qr/^\$Id: erar.xml,v [\d\.]+ [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id de erar.xml" );
+like( process::xml_context($errors,"$CFG->{xml_temp}/erar.xml"),qr/10: <drv>/,"Kunteksto de la unua eraro" );
+
+my ($out,$err) = process::git_cmd(qw(/usr/bin/git log -1));
+like( $out, qr/commit.*Author:.*Date:.*v3/s, "Git log...");
 
 done_testing();
