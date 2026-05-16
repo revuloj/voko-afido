@@ -4,45 +4,48 @@
 # laŭ GPL 2.0
 
 use strict; use warnings;
-use utf8;
+use utf8; use open ':std', ':encoding(UTF-8)';
 
 package process;
+use Exporter 'import';
+our @EXPORT_OK = qw($CFG);
 
 # debian/ubuntu: libipc-run-perl
 use IPC::Run qw(run); 
 
 use JSON;
-my $json_parser = JSON->new->allow_nonref;
 #$json_parser->allow_tags(true);
 
 use Text::CSV;
 use Encode;
 
-my $loglevel = 'info';
 
 #use File::Tempdir;
 #my $tmpdir = File::Tempdir->new();
 #my $tmp = $tmpdir->name;
 
-my $dict_home    = $ENV{"HOME"}; # por testi: $ENV{'PWD'};
-my $dict_base    = "$dict_home/dict"; # xml, dok, dtd
-my $tmp          = "$dict_base/tmp";
-my $xml_temp     = "$tmp/xml";
+our $CFG = {
+	loglevel   => 'info',
+	dict_home  => $ENV{"HOME"}, # por testi: $ENV{'PWD'},
+	# git     => '/usr/bin/git',
+	xmlcheck   => '/usr/bin/rxp -V -s',
+};
 
-# my $git          = '/usr/bin/git';
-my $git_dir      = "$dict_base/revo-fonto";
+$CFG->{dict_base}= "$CFG->{dict_home}/dict"; # xml, dok, dt,
+$CFG->{tmp}      = "$CFG->{dict_base}/tmp";
+$CFG->{xml_temp} = "$CFG->{tmp}/xml";
+$CFG->{git_dir}  = "$CFG->{dict_base}/revo-fonto";
 
+my $json_parser = JSON->new->allow_nonref;
 
 # preparu protokolon
 use Log::Dispatch;
 my $log = Log::Dispatch->new(
     outputs => [
         #[ 'File',   min_level => 'debug', filename => 'logfile' ],
-        [ 'Screen', min_level => $loglevel ],
+        [ 'Screen', min_level => $CFG->{loglevel} ],
     ],
 );
-
-my $xmlcheck     = '/usr/bin/rxp -V -s';
 
 
 # forigu spacojn komence kaj fine de signoĉeno
@@ -50,6 +53,7 @@ sub trim { my $s = shift; $s =~ s/^\s+|\s+$//gx; return $s };
 
 ################ helpfukcioj por ruli, legi kaj skribi dosierojn ##############
 
+# rulas sistemkomandon kaj redonas STDOUT
 sub sys_run {
   my @command = @_;
 
@@ -58,6 +62,15 @@ sub sys_run {
     warn(join(' ',@command). ": $!\n$err\n");
   };
   return $out;
+}
+
+# rulas sistemkomandon kaj  redonas STDERR, ekz-e por XML-sintakskontrolo
+sub sys_run_err {
+  my @command = @_;
+
+  my ($out, $err);
+  run \@command, \undef, \$out, \$err;
+  return $err;
 }
 
 sub my_name {
@@ -97,7 +110,7 @@ sub write_file {
 	print $FILE $text;
 	close $FILE;
 
-	return;
+	return 1;
 }
 
 # legi JSON-dosieron
@@ -115,8 +128,8 @@ sub read_json_file {
 
     my $parsed;
 	eval {
-    	$parsed = $json_parser->decode(decode('utf8', $j));
-		#$parsed = $json_parser->decode($j);
+    	#$parsed = $json_parser->decode(decode('utf8', $j));
+		$parsed = $json_parser->decode($j); # ni aldonis utf8 por ĉiu "open" supre!
     	1;
 	} or do {
   		my $error = $@;
@@ -141,7 +154,7 @@ sub write_json_file {
 	print $JSN $json;
 	close $JSN; 
 
-	return; 
+	return 1; 
 }
 
 # legu linion post linio el CSV-teksto kaj redonu kiel listo de vortaretoj 
@@ -213,10 +226,9 @@ sub rep_str {
 # kontrolado de la XML-artikolo: marko ($Id$), sintakso
 sub checkxml {
     my ($id,$fname,$nova) = @_;
-	my $lname = "$xml_temp/$id.log";
 
     # se ne jam estas kreu provizoran xml-dosierujon
-    mkdir($xml_temp);
+    mkdir($CFG->{xml_temp});
 
     # aldonu dtd symlink se ankoraŭ mankas
     #symlink("$dtd_dir","$xml_temp/../dtd") ;
@@ -251,13 +263,9 @@ sub checkxml {
     unless (write_file(">",$fname,$teksto)) { return; }
 
     # kontrolu la sintakson de la XML-teksto
-    sys_run($xmlcheck,$fname,'2>',$lname);
+    return
+		sys_run_err(split(/ /,$CFG->{xmlcheck}),$fname);
 
-    # legu la erarojn
-    my $err = read_file($lname);
-    # unlink("$lname");
-
-    return $err;
 }
 
 # en la artikolo troviĝas $Id....$, kiu enhavas i.a. version kaj tempon
@@ -415,23 +423,23 @@ sub xml_context {
 sub git_cmd {
 	my $git_cmd = shift;
 
-	chdir($git_dir);
+	chdir($CFG->{git_dir});
 	$log->info("------------------------------\n");
-	# `$git commit -F $tmp/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $tmp/git.log 2> $tmp/git.err`;
+	# `$git commit -F $CFG->{tmp}/shanghoj.msg --author "revo <$revo_mailaddr>" $xmlfile 1> $CFG->{tmp}/git.log 2> $CFG->{tmp}/git.err`;
 	$log->info("$git_cmd\n");
-	`$git_cmd 1> $tmp/git.log 2> $tmp/git.err`;
+	`$git_cmd 1> $CFG->{tmp}/git.log 2> $CFG->{tmp}/git.err`;
 
 	# chu 'commit' sukcesis?
-	my $git_log = read_file("$tmp/git.log");
+	my $git_log = read_file("$CFG->{tmp}/git.log");
     $log->info("git-out:\n$git_log\n") if ($git_log);
 
-    my $git_err = read_file("$tmp/git.err");
+    my $git_err = read_file("$CFG->{tmp}/git.err");
     $log->error("git-err:\n$git_err\n") if ($git_err);
 	$log->info("------------------------------\n");
 
-    unlink("$tmp/git.log");
-	unlink("$tmp/git.err");
-	chdir($dict_base);
+    unlink("$CFG->{tmp}/git.log");
+	unlink("$CFG->{tmp}/git.err");
+	chdir($CFG->{dict_base});
 
 	## no critic (RegularExpressions::RequireExtendedFormatting)
 	$git_log =~ s/\[master\s+/[m /;
