@@ -21,7 +21,7 @@ diag(Dumper($CFG));
 
 # ni supozas ke DTD-dosieroj troviĝas ĉe ../voko-grundo/dtd
 # se ne vi devas mane ligi/kopii ilin al dict/tmp/dtd
-`mkdir -p dict/tmp && ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
+`mkdir -p dict/tmp && rm -rf dict/tmp/* && ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
 
 my $USER = $ENV{'USER'};
 my $JSON = <<'EOJ';
@@ -123,13 +123,13 @@ like( process::get_art_id("$CFG->{xml_temp}/artefakt.xml"),qr/^\$Id: artefakt.xm
 like(process::sys_run_err('rxp','-Vs','dict/tmp/xml/erar.xml'),qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per rxp donas erarojn");
 
 #Warning: Required attribute mrk for element drv is not present
-# in unnamed entity at line 10 char 6 of file:///home/wolfram/work/voko/voko-afido/dict/tmp/xml/erar.xml
+# in unnamed entity at line 10 char 6 of file://./dict/tmp/xml/erar.xml
 #Warning: Start tag for undeclared element sncx
-# in unnamed entity at line 13 char 8 of file:///home/wolfram/work/voko/voko-afido/dict/tmp/xml/erar.xml
+# in unnamed entity at line 13 char 8 of file://./dict/tmp/xml/erar.xml
 #Warning: Content model for drv does not allow element sncx here
-# in unnamed entity at line 13 char 8 of file:///home/wolfram/work/voko/voko-afido/dict/tmp/xml/erar.xml
+# in unnamed entity at line 13 char 8 of file://./dict/tmp/xml/erar.xml
 #Error: Mismatched end tag: expected </sncx>, got </snc>
-# in unnamed entity at line 42 char 8 of file:///home/wolfram/work/voko/voko-afido/dict/tmp/xml/erar.xml
+# in unnamed entity at line 42 char 8 of file://./dict/tmp/xml/erar.xml
 
 my $errors = process::checkxml('erar',"$CFG->{xml_temp}/erar.xml",0);
 diag($errors);

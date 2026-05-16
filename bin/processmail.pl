@@ -125,7 +125,7 @@ MAIN() unless caller(); sub MAIN {
 
 
 	#git_pull();
-	my ($lg,$err) = process::git_cmd("$CFG->{git} pull");
+	my ($lg,$err) = process::git_cmd($CFG->{git}, 'pull');
 	if ($err =~ m/fatal/x || $err =~ m/error/x || $lg =~ m/[CK]ONFLI/x) {
 		# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
 		# kun eraro-stato, tio devus ankaŭ eviti la postan aldonon de konfirmoj/eraroj al
@@ -234,7 +234,7 @@ MAIN() unless caller(); sub MAIN {
 
 	##send_newarts_report();
 	$LOG->info("puŝas ŝanĝojn al git...");
-	($lg,$err) = process::git_cmd("$CFG->{git} push origin master");
+	($lg,$err) = process::git_cmd($CFG->{git}, 'push', 'origin', 'master');
 	if ($err =~ m/fatal/ || $err =~ m/error/) {
 		# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
 		# kun eraro-stato...
@@ -1054,8 +1054,8 @@ sub checkin_git {
 	#incr_ver("$git_dir/$xmlfile");
 	process::incr_ver($xmlfile,"$CFG->{tmp}/shanghoj.msg");
 
-	my ($log1,$err1) = process::git_cmd("$CFG->{git} add $xmlfile");
-	my ($log2,$err2) = process::git_cmd("$CFG->{git} commit -F $CFG->{tmp}/shanghoj.msg");
+	my ($log1,$err1) = process::git_cmd($CFG->{git}, 'add', $xmlfile);
+	my ($log2,$err2) = process::git_cmd($CFG->{git}, 'commit', '-F', "$CFG->{tmp}/shanghoj.msg");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco
@@ -1173,8 +1173,8 @@ sub checkinnew_git {
 
 	process::init_ver("$xmlfile","$CFG->{tmp}/shanghoj.msg");
 
-	my ($log1,$err1) = process::git_cmd("$CFG->{git} add $xmlfile");
-	my ($log2,$err2) = process::git_cmd("$CFG->{git} commit -F $CFG->{tmp}/shanghoj.msg");
+	my ($log1,$err1) = process::git_cmd($CFG->{git}, 'add', $xmlfile);
+	my ($log2,$err2) = process::git_cmd($CFG->{git}, 'commit', '-F', "$CFG->{tmp}/shanghoj.msg");
 
 	# ekz. git.log se estas ŝanĝo:
 	#	[master 601545b1d0] +spaco
