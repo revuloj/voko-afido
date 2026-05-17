@@ -209,7 +209,7 @@ MAIN() unless caller(); sub MAIN {
 	if (-s $CFG->{mail_send} > 10) {
 		my $filename = "mail_sent_".timestamp();    
 		$LOG->info("ŝovas $CFG->{mail_send} al $CFG->{log_dir}/$filename\n");
-		rename($CFG->{mail_send},$CFG->{log_dir}."/$filename");
+		process::move_file($CFG->{mail_send},$CFG->{log_dir}."/$filename");
 	}  
 
 	$LOG->info($CFG->{separator});

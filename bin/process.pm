@@ -14,7 +14,7 @@ package process;
 use IPC::Run qw(run); 
 
 use JSON;
-
+use File::Copy;
 use Text::CSV;
 use Encode;
 
@@ -82,6 +82,19 @@ sub my_name {
 sub timestamp {
 	chomp(my $ts = sys_run('date','+%Y%m%d_%H%M%S'));
 	return $ts;
+}
+
+sub move_file {
+	my ($from,$to) = @_;
+
+	# simpla rename(..) funkcias nur
+	# en sama dosiersistemo, sed of ekz /tmp
+	# estas en alia dosiersistemo ol /home
+	if (copy($from,$to)) {
+		unlink($from);
+		return 1;
+	}
+	return;
 }
 
 # legi dosieron

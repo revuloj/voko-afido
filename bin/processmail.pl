@@ -156,7 +156,7 @@ MAIN() unless caller(); sub MAIN {
 		};
 
 		# shovu la poshtdosieron
-		rename($CFG->{mail_folder},$CFG->{mail_local});
+		process::move_file($CFG->{mail_folder},$CFG->{mail_local});
 		#`cp $CFG->{mail_folder} $CFG->{mail_local}`;
 
 		$mail_file = $CFG->{mail_local};
@@ -246,17 +246,17 @@ MAIN() unless caller(); sub MAIN {
 	# arkivu la poshtdosieron
 	if ($mail_file eq $CFG->{mail_local}) {
 		$LOG->info("\nshovas $CFG->{mail_local} al $CFG->{old_mail}/$filename");
-		rename($CFG->{mail_local},"$CFG->{old_mail}/$filename");
+		process::move_file($CFG->{mail_local},"$CFG->{old_mail}/$filename");
 	}
 
 	if (-e $CFG->{mail_error}) {
 		$LOG->info("shovas $CFG->{mail_error} al $CFG->{err_mail}/$filename");
-		rename($CFG->{mail_error},"$CFG->{err_mail}/$filename");
+		process::move_file($CFG->{mail_error},"$CFG->{err_mail}/$filename");
 	}
 
 	if (-e $CFG->{mail_send}) {
 		$LOG->info("shovas $CFG->{mail_send} al $CFG->{prc_mail}/$filename");
-		rename($CFG->{mail_send},"$CFG->{prc_mail}/$filename");
+		process::move_file($CFG->{mail_send},"$CFG->{prc_mail}/$filename");
 	}
 
 	exit 0;
@@ -705,7 +705,7 @@ MOVE_FILE:
 		# donu provizoran nomon al la dosiero
 		$CTX->{file_no}++;
 		$attachment = "$CFG->{attachments}$CTX->{file_no}";
-		rename($file,$attachment);
+		process::move_file($file,$attachment);
     }
 
     # skribu informon en $mail_send por poste sendi raporton al $CTX->{editor}
@@ -1037,14 +1037,14 @@ sub checkin {
     my $xmlfile="$art.xml";
 
 	# checkin in Git
-    rename("$CFG->{xml_temp}/xml.xml","$CFG->{git_dir}/revo/$xmlfile");
+    process::move_file("$CFG->{xml_temp}/xml.xml","$CFG->{git_dir}/revo/$xmlfile");
 
 	chdir($CFG->{git_dir});
 	checkin_git("revo/$xmlfile",$edtr);
 
 	unlink("$CFG->{tmp}/shanghoj.msg");
 
-	return;
+	return 1;
 }
 
 
@@ -1157,19 +1157,19 @@ sub checkinnew {
 
 	# checkin in Git
 	my $repo_art_file = "$CFG->{git_dir}/revo/$art.xml";
-	rename("$CFG->{xml_temp}/xml.xml",$repo_art_file);
+	process::move_file("$CFG->{xml_temp}/xml.xml",$repo_art_file);
 
 	#chdir($git_dir);
-	checkinnew_git($repo_art_file,$edtr);
+	checkinnew_git($repo_art_file);
 
 	unlink("$CFG->{tmp}/shanghoj.msg");
 
-	return;
+	return 1;
 }
 
 
 sub checkinnew_git {
-	my ($xmlfile,$edtr) = @_;
+	my $xmlfile = shift;
 
 	process::init_ver("$xmlfile","$CFG->{tmp}/shanghoj.msg");
 
