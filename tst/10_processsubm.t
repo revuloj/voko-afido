@@ -6,7 +6,7 @@ use Test::More; # tests => 2;
 use Encode qw(encode decode);
 
 use lib('./bin');
-use process qw(sys_run my_name timestamp trim);
+use process;
 require 'processsubm.pl';
 
 # adaptu agordojn
@@ -28,6 +28,8 @@ $process::CFG->{xml_temp} = "$process::CFG->{tmp}/xml";
 $process::CFG->{git_dir}  = '/tmp/test-repo'; # "$CFG->{dict_base}/revo-fonto";
 diag("process.pm-agordo: ".Dumper($process::CFG));
 
+`mkdir -p dict/tmp/xml && rm -rf dict/tmp/xml/* && ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
+`bin/create_test_repo.sh /tmp`;
 
 my $utf8 = 'eĥoŝanĝo ĉiuĵaŭde EĤOŜANGO ĈIUĴAŬDE';
 my $art_id = '$Id: artiko.xml,v 1.52 2025/10/08 16:37:51 revo Exp $';
@@ -71,9 +73,14 @@ close $XML;
 
 `echo "testshangho" > $process::CFG->{tmp}/shanghoj.msg`;
 
-
-checkinnew({
+$main::CTX->{editor}->{red_nomo} = 'Vigla Testanto';
+$main::CTX->{editor}->{retadr} = ['vigla_testanto@example.com'];
+ok( checkinnew({
     desc=>'nov'
-    },'nov','nov',$xmlfile);
+    },'nov','nov',$xmlfile), "checkinnew()" );
+my ($out,$err) = process::git_cmd(qw(/usr/bin/git log -1));
+like ($out,qr/Vigla Testanto: nova artikolo/,"Kontrolo de git-protokolo");
+
+`rm -rf $main::CFG->{git_dir}`;
 
 done_testing();

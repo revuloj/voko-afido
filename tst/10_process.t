@@ -142,4 +142,6 @@ like( process::xml_context($errors,"$process::CFG->{xml_temp}/erar.xml"),qr/10: 
 my ($out,$err) = process::git_cmd(qw(/usr/bin/git log -1));
 like( $out, qr/commit.*Author:.*Date:.*v3/s, "Git log...");
 
+`rm -rf $process::CFG->{git_dir}`;
+`rm -rf $process::CFG->{tmp}/*`;
 done_testing();
