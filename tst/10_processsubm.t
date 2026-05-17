@@ -4,6 +4,7 @@ use warnings;
 use Test::More; # tests => 2; 
 use utf8; use open ':std', ':encoding(UTF-8)';
 #use Encode qw(encode decode);
+use Data::Dumper;
 
 use lib('./bin');
 use process;

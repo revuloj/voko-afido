@@ -52,7 +52,9 @@ like( process::read_file('test-repo/revo/artefakt.xml'),qr/<\?xml/,'read_file(..
 
 # skribi $JSON kiel ordinara teskto kaj provi enlegi kiel json
 ok( process::write_file(">",'test-repo/test.json',$JSON), 'write_file(test-repo/test.json)' );
-my $json = process::read_json_file('test-repo/test.json');
+ok( process::move_file('test-repo/test.json','test-repo/test-1.json'), 'move to test-repo/test-1.json' );
+
+my $json = process::read_json_file('test-repo/test-1.json');
 note("JSON:\n".Dumper($json));
 
 cmp_deeply(
