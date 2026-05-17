@@ -33,7 +33,7 @@ our $CFG = {
 
 	#$vokomail_url => "http://www.reta-vortaro.de/cgi-bin/vokomail.pl",
 	xml_source_url => 'https://github.com/revuloj/revo-fonto/blob/master/revo',
-	revo_url       => "http://purl.oclc.org/NET/voko/revo",
+	revo_url       => "http://purl.org/NET/voko/revo",
 
 	# FARENDA: legu tiujn el sekreto(j)
 	revoservo      => '[Revo-Servo]',

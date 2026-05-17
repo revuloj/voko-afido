@@ -51,7 +51,7 @@ our $CFG = {
 	revo_mailaddr => 'revo@reta-vortaro.de',
 	#$redaktilo_from=> 'revo-servo@steloj.de';
 
-	separator    => " => " x 80 . "\n",
+	separator    => "=" x 80 . "\n",
 
 	# programoj
 	git           => '/usr/bin/git'
@@ -625,6 +625,7 @@ sub checkin_git {
 }
 
 sub checkinnew {
+	# submeto-informoj, artikolnomo = id, dosiernomo kun pado (nomo povas devii de art)
     my ($subm,$art,$id,$fname) = @_;
 	my $shangho = encode('utf-8',$subm->{desc});
 
