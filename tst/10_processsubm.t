@@ -2,8 +2,8 @@
 use strict;
 use warnings;
 use Test::More; # tests => 2; 
-
-use Encode qw(encode decode);
+use utf8; use open ':std', ':encoding(UTF-8)';
+#use Encode qw(encode decode);
 
 use lib('./bin');
 use process;
@@ -28,14 +28,22 @@ $process::CFG->{xml_temp} = "$process::CFG->{tmp}/xml";
 $process::CFG->{git_dir}  = '/tmp/test-repo'; # "$CFG->{dict_base}/revo-fonto";
 diag("process.pm-agordo: ".Dumper($process::CFG));
 
-`mkdir -p dict/tmp/xml && rm -rf dict/tmp/xml/* && ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
+`mkdir -p dict/tmp/xml && rm dict/tmp/* && rm -rf dict/tmp/xml/* && ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
 `bin/create_test_repo.sh /tmp`;
 
 my $utf8 = 'eĥoŝanĝo ĉiuĵaŭde EĤOŜANGO ĈIUĴAŬDE';
 my $art_id = '$Id: artiko.xml,v 1.52 2025/10/08 16:37:51 revo Exp $';
 
+$main::CTX->{editor}->{red_nomo} = 'Vigla Testanto';
+$main::CTX->{editor}->{retadr} = ['vigla_testanto@example.com'];
+
+# ĉar ni ne vokas MAIN, ni mem devas skribi komencon al mail_send
+`echo "[" > $main::CFG->{mail_send}`;
+
 # Encode to Latin3 bytes
 is( extract_article({},$art_id), 'artiko', 'ekstrakti dosiernomon el artikolmarko');
+
+### kreu novan artikolon kaj testu la endeponejigon
 
 my $NOVA = <<'EON';
 <?xml version="1.0"?>
@@ -71,16 +79,37 @@ open my $XML, ">", $xmlfile or die "Ne povas skribi al $xmlfile: $!\n";
 print $XML $NOVA;
 close $XML;
 
-`echo "testshangho" > $process::CFG->{tmp}/shanghoj.msg`;
+`echo "testshangho 1" > $process::CFG->{tmp}/shanghoj.msg`;
 
-$main::CTX->{editor}->{red_nomo} = 'Vigla Testanto';
-$main::CTX->{editor}->{retadr} = ['vigla_testanto@example.com'];
 ok( checkinnew({
-    desc=>'nov'
+    desc => 'nov'
     },'nov','nov',$xmlfile), "checkinnew()" );
 my ($out,$err) = process::git_cmd(qw(/usr/bin/git log -1));
 like ($out,qr/Vigla Testanto: nova artikolo/,"Kontrolo de git-protokolo");
 
-`rm -rf $main::CFG->{git_dir}`;
+### endeponejigu ŝanĝon
+
+`echo "testshangho 2" > $process::CFG->{tmp}/shanghoj.msg`;
+
+ok( ! checkin({
+    desc => 'ŝanĝo'
+    },'nov','nov',$xmlfile), "checkin() malsukcesa pro versiokonflikto" );
+
+# Ni ne ŝanĝis la version, kio kaŭzas versikonflikton,
+# Tiun informon ni trovu en doserio 'mailsend'
+`echo "]" >> $main::CFG->{mail_send}`;
+my $json = process::read_json_file($main::CFG->{mail_send});
+my $report = $json->[-1];
+
+diag(Dumper($report));
+
+like ($report->{mesagho},qr/ne baziĝas sur la aktuala arkiva versio/,"Versikonflikto en 'mailsend'");
+
+# rekomencu mail_send
+##`echo "[" > $main::CFG->{mail_send}`;
+# my ($out,$err) = process::git_cmd(qw(/usr/bin/git log -1));
+# like ($out,qr/Vigla Testanto: nova artikolo/,"Kontrolo de git-protokolo");
+
+##`rm -rf $main::CFG->{git_dir}`;
 
 done_testing();
