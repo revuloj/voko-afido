@@ -1,6 +1,8 @@
 # t/mein_test.t
 use strict;
 use warnings;
+
+use utf8; use open ':std', ':encoding(UTF-8)';
 use Test::More; # tests => 2; 
 
 use Encode qw(encode decode);
@@ -49,20 +51,18 @@ $process::CFG->{xml_temp} = "$process::CFG->{tmp}/xml";
 $process::CFG->{git_dir}  = '/tmp/test-repo'; # "$CFG->{dict_base}/revo-fonto";
 diag("process.pm-agordo: ".Dumper($process::CFG));
 
-`mkdir -p dict/tmp/xml && rm dict/tmp/* && rm -rf dict/tmp/xml/* && ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
+`mkdir -p dict/xml && mkdir -p dict/tmp/xml && rm dict/tmp/* && rm -rf dict/tmp/xml/*`;
+`ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
 `bin/create_test_repo.sh /tmp`;
 
 my $utf8 = 'eĥoŝanĝo ĉiuĵaŭde EĤOŜANGO ĈIUĴAŬDE';
 my $art_id = '$Id: artiko.xml,v 1.52 2025/10/08 16:37:51 revo Exp $';
 
 # Encode to Latin3 bytes
-is( lat3_utf8( encode('iso-8859-3',decode('utf8',$utf8)) ),$utf8,'rekodigo lat3 utf8');
+#is( lat3_utf8( encode('iso-8859-3',decode('utf-8',$utf8)) ),$utf8,'rekodigo lat3 utf8');
+is( decode('utf8', lat3_utf8( encode('iso-8859-3',$utf8) )),$utf8,'rekodigo lat3 utf8');
 is( extract_article($art_id), 'artiko', 'ekstrakti dosiernomon el artikolmarko');
 is( extract_version($art_id), '1.52', 'ekstrakti version el artikolmarko');
-
-#$main::CTX->{editor}->{retadr} = ['vigla_testanto@example.com'];
-#$main::CTX->{editor}->{red_nomo} = 'Vigla Testanto';
-
 
 ### kreu novan artikolon kaj testu la endeponejigon
 
@@ -108,24 +108,28 @@ ok( checkinnew('nov','nov'), "checkinnew()" );
 my ($out,$err) = process::git_cmd(qw(/usr/bin/git log -1));
 like ($out,qr/Vigla Testanto: nova artikolo/,"Kontrolo de git-protokolo");
 
-### endeponejigu ŝanĝon
+
+### ni provos reendeponejigi la saman dosieron,
+# kio kaŭzu versikonflikton
+
+open my $XML, ">", $xmlfile or die "Ne povas skribi al $xmlfile: $!\n";
+print $XML $NOVA;
+close $XML;
+
+# kopion de la arĥivita dosiero ni bezonas en xml_dir
+`cp $main::CFG->{git_dir}/revo/nov.xml $main::CFG->{xml_dir}/`;
 
 #`echo "testshangho 2" > $process::CFG->{tmp}/shanghoj.msg`;
 $main::CTX->{shangho} = "testshangho 2";
 
-ok( ! checkin('nov','nov'), "checkin() malsukcesa pro versiokonflikto" );
+ok( ! checkin('nov','$Id$'), "checkin() malsukcesa pro versiokonflikto" );
 
 # Ni ne ŝanĝis la version, kio kaŭzas versikonflikton,
 # Tiun informon ni trovu en doserio 'mailsend'
-`echo "]" >> $main::CFG->{mail_send}`;
-my $json = process::read_json_file($main::CFG->{mail_send});
-my $report = $json->[-1];
+my $report = process::read_file($main::CFG->{mail_send});
+diag($report);
 
-diag(Dumper($report));
-
-like ($report->{mesagho},qr/ne baziĝas sur la aktuala arkiva versio/,"Versikonflikto en 'mailsend'");
-
-
+like ($report,qr/ne baziĝas sur la aktuala arkiva versio/s,"Versikonflikto en 'mailsend'");
 
 ##`rm -rf $main::CFG->{git_dir}`;
 

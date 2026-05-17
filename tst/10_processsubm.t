@@ -96,7 +96,7 @@ ok( ! checkin({
     desc => 'ŝanĝo'
     },'nov','nov',$xmlfile), "checkin() malsukcesa pro versiokonflikto" );
 
-# Ni ne ŝanĝis la version, kio kaŭzas versikonflikton,
+# Ni ne ŝanĝis la version en la origina dosiero, kio kaŭzas versikonflikton,
 # Tiun informon ni trovu en doserio 'mailsend'
 `echo "]" >> $main::CFG->{mail_send}`;
 my $json = process::read_json_file($main::CFG->{mail_send});

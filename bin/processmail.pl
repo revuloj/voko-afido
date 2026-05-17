@@ -78,6 +78,8 @@ $CFG->{dtd_dir}  = "$CFG->{dict_base}/dtd";
 
 $CFG->{mail_folder} = "/var/spool/mail/".process::my_name(); #/var/spool/mail/tomocero";
 $CFG->{parts_dir}   = "$CFG->{afido_dir}/tmp/mailparts";
+
+# alvenajn redaktojn ni unu traktas/kontrolas  en tmp/
 $CFG->{mail_error}  = "$CFG->{tmp}/mailerr";
 $CFG->{mail_send}   = "$CFG->{tmp}/mailsend";
 $CFG->{xml_temp}    = "$CFG->{tmp}/xml";
@@ -87,7 +89,10 @@ $CFG->{old_mail}    = "$CFG->{log_mail}/oldmail";
 $CFG->{err_mail}    = "$CFG->{log_mail}/errmail";
 $CFG->{prc_mail}    = "$CFG->{log_mail}/prcmail";
 
+# la aktualaj artikolfontoj estas en xml/
 $CFG->{xml_dir}     = "$CFG->{dict_base}/xml";
+
+# la malpakita Git-arĥivo, la XML-dosieorjn mem ni tenas aparte
 $CFG->{git_dir}     = "$CFG->{dict_base}/revo-fonto";
 $CFG->{dok_dir}     = "$CFG->{dict_base}/dok";
 
@@ -1027,7 +1032,7 @@ sub checkin {
 
 		# versi-konflikto
 		report("ERARO   : La de vi sendita artikolo\n"
-			."ne bazighas sur la aktuala arkiva versio\n"
+			."ne baziĝas sur la aktuala arkiva versio\n"
 			."($ark_id)\n"
 			."Bonvolu preni aktualan version el la TTT-ejo. "
 			."($CFG->{xml_source_url}/$art)\n","$CFG->{xml_temp}/xml.xml");
