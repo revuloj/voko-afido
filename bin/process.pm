@@ -7,18 +7,16 @@ use strict; use warnings;
 use utf8; use open ':std', ':encoding(UTF-8)';
 
 package process;
-use Exporter 'import';
-our @EXPORT_OK = qw($CFG);
+#use Exporter 'import';
+#our @EXPORT_OK = qw($CFG sys_run my_name timestamp trim);
 
 # debian/ubuntu: libipc-run-perl
 use IPC::Run qw(run); 
 
 use JSON;
-#$json_parser->allow_tags(true);
 
 use Text::CSV;
 use Encode;
-
 
 #use File::Tempdir;
 #my $tmpdir = File::Tempdir->new();
@@ -430,7 +428,12 @@ sub xml_context {
 sub git_cmd {
 	my @git_cmd = @_;
 
-	chdir($CFG->{git_dir});
+	chdir($CFG->{git_dir}) or do {
+		$log->warn("Ne povis ŝanĝi en dosierujon: $CFG->{git_dir}: $!\n");
+		return;
+	};
+	#$log->info($CFG->{git_dir}. " vs. ".`pwd`);
+
 	$log->info("------------------------------\n");
 	$log->info(join(' ',@git_cmd)."\n");
 

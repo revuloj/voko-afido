@@ -2,6 +2,11 @@
 
 #set -x
 
+dir=$1
+if [[ -n "$dir" ]]; then
+  cd ${dir}
+fi
+
 # ni difinas jam en docker-compose.yml 
 # mkdir test-repo
 rm -rf test-repo/.git

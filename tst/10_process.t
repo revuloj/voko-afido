@@ -8,16 +8,16 @@ use JSON;
 use utf8; use open ':std', ':encoding(UTF-8)';
 
 use lib('./bin');
-use process qw($CFG);
+use process;
 
 # iom da reagordo por loka testo...
-chomp(my $pwd = `pwd`);
-local $CFG->{dict_home} = $pwd;
-local $CFG->{dict_base}= "$CFG->{dict_home}/dict"; # xml, dok, dt,
-local $CFG->{tmp}      = "$CFG->{dict_base}/tmp";
-local $CFG->{xml_temp} = "$CFG->{tmp}/xml";
-local $CFG->{git_dir}  = 'test-repo'; # "$CFG->{dict_base}/revo-fonto";
-diag(Dumper($CFG));
+my $workdir = $ENV{'PWD'};
+$process::CFG->{dict_home} = $ENV{'PWD'};
+$process::CFG->{dict_base}= "$process::CFG->{dict_home}/dict"; # xml, dok, dt,
+$process::CFG->{tmp}      = "$process::CFG->{dict_base}/tmp";
+$process::CFG->{xml_temp} = "$process::CFG->{tmp}/xml";
+$process::CFG->{git_dir}  = '/tmp/test-repo'; # "$process::CFG->{dict_base}/revo-fonto";
+diag(Dumper($process::CFG));
 
 # ni supozas ke DTD-dosieroj troviĝas ĉe ../voko-grundo/dtd
 # se ne vi devas mane ligi/kopii ilin al dict/tmp/dtd
@@ -39,7 +39,8 @@ EOC
 
 my $json_parser = JSON->new->pretty;
 
-`bin/create_test_repo.sh`;
+`bin/create_test_repo.sh /tmp`;
+chdir($workdir);
 # Encode to Latin3 bytes
 
 is( process::my_name(),$USER,'my_name()' );
@@ -105,19 +106,19 @@ is( process::rep_str({
     }), "senddato: 2026-01-01\nartikolo: artefakt\nKONFIRMO: artikolo akceptita\n", 'rep_str(...)' );
 #like( )
 
-`mkdir -p $CFG->{xml_temp}`;
-`cp test-repo/revo/*.xml $CFG->{xml_temp}/`;
-ok(!process::checkxml('artefakt',"$CFG->{xml_temp}/artefakt.xml",0),"Kontrolo de artefakt.xml ne donas erarojn");
+`mkdir -p $process::CFG->{xml_temp}`;
+`cp test-repo/revo/*.xml $process::CFG->{xml_temp}/`;
+ok(!process::checkxml('artefakt',"$process::CFG->{xml_temp}/artefakt.xml",0),"Kontrolo de artefakt.xml ne donas erarojn");
 
 # doni plenan identigilon al ĝi
-`echo "testshangho" > $CFG->{xml_temp}/shangho.txt`;
-ok( process::init_ver("$CFG->{xml_temp}/artefakt.xml","$CFG->{xml_temp}/shangho.txt"), "Identigilo al artefakt.xml" );
+`echo "testshangho" > $process::CFG->{xml_temp}/shangho.txt`;
+ok( process::init_ver("$process::CFG->{xml_temp}/artefakt.xml","$process::CFG->{xml_temp}/shangho.txt"), "Identigilo al artefakt.xml" );
 
-like( process::get_art_id("$CFG->{xml_temp}/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.1 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.1 de artefakt.xml" );
+like( process::get_art_id("$process::CFG->{xml_temp}/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.1 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.1 de artefakt.xml" );
 
-ok( process::incr_ver("$CFG->{xml_temp}/artefakt.xml","$CFG->{xml_temp}/shangho.txt"), "Versialtigo al artefakt.xml" );
+ok( process::incr_ver("$process::CFG->{xml_temp}/artefakt.xml","$process::CFG->{xml_temp}/shangho.txt"), "Versialtigo al artefakt.xml" );
 
-like( process::get_art_id("$CFG->{xml_temp}/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.2 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.2 de artefakt.xml" );
+like( process::get_art_id("$process::CFG->{xml_temp}/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.2 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.2 de artefakt.xml" );
 
 
 like(process::sys_run_err('rxp','-Vs','dict/tmp/xml/erar.xml'),qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per rxp donas erarojn");
@@ -131,12 +132,13 @@ like(process::sys_run_err('rxp','-Vs','dict/tmp/xml/erar.xml'),qr/^Warning: Requ
 #Error: Mismatched end tag: expected </sncx>, got </snc>
 # in unnamed entity at line 42 char 8 of file://./dict/tmp/xml/erar.xml
 
-my $errors = process::checkxml('erar',"$CFG->{xml_temp}/erar.xml",0);
+my $errors = process::checkxml('erar',"$process::CFG->{xml_temp}/erar.xml",0);
 diag($errors);
 like($errors,qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per checkxml donas erarojn");
 
-like( process::xml_context($errors,"$CFG->{xml_temp}/erar.xml"),qr/10: <drv>/,"Kunteksto de la unua eraro" );
+like( process::xml_context($errors,"$process::CFG->{xml_temp}/erar.xml"),qr/10: <drv>/,"Kunteksto de la unua eraro" );
 
+#diag($process::CFG->{git_dir}. " vs. ".`pwd`);
 my ($out,$err) = process::git_cmd(qw(/usr/bin/git log -1));
 like( $out, qr/commit.*Author:.*Date:.*v3/s, "Git log...");
 
