@@ -78,7 +78,10 @@ $CFG->{git_dir}   =  "$CFG->{dict_base}/revo-fonto";
 $CFG->{editor_file} =  "$CFG->{dict_etc}/redaktantoj.json"; #"$CFG->{dict_etc}/voko.redaktantoj";
 
 # agordo de servilo-konekto
-if ( $ENV{REVO_HOST} && ($ENV{REVO_HOST} eq "araneo" || $ENV{REVO_HOST} eq "cetonio:8080") ) {
+if ( $ENV{REVO_HOST} && ($ENV{REVO_HOST} eq "araneo" 
+	|| $ENV{REVO_HOST} eq "cetonio:8080"  
+	|| $ENV{REVO_HOST} eq "127.0.0.1:8088" ) ) 
+{
 	# ene de docker-medio ni uzas nur HTTP
 	$CFG->{submeto_url} = "http://$ENV{REVO_HOST}";
 	$CFG->{netloc} = $ENV{REVO_HOST};
