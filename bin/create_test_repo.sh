@@ -7,10 +7,20 @@ if [[ -n "$dir" ]]; then
   cd ${dir}
 fi
 
+workdir=$(pwd)
+echo "En ${workdir}..."
+
 # ni difinas jam en docker-compose.yml 
 # mkdir test-repo
-rm -rf test-repo/.git
-rm -rf test-repo/*
+rm -rf test-repo-origin.git
+rm -rf test-repo
+
+# kreu test-repo-origin
+mkdir test-repo-origin.git && cd test-repo-origin.git
+git init --bare
+cd ..
+
+# kreu test-repo
 
 mkdir -p test-repo && cd test-repo
 
@@ -19,6 +29,8 @@ git config --local init.defaultBranch master
 git config --local commit.gpgsign false
 #git config receive.denyCurrentBranch warn
 git config --local receive.denyCurrentBranch updateInstead
+
+git remote add origin ${workdir}/test-repo-origin.git
 
 mkdir revo
 
@@ -184,6 +196,9 @@ EOF3
 git add revo
 git commit -m"v3"
 git tag "v3"
+
+echo "git push..."
+git push --set-upstream origin master
 
 #git config --global --add safe.directory test_repo/.git
 

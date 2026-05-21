@@ -4,8 +4,14 @@ use strict; use warnings;
 use utf8; use open ':std', ':encoding(UTF-8)';
 # pakaĵo de Debian/Ubunto: libtest-www-mechanize-perl
 use Test::WWW::Mechanize;
-use Test::More; use Test::Deep;
+# libtest-more-perl
+use Test::More; # use Test::Deep; 
+# libtest-output-perl
+#use Test::Output;
+# liblog-dispatch-array-perl
+use Log::Dispatch::Array;
 use URL::Encode qw(url_encode);
+use Data::Dumper;
 
 use lib('./bin');
 use process;
@@ -13,8 +19,12 @@ use process;
 my $SUBM_HOST = '127.0.0.1:8088';
 my $SUBM_URL = "http://$SUBM_HOST/cgi-bin/vokosubmx.pl";
 
+# antaŭ require... ni devas difini kelkajn mediovariablojn por processsubm.pl
 $ENV{'REVO_HOST'} = $SUBM_HOST;
 $ENV{ADM_USER} = 'araneo';
+$ENV{ADM_PASSWORD} = `tst/22_adm_pwd.sh`;
+
+
 require 'processsubm.pl';
 
 # 0. adaptu agordojn
@@ -44,9 +54,6 @@ diag("process.pm-agordo: ".Dumper($process::CFG));
 # alie la testo fiaskos pro rifuzo de la redakto
 my $redaktanto = $ENV{TEST_RETADRESO} || '_registrita_testredaktanto_@retavortaro.de';
 
-unless ( $ENV{ADM_PASSWORD} ) {
-    die "Vi devas transdoni ADM_PASSWORD tra medivariablo."
-}
 
 # 2. preparo de TTT-testkliento
 my $mech = Test::WWW::Mechanize->new();
@@ -74,11 +81,32 @@ $mech->scraped_id_like('konfirmo', qr/Bone/,'Konfirmo de submeto');
 
 # Nun ni provas trakti la submeton regule per processsubm.pl
 
+#main::MAIN();
+my @logged_events;
+
+# 2. Den Array-Logger zu deinem bestehenden $LOG hinzufügen
+$main::LOG->add(
+    Log::Dispatch::Array->new(
+        name      => 'test_array_logger',
+        min_level => 'debug',
+        array     => \@logged_events, # Referenz auf unser Array
+    )
+);
+
+note(Dumper($main::LOG->outputs())); #exit;
+#$main::LOG->output('Log::Dispatch::Screen')->{stderr} = 1;
+#stderr_like(
+#    sub { main::MAIN() },
+#    qr/Trovitaj novaj submetoj:.*desc: nur testo.*Ne valida artikolmarko.*sendas raportojn al redaktintoj.*Aktualigo de submeto.*ŝovas/,
+#    "MAIN() informas pri submetoj, sendo de raportoj kaj fino"
+#);
+
 main::MAIN();
 
+note(Dumper(@logged_events));
 
 done_testing();
-
+##########################
 
 sub forsendo {
     my ($xml,$testo) = @_;

@@ -142,6 +142,10 @@ MAIN() unless caller(); sub MAIN {
 	# legu redaktantojn el JSON-dosiero kaj transformu al HASH por 
 	# trovi ilin facile laŭ numero (red_id)
 	$CTX->{editors} = process::read_json_file($CFG->{editor_file});
+	unless($CTX->{editors}) {
+		$LOG->error("Ne povis legi la liston de redaktantoj\n");
+		return;
+	};
 
 	process::write_file(">:encoding(utf-8)", $CFG->{mail_send},"[\n"); 
 
@@ -210,14 +214,14 @@ MAIN() unless caller(); sub MAIN {
 	$LOG->info($CFG->{separator});
 
 	if (-s $CFG->{mail_send} > 10) {
-		my $filename = "mail_sent_".timestamp();    
+		my $filename = "mail_sent_".process::timestamp();    
 		$LOG->info("ŝovas $CFG->{mail_send} al $CFG->{log_dir}/$filename\n");
 		process::move_file($CFG->{mail_send},$CFG->{log_dir}."/$filename");
 	}  
 
 	$LOG->info($CFG->{separator});
 
-	exit;
+	return;
 
 } # MAIN
 
@@ -252,8 +256,8 @@ sub process_subm {
 sub is_editor {
     my $retadreso = shift;
 
-	# se ne troviĝis, trairu la liston kaj kalkulu dume la Sha-ojn
-	for my $ed (@$CTX->{editors}) {
+	# trairu la liston pro trovi la redaktantanton laŭ lia retadreso
+	for my $ed (@{$CTX->{editors}}) {
 		for my $ra (@{$ed->{retadr}}) {
 			return $ed if ($retadreso eq $ra);
 		}
@@ -339,11 +343,11 @@ sub send_reports {
 		my $mail_handle = build MIME::Entity(Type=>"multipart/mixed",
 						From=>$CFG->{revo_from},
 						To=>$to,
-						Subject=>"$CFG->{revoservo} - raporto");
+						Subject=>encode('utf-8',"$CFG->{revoservo} - raporto"));
 		
 		$mail_handle->attach(Type=>"text/plain",
 				Encoding=>"quoted-printable",
-				Data=>$message);
+				Data=>encode('utf-8',$message));
 		
 		# alpendigu dosierojn
 		$LOG->debug("dosieroj{maddr}: ");
@@ -823,7 +827,7 @@ sub submeto_rezulto {
 		[
 			id => $subm_id, 
 			state => $state,
-			result => $detaloj->{mesagho} # encode('utf-8',$detaloj->{mesagho})
+			result => encode('utf-8',$detaloj->{mesagho}) #$detaloj->{mesagho} # 
 		],
 		Content_Type => 'form-data'
 	);
