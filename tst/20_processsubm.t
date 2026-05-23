@@ -5,7 +5,7 @@ use utf8; use open ':std', ':encoding(UTF-8)';
 # pakaĵo de Debian/Ubunto: libtest-www-mechanize-perl
 use Test::WWW::Mechanize;
 # libtest-more-perl
-use Test::More; # use Test::Deep; 
+use Test::More; use Test::Deep; 
 # libtest-output-perl
 #use Test::Output;
 # liblog-dispatch-array-perl
@@ -22,7 +22,7 @@ my $SUBM_URL = "http://$SUBM_HOST/cgi-bin/vokosubmx.pl";
 # antaŭ require... ni devas difini kelkajn mediovariablojn por processsubm.pl
 $ENV{'REVO_HOST'} = $SUBM_HOST;
 $ENV{ADM_USER} = 'araneo';
-$ENV{ADM_PASSWORD} = `tst/22_adm_pwd.sh`;
+$ENV{ADM_PASSWORD} = `tst/adm_pwd.sh`;
 
 
 require 'processsubm.pl';
@@ -47,7 +47,7 @@ $process::CFG->{git_dir}  = '/tmp/test-repo'; # "$CFG->{dict_base}/revo-fonto";
 diag("process.pm-agordo: ".Dumper($process::CFG));
 
 `mkdir -p dict/tmp/xml && rm dict/tmp/* && rm -rf dict/tmp/xml/* && ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
-`bin/create_test_repo.sh /tmp`;
+`bin/create_test_repo.sh /tmp && tst/adm_forigi_subm.sh`;
 
 
 # transdonu registrita test-redaktanton en medivariablo,
@@ -104,6 +104,37 @@ note(Dumper($main::LOG->outputs())); #exit;
 main::MAIN();
 
 note(Dumper(@logged_events));
+
+cmp_deeply( \@logged_events, superbagof( 
+    {
+        'level' => 'info',
+        'message' => re(qr/Trovitaj novaj submetoj:/)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/desc: nur testo/)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/Ne valida artikolmarko/)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/sendas raportojn al redaktintoj/)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/Aktualigo de submeto.*stat: erar/)
+    },
+    {
+        'level' => 'debug',
+        'message' => re(qr/attach:.*test\.xml/)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/\x{15d}ovas/)
+    }
+) );
 
 done_testing();
 ##########################
