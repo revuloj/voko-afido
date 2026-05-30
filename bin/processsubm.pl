@@ -153,7 +153,9 @@ MAIN() unless caller(); sub MAIN {
 	#$LOG->info(Dumper(@submetoj));
 
 	$LOG->info("Trovitaj novaj submetoj: ".($#submetoj+1)."\n");
+	## no critic (ControlStructures::ProhibitNegativeExpressionsInUnlessAndUntilConditions)
 	exit unless (@submetoj && $#submetoj >= 0 && $submetoj[0]->{id});
+	## use critic
 
 	foreach my $subm (@submetoj) {
 
@@ -343,9 +345,9 @@ sub send_reports {
 		my $mail_handle = build MIME::Entity(Type=>"multipart/mixed",
 						From=>$CFG->{revo_from},
 						To=>$to,
-						Subject=>encode('utf-8',"$CFG->{revoservo} - raporto"));
+						Subject=>encode('MIME-Header', "$CFG->{revoservo} - raporto")); #encode('utf-8',"$CFG->{revoservo} - raporto"));
 		
-		$mail_handle->attach(Type=>"text/plain",
+		$mail_handle->attach(Type=>"text/plain; charset=UTF-8",
 				Encoding=>"quoted-printable",
 				Data=>encode('utf-8',$message));
 		

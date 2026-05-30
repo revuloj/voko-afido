@@ -142,7 +142,7 @@ MAIN() unless caller(); sub MAIN {
 	unless (-x "/usr/bin/rsync") {
 		warn "Programo 'rsync' ne ekzistas aŭ ne estas lanĉebla!\n";
 	}
-	print sys_run($CFG->{rsync},"$CFG->{git_dir}/revo/","$CFG->{xml_dir}/");
+	print process::sys_run(split(/ /,$CFG->{rsync}),"$CFG->{git_dir}/revo/","$CFG->{xml_dir}/");
 
 	# vi povas retrakti specifan (antaŭan) poŝtdosieron, ekz-e se okazis
 	# eraro kaj vi volas ripeti por ne perdi la redakton...
@@ -156,7 +156,7 @@ MAIN() unless caller(); sub MAIN {
 
 		# chu estas poshto?
 		if (not -s $CFG->{mail_folder}) {
-			$LOG->info("neniu poshto en $CFG->{mail_folder}");
+			$LOG->info("neniu poshto en $CFG->{mail_folder}\n");
 			exit;
 		};
 
@@ -175,7 +175,7 @@ MAIN() unless caller(); sub MAIN {
 	# komencon de retpoŝto readmail() rekonas per From:...
 	while (my $file = readmail($MAIL)) {
 
-		$LOG->info('-' x 50, "");
+		$LOG->info('-' x 50, "\n");
 
 		# preparu por la nova mesagho
 		$CTX->{editor} = '';
@@ -202,12 +202,13 @@ MAIN() unless caller(); sub MAIN {
 		# eligu iom da informo pri la mesagho
 		my $header = $entity->head();
 		
-		$LOG->info("From    : ", $header->get('From'));
-		$LOG->info("Reply-To: ", $header->get('Reply-To') || ""); 
+		$LOG->info("From    : ", $header->get('From'),"\n");
+		$LOG->info("Reply-To: ", $header->get('Reply-To') || "", "\n"); 
 
 		$LOG->debug(
 			"Subject : ", $header->get('Subject'),
-			"Cnt-Type: ", $header->get('Content-Type')
+			"Cnt-Type: ", $header->get('Content-Type'),
+			"\n"
 		);
 		$entity->dump_skeleton if ($CFG->{dump});
 
@@ -226,7 +227,7 @@ MAIN() unless caller(); sub MAIN {
 	## use critic
 
 	# sendu raportojn
-	$LOG->info("elsendas raportojn...");
+	$LOG->info("elsendas raportojn...\n");
 
 	#send_reports();
 
@@ -238,7 +239,7 @@ MAIN() unless caller(); sub MAIN {
 
 
 	##send_newarts_report();
-	$LOG->info("puŝas ŝanĝojn al git...");
+	$LOG->info("puŝas ŝanĝojn al git...\n");
 	($lg,$err) = process::git_cmd($CFG->{git}, 'push', 'origin', 'master');
 	if ($err =~ m/fatal/ || $err =~ m/error/) {
 		# se okazas problemo puŝi la ŝanĝojn, ne sendu raportojn, sed tuj finu
@@ -250,17 +251,17 @@ MAIN() unless caller(); sub MAIN {
 
 	# arkivu la poshtdosieron
 	if ($mail_file eq $CFG->{mail_local}) {
-		$LOG->info("\nshovas $CFG->{mail_local} al $CFG->{old_mail}/$filename");
+		$LOG->info("\nshovas $CFG->{mail_local} al $CFG->{old_mail}/$filename\n");
 		process::move_file($CFG->{mail_local},"$CFG->{old_mail}/$filename");
 	}
 
 	if (-e $CFG->{mail_error}) {
-		$LOG->info("shovas $CFG->{mail_error} al $CFG->{err_mail}/$filename");
+		$LOG->info("shovas $CFG->{mail_error} al $CFG->{err_mail}/$filename\n");
 		process::move_file($CFG->{mail_error},"$CFG->{err_mail}/$filename");
 	}
 
 	if (-e $CFG->{mail_send}) {
-		$LOG->info("shovas $CFG->{mail_send} al $CFG->{prc_mail}/$filename");
+		$LOG->info("shovas $CFG->{mail_send} al $CFG->{prc_mail}/$filename\n");
 		process::move_file($CFG->{mail_send},"$CFG->{prc_mail}/$filename");
 	}
 
@@ -341,22 +342,22 @@ sub process_ent {
 		return; # ne respondu al SPAMo
     }
 	
-    $LOG->debug("redaktisto: $CTX->{editor}");
+    $LOG->debug("redaktisto: $CTX->{editor}\n");
 
     # unuparta mesagho
     if (! $entity->is_multipart) {
-		$LOG->debug("single part message");
+		$LOG->debug("unuparta mesaĝo\n");
 
 		# elprenu la tekston
 		$parttxt = $entity->bodyhandle->as_string;   
 
 		# Opera uzas linirompojn anstatau "&", sed ankau havas aliloke linirompojn
-		if (($entity->head->get('user-agent') =~ /Opera/sx ) and        
-			($entity->head->get('content-type')
-					=~  /format=flowed/sx))      # Opera
+		my $user_agent = $entity->head->get('user-agent')||'';
+		if (( $user_agent =~ /Opera/sx ) and        
+			($entity->head->get('content-type') =~ /format=flowed/sx)) # Opera
 		{
 			$parttxt =~ s/&/%26/sgx;
-		$parttxt =~ s{
+			$parttxt =~ s{
 				\n(teksto|shangho|ago)=
 			}{\&\n$1=}sgx;
 		}
@@ -381,12 +382,12 @@ sub process_ent {
 
                 or ($entity->mime_type
                     =~ m|application/x-www-form-urlencoded|x)) { 
-	    $LOG->debug("URL encoded form");
+	    $LOG->debug("-kodita formularo\n");
 	    urlencoded_form($parttxt);
 	    return;
 	# normala mesagho
 	} else {
-	    $LOG->debug("normala mesagho");
+	    $LOG->debug("normala mesaĝo\n");
 	    normal_message($parttxt);
 	    return;
 	}
@@ -394,12 +395,12 @@ sub process_ent {
     # plurparta MIME-mesagho
     } else {
 	my $num_parts = $entity->parts;
-	$LOG->debug("num of parts: ", $num_parts);
+	$LOG->debug("num of parts: ", $num_parts,"\n");
 
 	# trairu chiujn partojn
 	for (my $i = 0; $i < $num_parts; $i++) {
 	    my $part = $entity->parts($i);
-	    $LOG->debug($part->mime_type, "");
+	    $LOG->debug($part->mime_type, "\n");
 
 	    # elprenu la tekston
 	    unless ($part->bodyhandle) { next; } # ignoru plurpartajn partojn
@@ -424,7 +425,7 @@ sub process_ent {
 			\s*($CFG->{commands})\s*:
 		}six ) {
 			$CTX->{komando} = $1;
-			$LOG->debug("komando $CTX->{komando} en parto $i");
+			$LOG->debug("komando $CTX->{komando} en parto $i\n");
 			if ( $CTX->{komando} =~ m{^
 				(help|dokument|artikol|histori)
 			}x ) {
@@ -432,7 +433,7 @@ sub process_ent {
 			} else {
 				# chu krome enhavas la xml-tekston?
 				if ($parttxt =~ /<\?xml/sx) {
-					$LOG->debug("xml en parto $i");
+					$LOG->debug("xml en parto $i\n");
 					normal_message($parttxt);
 					return;
 				} else {
@@ -441,7 +442,7 @@ sub process_ent {
 				}
 			}
 	    } elsif ($parttxt =~ /^\s*<\?xml/sx) {
-			$LOG->debug("xml en parto $i");
+			$LOG->debug("xml en parto $i\n");
 			# memoru la xml-tekston
 			$xmltxt = $parttxt;
 	    }
@@ -464,7 +465,7 @@ sub process_ent {
 # apartenas al registrita redaktanto
 sub is_editor {
     my $from_addr = shift;
-    my $reply_addr = shift;
+    my $reply_addr = shift||'';
     my $res_addr = '';
 
     chomp $from_addr;
@@ -516,14 +517,17 @@ sub is_editor {
 		return; # ne estas valida retadreso
     }
 
+	#$LOG->debug("serĉo pri: $email_addr\n");
+
     # serchu en la dosiero kun redaktoroj
 	## no critic (InputOutput::RequireBriefOpen)
     if (open my $edi, "<", $CFG->{editor_file}) {
 		while (<$edi>) {
 			chomp;
-			unless (/^#/x) {
+			unless (/^\#/x) {
+
 				if (index(lc($_),lc($email_addr)) >= 0) {
-					$LOG->debug("retadreso trovita en: $_");
+					$LOG->debug("retadreso trovita en: $_\n");
 					# /^([a-z'"\-\.\s]*<[a-z\@0-9\.\-_]*>)/i;
 					if ( m{^(
 						[\wćáàéè'"\-\.\s]*
@@ -544,6 +548,8 @@ sub is_editor {
 			}
 		}
 		close $edi;
+	} else {
+		$LOG->error("Ne eblis malfermi redaktanto-liston: $!\n");
 	}
 	## use critic
 		
@@ -671,7 +677,7 @@ sub save_errmail {
     };
     print $errmail $CTX->{mail};
     close $errmail;
-    $LOG->info("erara mesagho sekurigita al $CFG->{mail_error}");
+    $LOG->info("erara mesagho sekurigita al $CFG->{mail_error}\n");
 
 	return;
 }
@@ -683,7 +689,7 @@ sub report {
     my ($msg,$file) = @_;
     my ($attachment,$text);
     
-    $LOG->info("$msg");
+    $LOG->info("$msg\n");
 
     # donu provizoran nomon al kunsendajho
     if ($file) {
@@ -796,13 +802,13 @@ sub send_reports {
 			$mail_handle = build MIME::Entity(Type=>"multipart/mixed",
 							From=>$CFG->{revo_from},
 							To=>"$mail_addr",
-							Subject=>"$CFG->{revoservo} - raporto");
+							Subject=>encode('MIME-Header', "$CFG->{revoservo} - raporto")); #"$CFG->{revoservo} - raporto");
 
-			$LOG->info("AL: <$mail_addr>: [[[\n$message\n]]]");
+			$LOG->info("AL: <$mail_addr>: [[[\n$message\n]]]\n");
 			
-			$mail_handle->attach(Type=>"text/plain",
+			$mail_handle->attach(Type=>"text/plain; charset=UTF-8",
 					Encoding=>"quoted-printable",
-					Data=>$message);
+					Data=>encode('utf-8',$message));
 			
 			# alpendigu dosierojn
 			if ($dos) {
@@ -836,7 +842,7 @@ sub send_reports {
 						}
 					} else { $art_id = $file; $marko=$file; }
 					
-					$LOG->debug("attach: $file");
+					$LOG->debug("attach: $file\n");
 					if (-e $file) {
 						$mail_handle->attach(Path=>$file,
 								Type=>'text/plain',
@@ -849,7 +855,7 @@ sub send_reports {
 			}
 			
 			# forsendu
-			$LOG->info("sendi nun...");
+			$LOG->info("sendi nun...\n");
 			## unless (open SENDMAIL, "| $sendmail '$mail_addr'") {
 			## 	warn "Ne povas dukti al $sendmail: $!\n";
 			## 	next;
@@ -939,7 +945,7 @@ sub cmd_redakt {
 		<art[^>]*
 		\bmrk\s*=\s*"([^\"]*)"
 	}sx ) {
-		$LOG->info("artikolo: $id");
+		$LOG->info("artikolo: $id\n");
 		$CTX->{article_id} = $id;
 
 		# ekstraktu dosiernomon el $Id: ...
@@ -987,13 +993,13 @@ sub check_xml {
 
     if ($err) {
 		$err .= "\nkunteksto:\n".process::xml_context($err,$fname);
-		$LOG->info("XML-eraroj:\n$err");
+		$LOG->info("XML-eraroj:\n$err\n");
 
 		report("ERARO   : La XML-dosiero enhavas la sekvajn "
 			."sintakserarojn:\n$err",$fname);
 		return;
     } else {
-		$LOG->debug("XML: en ordo");
+		$LOG->debug("XML: en ordo\n");
 		return 1;
     }
 }
@@ -1009,7 +1015,7 @@ sub checkin {
         return;
     } 
     $CTX->{shangho} = lat3_utf8($CTX->{shangho});
-    $LOG->info("shanghoj: $CTX->{shangho}");
+    $LOG->info("shanghoj: $CTX->{shangho}\n");
 
     # skribu la shanghojn en dosieron
     $edtr = $CTX->{editor};
@@ -1122,7 +1128,7 @@ sub cmd_aldon {
     $teksto =~ s{
 		<art[^>]*>
 	}{<art mrk="\044Id\044">}sx;
-    $LOG->info("nova artikolo: $art");
+    $LOG->info("nova artikolo: $art\n");
 
     # bezonighas article_id en kazo de eraro
     $CTX->{article_id} = "\044Id: $art.xml,v\044";
@@ -1147,7 +1153,7 @@ sub checkinnew {
     my ($log,$err,$edtr,$teksto);
 
     $CTX->{shangho} = "nova artikolo";
-    $LOG->info("shanghoj: $CTX->{shangho}");
+    $LOG->info("shanghoj: $CTX->{shangho}\n");
 
     # skribu la shanghojn en dosieron
     $edtr = $CTX->{editor};

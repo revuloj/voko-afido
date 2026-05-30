@@ -1,0 +1,119 @@
+From Spamisto <spamisto@example.com>
+ Sa 30. Mai 15:10:09 CEST 2026
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: binary
+MIME-Version: 1.0
+X-Mailer: MIME-tools 5.509 (Entity 5.509)
+From: Spamisto <spamisto@example.com>
+Subject: ReVo-testo - Plain Text
+
+SPAM SPAM SPAM
+SPAM SPAM SPAM
+
+
+From Redaktanto <diestel@steloj.de>
+ Sa 30. Mai 15:10:09 CEST 2026
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: binary
+MIME-Version: 1.0
+X-Mailer: MIME-tools 5.509 (Entity 5.509)
+From: Redaktanto <diestel@steloj.de>
+Subject: ReVo-testo - Plain Text
+
+aldonu: nov
+
+<?xml version="1.0"?>
+<!DOCTYPE vortaro SYSTEM "../dtd/vokoxml.dtd">
+<vortaro>
+<art mrk="$Id$">
+<kap>
+  <ofc>*</ofc>
+  <rad>nov</rad>/a <fnt><bib>UV</bib></fnt>
+</kap>
+<drv mrk="nov.0a">
+  <kap><ofc>*</ofc><tld/>a</kap>
+  <snc mrk="nov.0a.eka">
+    <dif>
+      Anta&ubreve;e ne ekzistanta a&ubreve; ne konata, unuafoje
+      aperanta:
+      <ekz>
+        kiam vi ekparolis, ni atendis a&ubreve;di ion <tld/>an
+        <fnt><bib>F</bib> <lok>&FE; 40</lok></fnt>;
+      </ekz><ekz>
+        <tld/>a libro, modo;
+      </ekz>
+    </dif>
+  </snc>
+</drv>
+</art>
+</vortaro>
+
+
+From Redaktanto <diestel@steloj.de>
+ Sa 30. Mai 15:10:09 CEST 2026
+Content-Type: application/x-www-form-urlencoded
+Content-Disposition: inline
+Content-Transfer-Encoding: base64
+MIME-Version: 1.0
+X-Mailer: MIME-tools 5.509 (Entity 5.509)
+From: Redaktanto <diestel@steloj.de>
+Subject: ReVo-testo - URL Encoded Form
+
+a29tYW5kbz1yZWRha3RvJnNoYW5naG89bmVuaXUrxZ1hbsSdbyZ0ZWtzdG89
+PD94bWwgdmVyc2lvbj0iMS4wIj8+CjwhRE9DVFlQRSB2b3J0YXJvIFNZU1RF
+TSAiLi4vZHRkL3Zva294bWwuZHRkIj4KPHZvcnRhcm8+CjxhcnQgbXJrPSIk
+SWQkIj4KPGthcD4KICA8b2ZjPio8L29mYz4KICA8cmFkPm5vdjwvcmFkPi9h
+IDxmbnQ+PGJpYj5VVjwvYmliPjwvZm50Pgo8L2thcD4KPGRydiBtcms9Im5v
+di4wYSI+CiAgPGthcD48b2ZjPio8L29mYz48dGxkLz5hPC9rYXA+CiAgPHNu
+YyBtcms9Im5vdi4wYS5la2EiPgogICAgPGRpZj4KICAgICAgQW50YSZ1YnJl
+dmU7ZSBuZSBla3ppc3RhbnRhIGEmdWJyZXZlOyBuZSBrb25hdGEsIHVudWFm
+b2plCiAgICAgIGFwZXJhbnRhOgogICAgICA8ZWt6PgogICAgICAgIGtpYW0g
+dmkgZWtwYXJvbGlzLCBuaSBhdGVuZGlzIGEmdWJyZXZlO2RpIGlvbiA8dGxk
+Lz5hbgogICAgICAgIDxmbnQ+PGJpYj5GPC9iaWI+IDxsb2s+JkZFOyA0MDwv
+bG9rPjwvZm50PjsKICAgICAgPC9la3o+PGVrej4KICAgICAgICA8dGxkLz5h
+IGxpYnJvLCBtb2RvOwogICAgICA8L2Vrej4KICAgIDwvZGlmPgogIDwvc25j
+Pgo8L2Rydj4KPC9hcnQ+Cjwvdm9ydGFybz4K
+
+
+From Redaktanto <diestel@steloj.de>
+ Sa 30. Mai 15:10:09 CEST 2026
+Content-Type: multipart/mixed; boundary="----------=_1780146609-25882-0"
+Content-Transfer-Encoding: binary
+MIME-Version: 1.0
+X-Mailer: MIME-tools 5.509 (Entity 5.509)
+From: Redaktanto <diestel@steloj.de>
+Subject: ReVo-testo - Multipart
+
+This is a multi-part message in MIME format...
+
+------------=_1780146609-25882-0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: binary
+
+redaktu:
+kion mi ŝanĝis, tio estas sekreto.
+------------=_1780146609-25882-0
+Content-Type: application/xml; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: base64
+
+PD94bWwgdmVyc2lvbj0iMS4wIj8+CjwhRE9DVFlQRSB2b3J0YXJvIFNZU1RF
+TSAiLi4vZHRkL3Zva294bWwuZHRkIj4KPHZvcnRhcm8+CjxhcnQgbXJrPSIk
+SWQkIj4KPGthcD4KICA8b2ZjPio8L29mYz4KICA8cmFkPm5vdjwvcmFkPi9h
+IDxmbnQ+PGJpYj5VVjwvYmliPjwvZm50Pgo8L2thcD4KPGRydiBtcms9Im5v
+di4wYSI+CiAgPGthcD48b2ZjPio8L29mYz48dGxkLz5hPC9rYXA+CiAgPHNu
+YyBtcms9Im5vdi4wYS5la2EiPgogICAgPGRpZj4KICAgICAgQW50YSZ1YnJl
+dmU7ZSBuZSBla3ppc3RhbnRhIGEmdWJyZXZlOyBuZSBrb25hdGEsIHVudWFm
+b2plCiAgICAgIGFwZXJhbnRhOgogICAgICA8ZWt6PgogICAgICAgIGtpYW0g
+dmkgZWtwYXJvbGlzLCBuaSBhdGVuZGlzIGEmdWJyZXZlO2RpIGlvbiA8dGxk
+Lz5hbgogICAgICAgIDxmbnQ+PGJpYj5GPC9iaWI+IDxsb2s+JkZFOyA0MDwv
+bG9rPjwvZm50PjsKICAgICAgPC9la3o+PGVrej4KICAgICAgICA8dGxkLz5h
+IGxpYnJvLCBtb2RvOwogICAgICA8L2Vrej4KICAgIDwvZGlmPgogIDwvc25j
+Pgo8L2Rydj4KPC9hcnQ+Cjwvdm9ydGFybz4K
+
+------------=_1780146609-25882-0--
+
+

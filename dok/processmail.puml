@@ -1,0 +1,119 @@
+@startuml
+' --- Agordoj de aspekto ---
+skinparam changelog hide
+skinparam linetype ortho
+skinparam shadowing false
+skinparam Activity {
+    BackgroundColor White
+    BorderColor #555555
+    ArrowColor #333333
+    DiamondBackgroundColor White
+    DiamondBorderColor #555555
+}
+
+title Aktiveco-diagramo de la ĉefa proceduro (MAIN)
+
+start
+
+partition "Peparo & Git" {
+    :Lanĉi `git pull` en la deponejo;
+    if (Ĉu okazis grava eraro?) then (jes)
+        :Fini la skripton kun eraro (`exit 1`);
+        end
+    else (ne)
+        :Sinkronigi la dosierujojn per `rsync`
+        (el git_dir/revo/ al xml_dir/);
+    endif
+}
+
+partition "Retpoŝtfako" {
+    if (Ĉu specifa retpoŝta dosiero estis donita en @ARGV?) then (jes)
+        :Uzi la dosieron el `$ARGV[0]`;
+    else (ne)
+        if (Ĉu estas nova poŝto en la poŝtkesto `$CFG->{mail_folder}`?) then (ne)
+            :Protokoli "neniu poshto";
+            :Fini la skripton (`exit`);
+            end
+        else (jes)
+            :Movi la poŝtdosieron al loka provizora loko;
+            :Uzi la lokan dosieron `$CFG->{mail_local}`;
+        endif
+    endif
+}
+
+:Malfermu la poŝtdosieron (`$MAIL`);
+
+partition "Iteracio: Trakti ĉiujn retpoŝtojn" {
+    while (Voki `readmail($MAIL)`: ĉu restas mesaĝoj?) is (jes, trovis mesaĝon)
+        :Krei instancon de `MIME::Parser`;
+        :Analizi la MIME-strukturon kaj legi kapliniojn (From, Date, ktp);
+        
+        partition "Subproceduro: process_ent" {
+            :Voki `is_editor()` por kontroli la sendinton;
+            
+            if (Ĉu la sendinto estas registrita?) then (ne)
+                :Protokoli eraron: "ne estas redaktanto";
+                :Konservi la mesaĝon en `mail_error`;
+                ' Iras al sekva retpoŝto
+            else (jes)
+                :Protokoli la nomon de la redaktisto;
+                
+                if (Ĉu la mesaĝo estas unuparta?) then (jes)
+                    :Ektrakti la tekston (`$parttxt`);
+                    if (Ĉu ĝi estas TTT-formularo (URL encoded)?) then (jes)
+                        :Voki `urlencoded_form()`;
+                    else (ne)
+                        :Voki `normal_message()`;
+                    endif
+                else (ne, ĝi estas plurparta)
+                    :Iteracii tra ĉiuj partoj de la MIME-mesaĝo;
+                    :Serĉi komandojn kaj/aŭ XML-tekston (`<?xml`);
+                    if (Ĉu ambaŭ (komando + XML) estas trovitaj?) then (jes)
+                        :Voki `normal_message()`;
+                    else (ne)
+                        :Raporti eraron: "Ne trovighis komando kaj/au XML";
+                    endif
+                endif
+            endif
+        }
+        
+        :Purigi la provizorajn MIME-partojn kaj fermi la mesaĝ-dosieron;
+    endwhile (ne, fino de la poŝtdosiero)
+}
+
+:Fermi la ĉefan poŝtdosieron (`$MAIL`);
+
+partition "Raportoj & Sinkronigo" {
+    if (Ĉu estas raportoj por elsendi en `$CFG->{mail_send}`?) then (jes)
+        :Konekti al SMTP-servilo;
+        :Voki `send_reports()`;
+        :Fermi la SMTP-konekton;
+    else (ne)
+    endif
+
+    :Puŝi la lokajn ŝanĝojn al Git (`git push origin master`);
+    if (Ĉu okazis eraro dum la Git-puŝo?) then (jes)
+        :Fini la skripton kun eraro (`exit 1`);
+        end
+    else (ne)
+    endif
+}
+
+partition "Arkivado" {
+    :Krei dosiernomon kun dato kaj tempo;
+    if (Ĉu la traktita dosiero estis la normala loka poŝto?) then (jes)
+        :Movi `$CFG->{mail_local}` al la malnova arkivo (`old_mail`);
+    endif
+    
+    if (Ĉu ekzistas `mail_error`?) then (jes)
+        :Movi ĝin al la erar-arkivo (`err_mail`);
+    endif
+    
+    if (Ĉu ekzistas `mail_send`?) then (jes)
+        :Movi ĝin al la sukces-arkivo (`prc_mail`);
+    endif
+}
+
+:Fini la skripton sukcese (`exit 0`);
+stop
+@enduml
