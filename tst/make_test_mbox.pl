@@ -13,6 +13,7 @@ use URI::Escape qw(uri_escape_utf8);
 
 my $from_addr = "Redaktanto <${ARGV[0]}>";
 my $mbox_file = $ARGV[1] || './mail_test.mbox';
+my $id_erar = '$Id: erar.xml,v 1.47 2025/03/14 06:18:12 revo Exp $';
 
 open my $MBOX, '>', $mbox_file
   or die "Ne eblis krei $mbox_file: $!\n";
@@ -33,9 +34,9 @@ my $XML = <<'EON';
   <ofc>*</ofc>
   <rad>nov</rad>/a <fnt><bib>UV</bib></fnt>
 </kap>
-<drv mrk="novtest.0a">
+<drv mrk="nov.0a">
   <kap><ofc>*</ofc><tld/>a</kap>
-  <snc mrk="novtest.0a.eka">
+  <snc mrk="nov.0a.eka">
     <dif>
       Anta&ubreve;e ne ekzistanta a&ubreve; ne konata, unuafoje
       aperanta:
@@ -75,7 +76,7 @@ my $msg_plain = MIME::Entity->build(
     Date    => $timestamp,
     Type    => 'text/plain; charset=utf-8',
     Data    => [
-        "aldonu: novtest\n\n".$XML
+        "aldonu: nov\n\n".$XML
     ]
 );
 
@@ -84,6 +85,7 @@ my $msg_plain = MIME::Entity->build(
 # =========================================================================
 
 my $shangho = uri_escape_utf8("neniu ŝanĝo"); 
+$XML =~ s/\$Id.*\$/$id_erar/;
 my $xml  = uri_escape_utf8($XML);           
 my $form_data = "komando=redakto&shangho=$shangho&teksto=$xml";
 

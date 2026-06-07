@@ -65,7 +65,7 @@ chomp(my $pwd = `pwd`);
 my $mbox_file = "$pwd/dict/tmp/mail_test.mbox";
 my $redaktanto = $ENV{TEST_RETADRESO} || '_registrita_testredaktanto_@retavortaro.de';
 
-`mkdir -p dict/xml && mkdir -p dict/tmp/xml && rm dict/tmp/* && rm -rf dict/tmp/xml/*`;
+`rm -rf dict/tmp && rm dict/xml/* && mkdir -p dict/xml && mkdir -p dict/tmp/xml`;
 `ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
 `bin/create_test_repo.sh /tmp && perl tst/make_test_mbox.pl '$redaktanto' '$mbox_file'`;
 

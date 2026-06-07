@@ -53,7 +53,8 @@ $process::CFG->{xml_temp} = "$process::CFG->{tmp}/xml";
 $process::CFG->{git_dir}  = '/tmp/test-repo'; # "$CFG->{dict_base}/revo-fonto";
 diag("process.pm-agordo: ".Dumper($process::CFG));
 
-`mkdir -p dict/tmp/xml && rm dict/tmp/* && rm -rf dict/tmp/xml/* && ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
+`rm -rf dict/tmp && rm dict/xml/* && mkdir -p dict/xml && mkdir -p dict/tmp/xml`;
+`ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
 `bin/create_test_repo.sh /tmp && tst/adm_forigi_subm.sh`;
 
 

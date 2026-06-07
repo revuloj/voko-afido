@@ -574,7 +574,8 @@ sub urlencoded_form {
 			if ($key =~ /^(?:$CFG->{possible_keys})$/x) {
 				$value =~ s/\+/ /gx; # anstatauigu '+' per ' '
 				$value =~ s{%(..)}{pack('c',hex($1))}segx;
-				$content{$key} = decode('UTF-8',$value); $value;
+				$value = decode('UTF-8',$value);
+				$content{$key} = $value;
 				$LOG->debug("FORM: $key=$value\n");
 			};
 		}
@@ -1021,7 +1022,7 @@ sub checkin {
 	    ."en la dosiero.\n","$CFG->{tmp}/xml.xml");
         return;
     } 
-    $CTX->{shangho} = lat3_utf8($CTX->{shangho});
+    # $CTX->{shangho} = lat3_utf8($CTX->{shangho});
     $LOG->info("shanghoj: $CTX->{shangho}\n");
 
     # skribu la shanghojn en dosieron
@@ -1030,12 +1031,7 @@ sub checkin {
 		\s*<(.*?)>\s*
 	}{}x;
 
-    if (open my $msg, ">", "$CFG->{tmp}/shanghoj.msg") {
-	    print $msg "$edtr: $CTX->{shangho}";
-    	close $msg;
-	} else {
-		$LOG->warn("Ne eblas skribi al tmp/shanghoj.msg: $!\n");
-	}
+	process::write_file(">:encoding(utf-8)","$CFG->{tmp}/shanghoj.msg","$edtr: $CTX->{shangho}");
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
     my $ark_id = get_archive_version($art);
@@ -1166,12 +1162,7 @@ sub checkinnew {
     $edtr = $CTX->{editor};
     $edtr =~ s{\s*<(.*?)>\s*}{}x;
 
-    if (open my $msg, ">", "$CFG->{tmp}/shanghoj.msg") {
-	    print $msg "$edtr: $CTX->{shangho}";
-    	close $msg;
-	} else {
-		$LOG->warn("Ne eblas skribi al $CFG->{tmp}/shanghoj.msg: $!\n");
-	}
+	process::write_file(">:encoding(utf-8)","$CFG->{tmp}/shanghoj.msg","$edtr: $CTX->{shangho}");
 
 	# checkin in Git
 	my $repo_art_file = "$CFG->{git_dir}/revo/$art.xml";
@@ -1272,26 +1263,27 @@ sub extract_article {
     }
 }
 
-sub lat3_utf8 {
-    my $text = shift;
-
-    # konverti la e-literojn de Lat-3 al utf-8
-	## no critic (RegularExpressions::RequireExtendedFormatting)
-    $text =~ s/\306/\304\210/g; #Cx
-    $text =~ s/\330/\304\234/g; #Gx
-    $text =~ s/\246/\304\244/g; #Hx 
-    $text =~ s/\254/\304\264/g; #Jx
-    $text =~ s/\336/\305\234/g; #Sx
-    $text =~ s/\335/\305\254/g; #Ux
-    $text =~ s/\346/\304\211/g; #cx
-    $text =~ s/\370/\304\235/g; #gx
-    $text =~ s/\266/\304\245/g; #hx
-    $text =~ s/\274/\304\265/g; #jx
-    $text =~ s/\376/\305\235/g; #sx
-    $text =~ s/\375/\305\255/g; #ux
-
-    return $text;
-}
+#sub lat3_utf8 {
+#    my $text = shift;
+#
+#    # konverti la e-literojn de Lat-3 al utf-8
+#	## no critic (RegularExpressions::RequireExtendedFormatting)
+#    $text =~ s/\306/\304\210/g; #Cx
+#    $text =~ s/\330/\304\234/g; #Gx
+#    $text =~ s/\246/\304\244/g; #Hx 
+#    $text =~ s/\254/\304\264/g; #Jx
+#    $text =~ s/\336/\305\234/g; #Sx
+#    $text =~ s/\335/\305\254/g; #Ux
+#    $text =~ s/\346/\304\211/g; #cx
+#    $text =~ s/\370/\304\235/g; #gx
+#    $text =~ s/\266/\304\245/g; #hx
+#    $text =~ s/\274/\304\265/g; #jx
+#    $text =~ s/\376/\305\235/g; #sx
+#    $text =~ s/\375/\305\255/g; #ux
+#
+#	return $text;
+#    #return encode('UTF-8',$text);
+#}
 
 sub tr_nbsp {
     my $str = shift;

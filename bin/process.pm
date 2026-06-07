@@ -348,7 +348,7 @@ sub id_incr {
 }
 
 # ni legas la ŝanĝojn el dosiero shangoj.msg
-# kaj metas kape de ŝanĝprotkoleto, kiu troviĝas piede de artikolo
+# kaj metas kapen de ŝanĝprotkoleto, kiu troviĝas piede de artikolo,
 # ni mallongigas ĝin al maksimume 20 linioj
 sub log_incr {
 	my ($alog,$ver,$shangh_file) = @_;
@@ -357,7 +357,8 @@ sub log_incr {
 	my @lines = split(/\n/x,$alog);
 	$alog = join("\n",splice(@lines,0,20));
 
-	my $shg = decode('utf8', read_file($shangh_file));
+	#my $shg = decode('utf8', read_file($shangh_file));
+	my $shg = read_file($shangh_file);
 	return "\$Log\$\nversio $ver\n".$shg."\n$alog\n-->";
 }
 
@@ -368,7 +369,8 @@ sub init_ver {
 
 	# $Id: test.xml,v 1.1 2019/12/01 16:57:36 afido Exp $
     my $art = read_file("$artfile");
-	my $shg = decode('utf8', read_file($shangh_file));
+	#my $shg = decode('utf8', read_file($shangh_file));
+	my $shg = read_file($shangh_file);
 
 	if ( $artfile =~ m{
 		/([^/]+\.xml) # dosiernomo sen pado
@@ -454,6 +456,8 @@ sub git_cmd {
   	run \@git_cmd, \undef, \$out, \$err;
 
 	# chu 'commit' sukcesis?
+	$out = decode('UTF-8',$out);
+	$err = decode('UTF-8',$err);
     $log->info("git-out:\n$out\n") if ($out);
     $log->error("git-err:\n$err\n") if ($err);
 	$log->info("------------------------------\n");
