@@ -392,7 +392,7 @@ sub send_reports {
 		}
 		
 		# forsendu
-		unless (mailsender::smtp_send($mailer,$CFG->{revo_from},$to,$mail_handle)) {
+		unless (mailsender::smtp_send($mailer,$CFG->{revo_mailaddr},$to,$mail_handle)) {
 			$LOG->warn("Ne povas forsendi retpoŝtan raporton!\n");
 			next;
 		}

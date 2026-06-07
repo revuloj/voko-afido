@@ -1,4 +1,12 @@
-# t/mein_test.t
+#!/usr/bin/perl 
+
+# (c) 2026 ĉe Wolfram Diestel
+# tio testas bin/processmail.pl
+# vi bezonas aktivan testmedion revo-medio/araneujo-t
+# kaj agordon por uzi ties testan poŝtservon en /etc/mailsender.conf
+# ${HOME}/etc/redaktantoj devas enhavi la retadreson de la
+# testanto (mediovariablo $TEST_RETADRESO)
+
 use strict;
 use warnings;
 
@@ -64,12 +72,12 @@ my $redaktanto = $ENV{TEST_RETADRESO} || '_registrita_testredaktanto_@retavortar
 #main::MAIN();
 my @logged_events;
 
-# 2. Den Array-Logger zu deinem bestehenden $LOG hinzufügen
+# Ni aldonas protokolon en liston por poste kontroli ĝin
 $main::LOG->add(
     Log::Dispatch::Array->new(
         name      => 'test_array_logger',
         min_level => 'debug',
-        array     => \@logged_events, # Referenz auf unser Array
+        array     => \@logged_events, 
     )
 );
 

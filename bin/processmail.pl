@@ -140,7 +140,7 @@ MAIN() unless caller(); sub MAIN {
 	# sinkronigu revo/xml
 	$LOG->info("$CFG->{rsync} $CFG->{git_dir}/revo/ $CFG->{xml_dir}/\n...");
 	unless (-x "/usr/bin/rsync") {
-		warn "Programo 'rsync' ne ekzistas aŭ ne estas lanĉebla!\n";
+		$LOG->warn("Programo 'rsync' ne ekzistas aŭ ne estas lanĉebla!\n");
 	}
 	print process::sys_run(split(/ /,$CFG->{rsync}),"$CFG->{git_dir}/revo/","$CFG->{xml_dir}/");
 
@@ -189,13 +189,13 @@ MAIN() unless caller(); sub MAIN {
 
 		# malfermu kaj enlegu la mesaghon
 		open my $ML, "<", $file or do {
-			warn "Ne eblis malfermi la mesaĝon por legi ĝin: $file\n";
+			$LOG->warn("Ne eblis malfermi la mesaĝon por legi ĝin: $file\n");
 			next;
 		};
 
 		my $entity = $parser->read($ML);
 		unless ($entity) {
-			warn "Ne eblis analizi la MIME-mesaghon.\n";
+			$LOG->warn("Ne eblis analizi la MIME-mesaghon.\n");
 			next;
 		}
 
@@ -206,9 +206,8 @@ MAIN() unless caller(); sub MAIN {
 		$LOG->info("Reply-To: ", $header->get('Reply-To') || "", "\n"); 
 
 		$LOG->debug(
-			"Subject : ", $header->get('Subject'),
-			"Cnt-Type: ", $header->get('Content-Type'),
-			"\n"
+			"Subject : ", $header->get('Subject'),"\n",
+			"Cnt-Type: ", $header->get('Content-Type'),"\n"
 		);
 		$entity->dump_skeleton if ($CFG->{dump});
 
@@ -233,10 +232,13 @@ MAIN() unless caller(); sub MAIN {
 
 	if (-s $CFG->{mail_send} > 10) {
 		my $mailer = mailsender::smtp_connect;
-		send_reports($mailer);
-		mailsender::smtp_quit($mailer);
+		if ($mailer) {
+			send_reports($mailer);
+			mailsender::smtp_quit($mailer);
+		} else {
+			$LOG->error("Ne eblas konekti la poŝtsendan servon: $!\n");
+		}
 	}
-
 
 	##send_newarts_report();
 	$LOG->info("puŝas ŝanĝojn al git...\n");
@@ -247,7 +249,7 @@ MAIN() unless caller(); sub MAIN {
 		exit 1;
 	}
 
-	my $filename = timestamp();    
+	my $filename = process::timestamp();    
 
 	# arkivu la poshtdosieron
 	if ($mail_file eq $CFG->{mail_local}) {
@@ -349,7 +351,7 @@ sub process_ent {
 		$LOG->debug("unuparta mesaĝo\n");
 
 		# elprenu la tekston
-		$parttxt = $entity->bodyhandle->as_string;   
+		$parttxt = $entity->bodyhandle->as_string;
 
 		# Opera uzas linirompojn anstatau "&", sed ankau havas aliloke linirompojn
 		my $user_agent = $entity->head->get('user-agent')||'';
@@ -562,6 +564,7 @@ sub urlencoded_form {
     my %content = ();
     my ($key,$value);
 
+	#$LOG->debug("ENHV: $text\n");
     $text =~ s/!?\n//sgx;
 	foreach my $pair (split ('&',$text)) {
 		if ($pair =~ m{
@@ -569,9 +572,10 @@ sub urlencoded_form {
 		}x) {
 			($key,$value) = ($1,$2);
 			if ($key =~ /^(?:$CFG->{possible_keys})$/x) {
-			$value =~ s/\+/ /gx; # anstatauigu '+' per ' '
-			$value =~ s{%(..)}{pack('c',hex($1))}segx;
-			$content{$key} = $value;
+				$value =~ s/\+/ /gx; # anstatauigu '+' per ' '
+				$value =~ s{%(..)}{pack('c',hex($1))}segx;
+				$content{$key} = decode('UTF-8',$value); $value;
+				$LOG->debug("FORM: $key=$value\n");
 			};
 		}
     };           
@@ -601,7 +605,7 @@ sub normal_message {
 				(.*?)
 				\n
 			}{}x) {
-				$arg .= $1;
+				$arg .= decode('UTF-8',$1);
 			}
 		}
 
@@ -631,7 +635,7 @@ sub normal_message {
     } else {
 		# sekurigu la dosieron
 		open my $msg, ">", "$CFG->{tmp}/_err_msg" or do {
-			warn "Ne povis malfermi $CFG->{tmp}/_err_msg: $!\n";
+			$LOG->warn("Ne povis malfermi $CFG->{tmp}/_err_msg: $!\n");
 			report("ERARO   : nekonata komando en la poshtajho");
 			return;
 		};
@@ -672,7 +676,7 @@ sub komando {
 
 sub save_errmail {
     open my $errmail, ">>", "$CFG->{mail_error}" or do {
-		warn "Ne povis malfermi $CFG->{mail_error}: $!\n";
+		$LOG->warn("Ne povis malfermi $CFG->{mail_error}: $!\n");
 		return;
     };
     print $errmail $CTX->{mail};
@@ -697,14 +701,14 @@ sub report {
 		# enmetu "redakto: $shanghoj" komence
 		if ($file =~ m/\.xml$/x) {
 			open my $in, "<", $file or do {
-				warn "Ne povis malfermi $file: $!\n";
+				$LOG->warn("Ne povis malfermi $file: $!\n");
 				goto "MOVE_FILE";
 			};
 			$text = do { local $/ = undef, <$in>};
 			close $in;
 
 			open my $out, ">", "$file" or do {
-				warn "Ne povis malfermi $file: $!\n";
+				$LOG->warn("Ne povis malfermi $file: $!\n");
 				goto "MOVE_FILE";
 			};
 			print $out "$CTX->{komando}: $CTX->{shangho}\n\n";
@@ -721,7 +725,7 @@ MOVE_FILE:
 
     # skribu informon en $mail_send por poste sendi raporton al $CTX->{editor}
     open my $smail, ">>", "$CFG->{mail_send}" 
-		or do { warn "Ne povis malfermi $CFG->{mail_send}: $!\n"; return; };
+		or do { $LOG->warn("Ne povis malfermi $CFG->{mail_send}: $!\n"); return; };
 
     print $smail "sendinto: $CTX->{editor}\n";
     print $smail "dosieroj: $attachment\n" if ($file);
@@ -746,7 +750,7 @@ sub send_reports {
 		
 		local $/ = $CFG->{separator};
 		open my $smail, "<", $CFG->{mail_send} or do {
-			warn "Ne povis malfermi $CFG->{mail_send}: $!\n";
+			$LOG->warn("Ne povis malfermi $CFG->{mail_send}: $!\n");
 			return;
 		};
 
@@ -780,12 +784,12 @@ sub send_reports {
 				}
 				$reports{$mail_addr} .= $_;
 			} else {
-				warn "Ne povis elpreni sendinton el $_\n";
+				$LOG->warn("Ne povis elpreni sendinton el $_\n");
 				next;
 			}
 		}
 		close $smail;
-		local $/ = $CFG->{newline};
+		local $/ = $newline;
 
 		# forsendu la raportojn
 		while (($mail_addr,$message) = each %reports) {
@@ -864,8 +868,8 @@ sub send_reports {
 			## close SENDMAIL;
 
 			# forsendu
-			unless (mailsender::smtp_send($mailer,$CFG->{revo_from},$mail_addr,$mail_handle)) {
-				warn("Ne povas forsendi retpoŝtan raporton!\n");
+			unless (mailsender::smtp_send($mailer,$CFG->{revo_mailaddr},$mail_addr,$mail_handle)) {
+				$LOG->error("Ne povas forsendi retpoŝtan raporton al $mail_addr!\n");
 				next;
 			}
 
@@ -950,7 +954,10 @@ sub cmd_redakt {
 
 		# ekstraktu dosiernomon el $Id: ...
 		#$id =~ /^\044Id: ([^ ,\.]+)\.xml,v\s+([0-9\.]+)/;
-		$art = extract_article($id);
+		unless($art = extract_article($id)) { 
+			return; 
+		};
+
 	} else {
 		report("ERARO   : Artikolmarko ne troviĝis en la artikolo.\n");
 		return;
@@ -982,7 +989,7 @@ sub check_xml {
 
     # skribu la dosieron provizore al tmp
     open my $xml,">", "$CFG->{xml_temp}/xml.xml" or do {
-		warn "Ne povis malfermi $CFG->{xml_temp}/xml.xml: $!\n";
+		$LOG->warn("Ne povis malfermi $CFG->{xml_temp}/xml.xml: $!\n");
 		return;
     };
 
@@ -1027,7 +1034,7 @@ sub checkin {
 	    print $msg "$edtr: $CTX->{shangho}";
     	close $msg;
 	} else {
-		warn "Ne eblas skribi al tmp/shanghoj.msg: $!\n";
+		$LOG->warn("Ne eblas skribi al tmp/shanghoj.msg: $!\n");
 	}
 
     # kontrolu, chu la artikolo bazighas sur la aktuala versio
@@ -1163,7 +1170,7 @@ sub checkinnew {
 	    print $msg "$edtr: $CTX->{shangho}";
     	close $msg;
 	} else {
-		warn "Ne eblas skribi al $CFG->{tmp}/shanghoj.msg: $!\n";
+		$LOG->warn("Ne eblas skribi al $CFG->{tmp}/shanghoj.msg: $!\n");
 	}
 
 	# checkin in Git
@@ -1229,7 +1236,7 @@ sub get_archive_version {
     # legu la ĝisnunan artikolon
 	# KOREKTU: ĉe nova dosiero tiu atendeble ne ekzistas
 	open my $xml, "<", $xmlfile or do {
-		warn "Ne povis legi $xmlfile: $!\n";
+		$LOG->warn("Ne povis legi $xmlfile: $!\n");
 		return;
     };
 	my $txt = do { local $/ = undef, <$xml>};
@@ -1247,22 +1254,6 @@ sub get_archive_version {
     return $id;
 }
 
-sub extract_version {
-    my $id = shift;
-    # ekstraktu version el $Id: ...
-    unless ($id =~ m{^
-		\044Id:\s+ # $Id:
-		[^\ ,\.]+  # dosiernomo
-		\.xml,v\s+ # finaĵo
-		([0-9\.]+) # versio
-		}x) {
-		report ("ERARO   : Artikol-marko havas malĝustan sintakson\n");
-		warn "$id ne enhavas version\n";
-		return '???';
-    } else {
-		return $1;
-    }
-}
 
 sub extract_article {
     my $id = shift;
@@ -1273,9 +1264,9 @@ sub extract_article {
 		\.xml,v\s+  # finaĵo
 		[0-9\.]+    # versio
 	}x) {
-		report ("ERARO   : Artikol-marko havas malĝustan sintakson\n");
-		warn "$id ne enhavas dosiernomon\n";
-		return '???';
+		report ("ERARO   : Artikol-marko mankas aŭ havas malĝustan sintakson.\n");
+		$LOG->warn("$id ne enhavas dosiernomon\n");
+		return;
     } else {
 		return $1;
     }

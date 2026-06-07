@@ -1,5 +1,12 @@
 #!/usr/bin/perl
 
+# (c) 2026 ĉe Wolfram Diestel
+# tio testas bin/processsubm.pl
+# vi bezonas aktivan testmedion revo-medio/araneujo-t
+# kaj agordon por uzi ties testan poŝtservon en /etc/mailsender.conf
+# ${HOME}/etc/redaktantoj.json devas enhavi la retadreson de la
+# testanto (mediovariablo $TEST_RETADRESO)
+
 use strict; use warnings;
 use utf8; use open ':std', ':encoding(UTF-8)';
 # pakaĵo de Debian/Ubunto: libtest-www-mechanize-perl
@@ -84,16 +91,18 @@ $mech->scraped_id_like('konfirmo', qr/Bone/,'Konfirmo de submeto');
 #main::MAIN();
 my @logged_events;
 
-# 2. Den Array-Logger zu deinem bestehenden $LOG hinzufügen
+# Ni aldonas protokolon en liston por poste kontroli ĝin
+
 $main::LOG->add(
     Log::Dispatch::Array->new(
         name      => 'test_array_logger',
         min_level => 'debug',
-        array     => \@logged_events, # Referenz auf unser Array
+        array     => \@logged_events
     )
 );
 
-note(Dumper($main::LOG->outputs())); #exit;
+## note(Dumper($main::LOG->outputs())); #exit;
+
 #$main::LOG->output('Log::Dispatch::Screen')->{stderr} = 1;
 #stderr_like(
 #    sub { main::MAIN() },

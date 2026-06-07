@@ -2,13 +2,21 @@
 
 use strict;
 use warnings;
+use utf8; #use open ':std', ':encoding(UTF-8)';
+
 use MIME::Entity;
+
+#use MIME::Tools; MIME::Tools->bootstring("debug");
+
+use Encode qw(encode);
+use URI::Escape qw(uri_escape_utf8);
 
 my $from_addr = "Redaktanto <${ARGV[0]}>";
 my $mbox_file = $ARGV[1] || './mail_test.mbox';
 
 open my $MBOX, '>', $mbox_file
   or die "Ne eblis krei $mbox_file: $!\n";
+binmode($MBOX, ':raw');  
 
 my $from_spamisto = 'Spamisto <spamisto@example.com>';
 my $redaktilo_from = 'redaktilo@reta-vortaro.de';
@@ -25,9 +33,9 @@ my $XML = <<'EON';
   <ofc>*</ofc>
   <rad>nov</rad>/a <fnt><bib>UV</bib></fnt>
 </kap>
-<drv mrk="nov.0a">
+<drv mrk="novtest.0a">
   <kap><ofc>*</ofc><tld/>a</kap>
-  <snc mrk="nov.0a.eka">
+  <snc mrk="novtest.0a.eka">
     <dif>
       Anta&ubreve;e ne ekzistanta a&ubreve; ne konata, unuafoje
       aperanta:
@@ -67,14 +75,18 @@ my $msg_plain = MIME::Entity->build(
     Date    => $timestamp,
     Type    => 'text/plain; charset=utf-8',
     Data    => [
-        "aldonu: nov\n\n".$XML
+        "aldonu: novtest\n\n".$XML
     ]
 );
 
 # =========================================================================
 # TTT-formularo (URL-kodita)
 # =========================================================================
-my $form_data = "komando=redakto&shangho=neniu+ŝanĝo&teksto=$XML";
+
+my $shangho = uri_escape_utf8("neniu ŝanĝo"); 
+my $xml  = uri_escape_utf8($XML);           
+my $form_data = "komando=redakto&shangho=$shangho&teksto=$xml";
+
 
 my $msg_form = MIME::Entity->build(
     From    => 	$redaktilo_from,
@@ -82,6 +94,8 @@ my $msg_form = MIME::Entity->build(
     Subject => "$subject_base - URL-kodita formularo",
     Date    => $timestamp,
     Type    => 'application/x-www-form-urlencoded',
+    Encoding   => '8bit',
+    #InCore     => 1,
     Data    => [ $form_data ]
 );
 
@@ -92,19 +106,31 @@ my $msg_multi = MIME::Entity->build(
     From    => $from_addr,
     Subject => "$subject_base - plurparta mesagho",
     Date    => $timestamp,
+    InCore  => 1,
     Type    => 'multipart/mixed'
 );
 
 # Parto 1: La komando
+my $part1_data = encode('UTF-8', "redaktu:\nkion mi ŝanĝis, tio estas sekreto.");
+
+#print "PART1: $part1_data\n";
+
 $msg_multi->attach(
     Type => 'text/plain; charset=utf-8',
-    Data => "redaktu:\nkion mi ŝanĝis, tio estas sekreto."
+    InCore  => 1,
+    Encoding => '8bit',
+    Data => [ $part1_data ] #"redaktu:\nkion mi ŝanĝis, tio estas sekreto." ] #$part1_data ]
 );
 
 # Parto 2: La XML-dosiero
+my $part2_data = encode('UTF-8', $XML);
+#print "PART2: $part2_data\n";
+
 $msg_multi->attach(
     Type => 'application/xml; charset=utf-8',
-    Data => $XML
+    InCore  => 1,
+    Encoding => '8bit',
+    Data => [ $part2_data ]
 );
 
 # =========================================================================
