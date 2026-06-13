@@ -267,7 +267,7 @@ MAIN() unless caller(); sub MAIN {
 		process::move_file($CFG->{mail_send},"$CFG->{prc_mail}/$filename");
 	}
 
-	exit 0;
+	return;
 
 } # MAIN
 
@@ -573,7 +573,7 @@ sub urlencoded_form {
 			($key,$value) = ($1,$2);
 			if ($key =~ /^(?:$CFG->{possible_keys})$/x) {
 				$value =~ s/\+/ /gx; # anstatauigu '+' per ' '
-				$value =~ s{%(..)}{pack('c',hex($1))}segx;
+				$value =~ s{%(..)}{pack('C',hex($1))}segx;
 				$value = decode('UTF-8',$value);
 				$content{$key} = $value;
 				$LOG->debug("FORM: $key=$value\n");

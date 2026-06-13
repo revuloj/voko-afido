@@ -12,12 +12,13 @@ use warnings;
 
 use utf8; use open ':std', ':encoding(UTF-8)';
 use Test::More; # tests => 2; 
+use Test::Deep; 
 
 use Encode qw(encode decode);
 use Data::Dumper;
 use Log::Dispatch::Array;
 
-$ENV{'DEBUG'} = 1; # necesas antaŭ require...!
+#$ENV{'DEBUG'} = 1; # necesas antaŭ require...!
 use lib('./bin');
 require 'processmail.pl';
 
@@ -97,9 +98,46 @@ note(Dumper(@logged_events));
 cmp_deeply( \@logged_events, superbagof( 
     {
         'level' => 'info',
-        'message' => re(qr/Trovitaj novaj submetoj:/)
+        'message' => re(qr/rsync/)
     },
-    #...
+    {
+        'level' => 'info',
+        'message' => re(qr/Spamisto/)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/erara mesagho sekurigita al.*\/mailerr/)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/Redaktanto/)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/nova artikolo: nov/)
+    },
+#    {
+#        'level' => 'debug',
+#        'message' => re(qr/XML: en ordo/)
+#    },  
+    {
+        'level' => 'info',
+        'message' => re(qr/shanghoj: nova artikolo/)
+    },    
+    {
+        'level' => 'info',
+        'message' => re(qr/KONFIRMO:.*nova artikolo.*1 dosiero, 32 enmetoj.*create mode 100644 revo\/nov.xml/s)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/artikolo: \$Id: erar.xml,v 1.47 [\d\/]{10} [\d:]{8} revo Exp \$/)
+    },    
+    # VAR33
+    {
+        'level' => 'info',
+        'message' => re(qr/KONFIRMO:.*1 dosiero, 19 enmetoj\(\+\), 61 forigoj\(\-\)/s)
+    },
+    #...VAR47
 ));
 
 done_testing();
