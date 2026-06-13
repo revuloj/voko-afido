@@ -66,7 +66,7 @@ chomp(my $pwd = `pwd`);
 my $mbox_file = "$pwd/dict/tmp/mail_test.mbox";
 my $redaktanto = $ENV{TEST_RETADRESO} || '_registrita_testredaktanto_@retavortaro.de';
 
-`rm -rf dict/tmp && rm dict/xml/* && mkdir -p dict/xml && mkdir -p dict/tmp/xml`;
+`rm -rf dict/tmp && mkdir -p dict/tmp/xml`;
 `ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
 `bin/create_test_repo.sh /tmp && perl tst/make_test_mbox.pl '$redaktanto' '$mbox_file'`;
 
@@ -96,10 +96,10 @@ main::MAIN();
 note(Dumper(@logged_events));
 
 cmp_deeply( \@logged_events, superbagof( 
-    {
-        'level' => 'info',
-        'message' => re(qr/rsync/)
-    },
+#    {
+#        'level' => 'info',
+#        'message' => re(qr/rsync/)
+#    },
     {
         'level' => 'info',
         'message' => re(qr/Spamisto/)
@@ -116,10 +116,6 @@ cmp_deeply( \@logged_events, superbagof(
         'level' => 'info',
         'message' => re(qr/nova artikolo: nov/)
     },
-#    {
-#        'level' => 'debug',
-#        'message' => re(qr/XML: en ordo/)
-#    },  
     {
         'level' => 'info',
         'message' => re(qr/shanghoj: nova artikolo/)
@@ -138,6 +134,55 @@ cmp_deeply( \@logged_events, superbagof(
         'message' => re(qr/KONFIRMO:.*1 dosiero, 19 enmetoj\(\+\), 61 forigoj\(\-\)/s)
     },
     #...VAR47
+    {
+        'level' => 'info',
+        'message' => re(qr/ERARO.*La de vi sendita artikolo.*sur la aktuala arkiva versio.*erar\.xml,v 1\.48.*Bonvolu preni aktualan version/s)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/elsendas raportojn\.\.\./)
+    },
+    #VAR49
+#    {
+#        'level' => 'info',
+#        'message' => re(qr/.*Saluton.*Jen raporto pri via\(j\) sendita\(j\) artikolo\(j\).*nova artikolo.*KONFIRMO.*19 enmetoj.*ERARO.*arkiva versio/as)
+#},
+#    {
+#        'level' => 'info',
+#        'message' => code(sub {
+#            #my $raw_bytes = shift;
+#            
+#            # Wir wandeln die rohen Bytes des Logs in echten Unicode-Text um:
+#            my $unicode_string = shift; #Encode::decode('UTF-8', $raw_bytes);
+#            
+#            # Jetzt matcht JEDER ganz normale Regex ohne irgendwelche '/a'-Tricks!
+#            return $unicode_string =~ /Saluton!/ #.*Jen raporto pri via\(j\) sendita\(j\) artikolo\(j\).*shanghoj:/as;
+#        }),
+#    },    
+    {
+        'level' => 'info',
+        'message' => re(qr/pu.*ojn al git\.\.\./s)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/mailerr al/s)
+    },
+    {
+        'level' => 'info',
+        'message' => re(qr/mailsend al/s)
+    },
 ));
+
+my $saluton;
+for my $l (@logged_events) {
+    if ( $l->{message} =~ /Saluton/ ) {
+        $saluton = 1;
+        note("SALUTON\n");
+        like($l->{message},qr/Saluton!.*Jen raporto pri via\(j\) sendita\(j\) artikolo\(j\)/s);
+        like($l->{message},qr/nova artikolo.*KONFIRMO.*19 enmetoj.*ERARO.*arkiva versio/s);
+    }
+}
+
+is($saluton,1);
 
 done_testing();

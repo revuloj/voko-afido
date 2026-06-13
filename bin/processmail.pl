@@ -1043,7 +1043,7 @@ sub checkin {
 		report("ERARO   : La de vi sendita artikolo\n"
 			."ne baziĝas sur la aktuala arkiva versio\n"
 			."($ark_id)\n"
-			."Bonvolu preni aktualan version el la TTT-ejo. "
+			."Bonvolu preni aktualan version. "
 			."($CFG->{xml_source_url}/$art.xml)\n","$CFG->{xml_temp}/xml.xml");
 		return;
     }
