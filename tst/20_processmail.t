@@ -44,7 +44,7 @@ $main::CFG->{old_mail}    = "$main::CFG->{log_mail}/oldmail";
 $main::CFG->{err_mail}    = "$main::CFG->{log_mail}/errmail";
 $main::CFG->{prc_mail}    = "$main::CFG->{log_mail}/prcmail";
 
-$main::CFG->{xml_dir}     = "$main::CFG->{dict_base}/xml";
+#$main::CFG->{xml_dir}     = "$main::CFG->{dict_base}/xml";
 $main::CFG->{git_dir}     = "/tmp/test-repo";
 $main::CFG->{dok_dir}     = "$main::CFG->{dict_base}/dok";
 

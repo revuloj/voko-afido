@@ -31,7 +31,7 @@ our $CFG = {
 
 $CFG->{dict_base}= "$CFG->{dict_home}/dict"; # xml, dok, dt,
 $CFG->{tmp}      = "$CFG->{dict_base}/tmp";
-$CFG->{xml_temp} = "$CFG->{tmp}/xml";
+#$CFG->{xml_temp} = "$CFG->{tmp}/xml";
 $CFG->{git_dir}  = "$CFG->{dict_base}/revo-fonto";
 
 my $json_parser = JSON->new->allow_nonref;
@@ -242,7 +242,7 @@ sub checkxml {
     my ($id,$fname,$nova) = @_;
 
     # se ne jam estas kreu provizoran xml-dosierujon
-    mkdir($CFG->{xml_temp});
+    #mkdir($CFG->{xml_temp});
 
     # aldonu dtd symlink se ankoraŭ mankas
     #symlink("$dtd_dir","$xml_temp/../dtd") ;

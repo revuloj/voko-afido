@@ -90,7 +90,7 @@ $CFG->{err_mail}    = "$CFG->{log_mail}/errmail";
 $CFG->{prc_mail}    = "$CFG->{log_mail}/prcmail";
 
 # la aktualaj artikolfontoj estas en xml/
-$CFG->{xml_dir}     = "$CFG->{dict_base}/xml";
+#$CFG->{xml_dir}     = "$CFG->{dict_base}/xml";
 
 # la malpakita Git-arĥivo, la XML-dosieorjn mem ni tenas aparte
 $CFG->{git_dir}     = "$CFG->{dict_base}/revo-fonto";
@@ -138,11 +138,11 @@ MAIN() unless caller(); sub MAIN {
 		exit 1;
 	}
 	# sinkronigu revo/xml
-	$LOG->info("$CFG->{rsync} $CFG->{git_dir}/revo/ $CFG->{xml_dir}/\n...");
-	unless (-x "/usr/bin/rsync") {
-		$LOG->warn("Programo 'rsync' ne ekzistas aŭ ne estas lanĉebla!\n");
-	}
-	print process::sys_run(split(/ /,$CFG->{rsync}),"$CFG->{git_dir}/revo/","$CFG->{xml_dir}/");
+	#$LOG->info("$CFG->{rsync} $CFG->{git_dir}/revo/ $CFG->{xml_dir}/\n...");
+	#unless (-x "/usr/bin/rsync") {
+	#	$LOG->warn("Programo 'rsync' ne ekzistas aŭ ne estas lanĉebla!\n");
+	#}
+	#print process::sys_run(split(/ /,$CFG->{rsync}),"$CFG->{git_dir}/revo/","$CFG->{xml_dir}/");
 
 	# vi povas retrakti specifan (antaŭan) poŝtdosieron, ekz-e se okazis
 	# eraro kaj vi volas ripeti por ne perdi la redakton...
@@ -396,68 +396,68 @@ sub process_ent {
 	
     # plurparta MIME-mesagho
     } else {
-	my $num_parts = $entity->parts;
-	$LOG->debug("num of parts: ", $num_parts,"\n");
+		my $num_parts = $entity->parts;
+		$LOG->debug("num of parts: ", $num_parts,"\n");
 
-	# trairu chiujn partojn
-	for (my $i = 0; $i < $num_parts; $i++) {
-	    my $part = $entity->parts($i);
-	    $LOG->debug($part->mime_type, "\n");
+		# trairu chiujn partojn
+		for (my $i = 0; $i < $num_parts; $i++) {
+			my $part = $entity->parts($i);
+			$LOG->debug($part->mime_type, "\n");
 
-	    # elprenu la tekston
-	    unless ($part->bodyhandle) { next; } # ignoru plurpartajn partojn
-	    $parttxt = $part->bodyhandle->as_string;
+			# elprenu la tekston
+			unless ($part->bodyhandle) { next; } # ignoru plurpartajn partojn
+			$parttxt = $part->bodyhandle->as_string;
 
-	    # chu temas pri TTT-formularo?
-	    if ((($entity->head->get('subject') 
-		 =~ /Microsoft.*Internet.*lorer/sx) 
-                or ($part->head->get('content-type')
-		    =~  /POSTDATA\.ATT/sx))
-		and ($parttxt =~ /^\s*komando=redakto&/x)
-		or ($part->mime_type 
-		    =~ m|application/x-www-form-urlencoded|x)) {
-		
-		# TTT-formularo
-		urlencoded_form($parttxt);
-		return;
-	    }
-
-	    # ekzamenu, chu en la partoj estas komando kaj/au xml
-	    if ( $parttxt =~ m{^
-			\s*($CFG->{commands})\s*:
-		}six ) {
-			$CTX->{komando} = $1;
-			$LOG->debug("komando $CTX->{komando} en parto $i\n");
-			if ( $CTX->{komando} =~ m{^
-				(help|dokument|artikol|histori)
-			}x ) {
-				normal_message($parttxt);
-			} else {
-				# chu krome enhavas la xml-tekston?
-				if ($parttxt =~ /<\?xml/sx) {
-					$LOG->debug("xml en parto $i\n");
-					normal_message($parttxt);
-					return;
-				} else {
-					# supozu, ke estas nur la komando kaj trovu la reston
-					$CTX->{komando} = $parttxt;
-				}
-			}
-	    } elsif ($parttxt =~ /^\s*<\?xml/sx) {
-			$LOG->debug("xml en parto $i\n");
-			# memoru la xml-tekston
-			$xmltxt = $parttxt;
-	    }
-
-	    # se ambau - komando kaj xml - estas trovitaj, daurigu
-	    if ($CTX->{komando} and $xmltxt) {
-			normal_message("$CTX->{komando}\n\n$xmltxt");
+			# chu temas pri TTT-formularo?
+			if ((($entity->head->get('subject') 
+			=~ /Microsoft.*Internet.*lorer/sx) 
+					or ($part->head->get('content-type')
+				=~  /POSTDATA\.ATT/sx))
+			and ($parttxt =~ /^\s*komando=redakto&/x)
+			or ($part->mime_type 
+				=~ m|application/x-www-form-urlencoded|x)) {
+			
+			# TTT-formularo
+			urlencoded_form($parttxt);
 			return;
-	    }
-	}
-	# en la plurparta mesagho shajne ne trovighis la serchita
-	report("ERARO   : Ne trovighis komando kaj/au XML-teksto en la "
-		   ."plurparta mesagho");
+			}
+
+			# ekzamenu, chu en la partoj estas komando kaj/au xml
+			if ( $parttxt =~ m{^
+				\s*($CFG->{commands})\s*:
+			}six ) {
+				$CTX->{komando} = $1;
+				$LOG->debug("komando $CTX->{komando} en parto $i\n");
+				if ( $CTX->{komando} =~ m{^
+					(help|dokument|artikol|histori)
+				}x ) {
+					normal_message($parttxt);
+				} else {
+					# chu krome enhavas la xml-tekston?
+					if ($parttxt =~ /<\?xml/sx) {
+						$LOG->debug("xml en parto $i\n");
+						normal_message($parttxt);
+						return;
+					} else {
+						# supozu, ke estas nur la komando kaj trovu la reston
+						$CTX->{komando} = $parttxt;
+					}
+				}
+			} elsif ($parttxt =~ /^\s*<\?xml/sx) {
+				$LOG->debug("xml en parto $i\n");
+				# memoru la xml-tekston
+				$xmltxt = $parttxt;
+			}
+
+			# se ambau - komando kaj xml - estas trovitaj, daurigu
+			if ($CTX->{komando} and $xmltxt) {
+				normal_message("$CTX->{komando}\n\n$xmltxt");
+				return;
+			}
+		}
+		# en la plurparta mesagho shajne ne trovighis la serchita
+		report("ERARO   : Ne trovighis komando kaj/au XML-teksto en la "
+			."plurparta mesagho");
     }
 
 	return;
@@ -1044,7 +1044,7 @@ sub checkin {
 			."ne baziĝas sur la aktuala arkiva versio\n"
 			."($ark_id)\n"
 			."Bonvolu preni aktualan version el la TTT-ejo. "
-			."($CFG->{xml_source_url}/$art)\n","$CFG->{xml_temp}/xml.xml");
+			."($CFG->{xml_source_url}/$art.xml)\n","$CFG->{xml_temp}/xml.xml");
 		return;
     }
 
@@ -1137,7 +1137,7 @@ sub cmd_aldon {
     $CTX->{article_id} = "\044Id: $art.xml,v\044";
 
     # kontrolu, chu la dosiernomo estas ankorau uzebla
-    if (-e "$CFG->{xml_dir}/$art.xml") {
+    if (-e "$CFG->{git_dir}/revo/$art.xml") {
 		report ("ERARO   : Artikolo kun la dosiernomo $art.xml jam ekzistas\n"
 			."Bv. elekti alian nomon por la nova artikolo.\n");
 		return;
@@ -1222,7 +1222,7 @@ sub checkinnew_git {
 
 sub get_archive_version {
     my ($art) = @_;
-    my $xmlfile = "$CFG->{xml_dir}/$art.xml";
+    my $xmlfile = "$CFG->{git_dir}/revo/$art.xml";
 
     # legu la ĝisnunan artikolon
 	# KOREKTU: ĉe nova dosiero tiu atendeble ne ekzistas

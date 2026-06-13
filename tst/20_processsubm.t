@@ -42,7 +42,7 @@ $main::CFG->{tmp}       =  "$main::CFG->{dict_base}/tmp";
 $main::CFG->{log_dir}   =  "$main::CFG->{dict_base}/log";
 $main::CFG->{mail_send} =  "$main::CFG->{tmp}/mailsend";
 $main::CFG->{rez_dir}   =  "$main::CFG->{dict_base}/rez";
-$main::CFG->{xml_dir}   =  "$main::CFG->{dict_base}/xml";
+#$main::CFG->{xml_dir}   =  "$main::CFG->{dict_base}/xml";
 $main::CFG->{git_dir}   =  "/tmp/test-repo";
 diag("processsubm.pl-agordo: ".Dumper($main::CFG));
 

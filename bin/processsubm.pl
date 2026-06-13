@@ -71,7 +71,7 @@ $CFG->{log_dir}   =  "$CFG->{dict_base}/log";
 $CFG->{mail_send} =  "$CFG->{tmp}/mailsend";
 
 $CFG->{rez_dir}   =  "$CFG->{dict_base}/rez";
-$CFG->{xml_dir}   =  "$CFG->{dict_base}/xml";
+#$CFG->{xml_dir}   =  "$CFG->{dict_base}/xml";
 	#$git_repo     => $ENV{"GIT_REPO_REVO"} || "revo-fonto";
 $CFG->{git_dir}   =  "$CFG->{dict_base}/revo-fonto";
 
@@ -407,7 +407,7 @@ sub send_reports {
 # redakto de jam ekzistanta artikolo
 sub cmd_redakt {
     my ($subm,$detaloj) = @_;
-	my $fname = "$CFG->{xml_dir}/".$subm->{fname}.".xml";
+	my $fname = "$CFG->{git_dir}/revo/".$subm->{fname}.".xml";
 	process::write_file(">:encoding(utf-8)",$fname,$detaloj->{xml});
 
     #$CTX->{shangho} = $shangh; # memoru por poste
@@ -443,7 +443,7 @@ sub cmd_aldon {
 
     # kio estu la nomo de la nova artikolo
 	my $art = process::trim($subm->{fname}); 
-	my $fname = "$CFG->{xml_dir}/".$subm->{fname}.".xml";
+	my $fname = "$CFG->{git_dir}/revo/".$subm->{fname}.".xml";
 	process::write_file(">:encoding(utf-8)",$fname,$detaloj->{xml});
    
     unless ($art =~ /^[a-z0-9_]+$/sx) {
