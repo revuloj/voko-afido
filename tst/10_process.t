@@ -15,13 +15,17 @@ my $workdir = $ENV{'PWD'};
 $process::CFG->{dict_home} = $ENV{'PWD'};
 $process::CFG->{dict_base}= "$process::CFG->{dict_home}/dict"; # xml, dok, dt,
 $process::CFG->{tmp}      = "$process::CFG->{dict_base}/tmp";
-$process::CFG->{xml_temp} = "$process::CFG->{tmp}/xml";
+#$process::CFG->{xml_temp} = "$process::CFG->{tmp}/xml";
 $process::CFG->{git_dir}  = '/tmp/test-repo'; # "$process::CFG->{dict_base}/revo-fonto";
 diag(Dumper($process::CFG));
 
 # ni supozas ke DTD-dosieroj troviĝas ĉe ../voko-grundo/dtd
 # se ne vi devas mane ligi/kopii ilin al dict/tmp/dtd
-`mkdir -p dict/tmp && rm -rf dict/tmp/* && ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
+#`mkdir -p dict/tmp && rm -rf dict/tmp/* && ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
+
+`rm -rf dict/tmp && mkdir -p dict/tmp/xml`;
+`ln -s \$(pwd)/../voko-grundo/dtd dict/tmp/`;
+`bin/create_test_repo.sh /tmp`;
 
 my $USER = $ENV{'USER'};
 my $JSON = <<'EOJ';
@@ -39,24 +43,25 @@ EOC
 
 my $json_parser = JSON->new->pretty;
 
-`bin/create_test_repo.sh /tmp`;
 chdir($workdir);
 # Encode to Latin3 bytes
 
+# T1..T4
 is( process::my_name(),$USER,'my_name()' );
 like( process::sys_run('pwd'),qr/voko-afido$/,'sys_run(pwd)' );
 like( process::timestamp(), qr/^\d{8}_\d{6}$/,'timestamp()' );
 is( process::trim("\n abc \t"),'abc','trim()' );
-
-like( process::read_file('test-repo/revo/artefakt.xml'),qr/<\?xml/,'read_file(..artefkakt.xml)' );
+# T5
+like( process::read_file($process::CFG->{git_dir}.'/revo/artefakt.xml'),qr/<\?xml/,'read_file(..artefkakt.xml)' );
 
 # skribi $JSON kiel ordinara teskto kaj provi enlegi kiel json
-ok( process::write_file(">",'test-repo/test.json',$JSON), 'write_file(test-repo/test.json)' );
-ok( process::move_file('test-repo/test.json','test-repo/test-1.json'), 'move to test-repo/test-1.json' );
+#T6/T7
+ok( process::write_file(">",$process::CFG->{git_dir}.'/test.json',$JSON), 'write_file(test-repo/test.json)' );
+ok( process::move_file($process::CFG->{git_dir}.'/test.json',$process::CFG->{git_dir}.'/test-1.json'), 'move to test-repo/test-1.json' );
 
-my $json = process::read_json_file('test-repo/test-1.json');
+my $json = process::read_json_file($process::CFG->{git_dir}.'/test-1.json');
 note("JSON:\n".Dumper($json));
-
+# T8
 cmp_deeply(
         $json,
         superbagof({
@@ -67,10 +72,12 @@ cmp_deeply(
     );
 
 # nun ni reskribas per write_json_file kaj legas denove
-ok( process::write_json_file(">",'test-repo/test.json',$json), 'write_json_file(test-repo/test.json)' );
-my $json1 = process::read_json_file('test-repo/test.json');
+# T9
+ok( process::write_json_file(">",$process::CFG->{git_dir}.'/test.json',$json), 'write_json_file(test-repo/test.json)' );
+my $json1 = process::read_json_file($process::CFG->{git_dir}.'/test.json');
 note("JSON:\n".Dumper($json1));
 
+# T10
 cmp_deeply(
         $json1,
         superbagof({
@@ -83,6 +90,7 @@ cmp_deeply(
 my @csv = process::csv2arr($CSV);
 note("CSV:\n".Dumper(@csv));
 
+# T11
 cmp_deeply(
         \@csv,
         superbagof({
@@ -100,6 +108,7 @@ cmp_deeply(
         "CSV enhavas rikordojn por 'unu' kaj 'na\x{16d}'"
     );
 
+# T12
 is( process::rep_str({
     senddato => '2026-01-01',
     artikolo => 'artefakt',
@@ -108,15 +117,17 @@ is( process::rep_str({
     }), "senddato: 2026-01-01\nartikolo: artefakt\nKONFIRMO: artikolo akceptita\n", 'rep_str(...)' );
 #like( )
 
-`mkdir -p $process::CFG->{xml_temp}`;
-`cp test-repo/revo/*.xml $process::CFG->{xml_temp}/`;
-ok(!process::checkxml('artefakt',"$process::CFG->{xml_temp}/artefakt.xml",0),"Kontrolo de artefakt.xml ne donas erarojn");
+#`mkdir -p $process::CFG->{xml_temp}`;
+#`cp test-repo/revo/*.xml $process::CFG->{xml_temp}/`;
+#ok(!process::checkxml('artefakt',"$process::CFG->{xml_temp}/artefakt.xml",0),"Kontrolo de artefakt.xml ne donas erarojn");
+# T13
+ok(!process::checkxml('artefakt',"$process::CFG->{git_dir}/revo/artefakt.xml",0),"Kontrolo de artefakt.xml ne donas erarojn");
 
 # doni plenan identigilon al ĝi
-`echo "testshangho" > $process::CFG->{xml_temp}/shangho.txt`;
-ok( process::init_ver("$process::CFG->{xml_temp}/artefakt.xml","$process::CFG->{xml_temp}/shangho.txt"), "Identigilo al artefakt.xml" );
+`echo "testshangho" > $process::CFG->{tmp}/shangho.txt`;
+ok( process::init_ver("$process::CFG->{git_dir}/revo/artefakt.xml","$process::CFG->{tmp}/shangho.txt"), "Identigilo al artefakt.xml" );
 
-like( process::get_art_id("$process::CFG->{xml_temp}/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.1 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.1 de artefakt.xml" );
+like( process::get_art_id("$process::CFG->{git_dir}/revo/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.1 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.1 de artefakt.xml" );
 
 ok( process::incr_ver("$process::CFG->{xml_temp}/artefakt.xml","$process::CFG->{xml_temp}/shangho.txt"), "Versialtigo al artefakt.xml" );
 
