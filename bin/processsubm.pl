@@ -416,7 +416,11 @@ sub cmd_redakt {
 
     # pri kiu artikolo temas, trovighas en <art mrk="...">
 	$CTX->{article_id} = process::get_art_id($fname);
-    my $art = extract_article($subm, $CTX->{article_id});
+
+	my $art;
+	unless($art = extract_article($subm, $CTX->{article_id})) { 
+		return; 
+	};	
 
     unless ($art =~ /^[a-z0-9_]+$/ix) {
 		report($subm,
@@ -728,7 +732,7 @@ sub extract_article {
 			"artikolo" => $id
 		});
 		$LOG->warn("$id ne enhavas dosiernomon\n");
-		return '???';
+		return;
     } else {
 		return $1;
     }

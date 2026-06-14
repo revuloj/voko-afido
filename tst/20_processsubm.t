@@ -25,6 +25,7 @@ use process;
 
 my $SUBM_HOST = '127.0.0.1:8088';
 my $SUBM_URL = "http://$SUBM_HOST/cgi-bin/vokosubmx.pl";
+my $art_id = '$Id: kvin.xml,v 1.52 2025/10/08 16:37:51 revo Exp $';
 
 # antaŭ require... ni devas difini kelkajn mediovariablojn por processsubm.pl
 $ENV{'REVO_HOST'} = $SUBM_HOST;
@@ -85,6 +86,7 @@ note($xmlTxt);
 
 forsendo($xmlTxt,'Forsendi artikolon \'kvin\'');
 # $mech->scraped_id_like('malkonfirmo', qr/problemo kun la retpoŝta servo/,'Send-eraro');
+# T8
 $mech->scraped_id_like('konfirmo', qr/Bone/,'Konfirmo de submeto');
 
 # Nun ni provas trakti la submeton regule per processsubm.pl
@@ -115,19 +117,28 @@ main::MAIN();
 
 note(Dumper(@logged_events));
 
+# T9
 cmp_deeply( \@logged_events, superbagof( 
+    # VAR1
     {
         'level' => 'info',
         'message' => re(qr/Trovitaj novaj submetoj:/)
     },
+    # VAR5
     {
         'level' => 'info',
         'message' => re(qr/desc: nur testo/)
     },
+#    {
+#        'level' => 'info',
+#        'message' => re(qr/Ne valida artikolmarko/)
+#    },
+# VAR11
     {
         'level' => 'info',
-        'message' => re(qr/Ne valida artikolmarko/)
+        'message' => re(qr/Artikol-marko havas mal\x{11d}ustan sintakson/)
     },
+    # VAR15
     {
         'level' => 'info',
         'message' => re(qr/sendas raportojn al redaktintoj/)
@@ -136,13 +147,14 @@ cmp_deeply( \@logged_events, superbagof(
         'level' => 'info',
         'message' => re(qr/Aktualigo de submeto.*stat: erar/)
     },
-    {
-        'level' => 'debug',
-        'message' => re(qr/attach:.*test\.xml/)
-    },
+#    {
+#        'level' => 'debug',
+#        'message' => re(qr/attach:.*test\.xml/)
+#    },
+    # VAR21
     {
         'level' => 'info',
-        'message' => re(qr/\x{15d}ovas/)
+        'message' => re(qr/\x{15d}ovas.*mailsend al/)
     }
 ) );
 
@@ -168,12 +180,14 @@ sub forsendo {
     note($mech->content);
 
     #$mech->content_is('text/html; charset=utf-8');
+    # T2
     like(
         $mech->response->header('Content-Type'),
         qr{text/html;\s*charset=utf-?8}i,
         'Ĝusta enhavtipo (html, utf-8)'
     );
 
+    # T3..T7
     $mech->title_is('vokosubmx', 'Titolo \'vokosubmx\' troviĝis');
     $mech->content_like(qr/<body>/, 'body...');
     $mech->content_like(qr/ni ne povas sendi al vi kopion/,'ne eblis sendi kopion');

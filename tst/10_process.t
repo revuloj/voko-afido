@@ -2,6 +2,7 @@
 #use strict;
 use warnings;
 use Test::More; # tests => 2; 
+
 use Test::Deep;
 use Data::Dumper;
 use JSON;
@@ -9,6 +10,14 @@ use utf8; use open ':std', ':encoding(UTF-8)';
 
 use lib('./bin');
 use process;
+
+# certigu ke UTF-8 funkcias kun la test-eligoj
+my $builder = Test::More->builder;
+$builder->failure_output(\*STDERR); 
+$builder->output(\*STDOUT);
+binmode $builder->output,         ":encoding(UTF-8)";
+binmode $builder->failure_output, ":encoding(UTF-8)";
+binmode $builder->todo_output,    ":encoding(UTF-8)";
 
 # iom da reagordo por loka testo...
 my $workdir = $ENV{'PWD'};
@@ -106,6 +115,7 @@ cmp_deeply(
             'tri'    => '999'
         }),
         "CSV enhavas rikordojn por 'unu' kaj 'na\x{16d}'"
+        #encode('UTF-8',"CSV enhavas rikordojn por 'unu' kaj 'na\x{16d}'")
     );
 
 # T12
@@ -117,24 +127,27 @@ is( process::rep_str({
     }), "senddato: 2026-01-01\nartikolo: artefakt\nKONFIRMO: artikolo akceptita\n", 'rep_str(...)' );
 #like( )
 
-#`mkdir -p $process::CFG->{xml_temp}`;
-#`cp test-repo/revo/*.xml $process::CFG->{xml_temp}/`;
-#ok(!process::checkxml('artefakt',"$process::CFG->{xml_temp}/artefakt.xml",0),"Kontrolo de artefakt.xml ne donas erarojn");
 # T13
-ok(!process::checkxml('artefakt',"$process::CFG->{git_dir}/revo/artefakt.xml",0),"Kontrolo de artefakt.xml ne donas erarojn");
+`cp $process::CFG->{git_dir}/revo/artefakt.xml $process::CFG->{tmp}/xml/`;
+note(my $checkxml = process::checkxml('artefakt',"$process::CFG->{tmp}/xml/artefakt.xml",0));
+ok(!$checkxml,"Kontrolo de artefakt.xml ne donu erarojn");
 
+# T14
 # doni plenan identigilon al ĝi
 `echo "testshangho" > $process::CFG->{tmp}/shangho.txt`;
-ok( process::init_ver("$process::CFG->{git_dir}/revo/artefakt.xml","$process::CFG->{tmp}/shangho.txt"), "Identigilo al artefakt.xml" );
+ok( process::init_ver("$process::CFG->{tmp}/xml/artefakt.xml","$process::CFG->{tmp}/shangho.txt"), "Identigilo al artefakt.xml" );
 
-like( process::get_art_id("$process::CFG->{git_dir}/revo/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.1 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.1 de artefakt.xml" );
+# T15
+like( process::get_art_id("$process::CFG->{tmp}/xml/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.1 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.1 de artefakt.xml" );
 
-ok( process::incr_ver("$process::CFG->{xml_temp}/artefakt.xml","$process::CFG->{xml_temp}/shangho.txt"), "Versialtigo al artefakt.xml" );
+# T16
+ok( process::incr_ver("$process::CFG->{tmp}/xml/artefakt.xml","$process::CFG->{tmp}/shangho.txt"), "Versialtigo al artefakt.xml" );
 
-like( process::get_art_id("$process::CFG->{xml_temp}/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.2 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.2 de artefakt.xml" );
+# T17
+like( process::get_art_id("$process::CFG->{tmp}/xml/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.2 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.2 de artefakt.xml" );
 
-
-like(process::sys_run_err('rxp','-Vs','dict/tmp/xml/erar.xml'),qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per rxp donas erarojn");
+# T18
+like(process::sys_run_err('rxp','-Vs',$process::CFG->{tmp}.'/xml/erar.xml'),qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per rxp donas erarojn");
 
 #Warning: Required attribute mrk for element drv is not present
 # in unnamed entity at line 10 char 6 of file://./dict/tmp/xml/erar.xml
@@ -155,6 +168,6 @@ like( process::xml_context($errors,"$process::CFG->{xml_temp}/erar.xml"),qr/10: 
 my ($out,$err) = process::git_cmd(qw(/usr/bin/git log -1));
 like( $out, qr/commit.*Author:.*Date:.*v3/s, "Git log...");
 
-`rm -rf $process::CFG->{git_dir}`;
-`rm -rf $process::CFG->{tmp}/*`;
+#`rm -rf $process::CFG->{git_dir}`;
+#`rm -rf $process::CFG->{tmp}/*`;
 done_testing();
