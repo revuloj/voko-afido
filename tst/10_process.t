@@ -147,7 +147,8 @@ ok( process::incr_ver("$process::CFG->{tmp}/xml/artefakt.xml","$process::CFG->{t
 like( process::get_art_id("$process::CFG->{tmp}/xml/artefakt.xml"),qr/^\$Id: artefakt.xml,v 1\.2 [\d\/]{10} [\d:]{8} .*\$$/,"Ni povas ekstrakti Id 1.2 de artefakt.xml" );
 
 # T18
-like(process::sys_run_err('rxp','-Vs',$process::CFG->{tmp}.'/xml/erar.xml'),qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per rxp donas erarojn");
+`cp $process::CFG->{git_dir}/revo/erar.xml $process::CFG->{tmp}/xml/`;
+like(process::sys_run_err('rxp','-Vs',"$process::CFG->{tmp}/xml/erar.xml"),qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per rxp donas erarojn");
 
 #Warning: Required attribute mrk for element drv is not present
 # in unnamed entity at line 10 char 6 of file://./dict/tmp/xml/erar.xml
@@ -158,13 +159,16 @@ like(process::sys_run_err('rxp','-Vs',$process::CFG->{tmp}.'/xml/erar.xml'),qr/^
 #Error: Mismatched end tag: expected </sncx>, got </snc>
 # in unnamed entity at line 42 char 8 of file://./dict/tmp/xml/erar.xml
 
-my $errors = process::checkxml('erar',"$process::CFG->{xml_temp}/erar.xml",0);
+# T19
+my $errors = process::checkxml('erar',"$process::CFG->{tmp}/xml/erar.xml",0);
 diag($errors);
 like($errors,qr/^Warning: Required attribute mrk for element drv is not present/,"Kontrolo de erar.xml per checkxml donas erarojn");
 
-like( process::xml_context($errors,"$process::CFG->{xml_temp}/erar.xml"),qr/10: <drv>/,"Kunteksto de la unua eraro" );
+# T20
+like( process::xml_context($errors,"$process::CFG->{tmp}/xml/erar.xml"),qr/10: <drv>/,"Kunteksto de la unua eraro" );
 
 #diag($process::CFG->{git_dir}. " vs. ".`pwd`);
+# T21
 my ($out,$err) = process::git_cmd(qw(/usr/bin/git log -1));
 like( $out, qr/commit.*Author:.*Date:.*v3/s, "Git log...");
 

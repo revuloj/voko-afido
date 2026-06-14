@@ -105,7 +105,7 @@ sub read_file {
 	# do faru tion prefere post voko de read_file, kie necesas
 	# my $text = decode('utf8', join('',<$FILE>));
 	open my $FILE, "<", $file or do {
-		$log->warn("Ne povis malfermi '$file': $!\n"); return;
+		$log->warn("read_file: Ne povis malfermi '$file': $!\n"); return;
 	};
 	my $text = do { local $/ = undef, <$FILE>};
 	close $FILE;
@@ -119,7 +119,7 @@ sub write_file {
 
     $log->debug("Skribas ".length($text)." bitokojn al: ".$file."\n");
 	open my $FILE, $mode, $file or do {
-		$log->warn("Ne povis malfermi '$file': $!\n"); return;
+		$log->warn("write_file: Ne povis malfermi '$file': $!\n"); return;
 	};
 	print $FILE $text;
 	close $FILE;
@@ -162,7 +162,7 @@ sub write_json_file {
     my $json = $json_parser->encode($content);
 
     open my $JSN, $mode, $file or do {
-		$log->warn("Ne povis malfermi $file: $!\n"); return;
+		$log->warn("write_json_file: Ne povis malfermi $file: $!\n"); return;
     };
 	print $JSN $sep if ($sep);
 	print $JSN $json;
@@ -409,7 +409,7 @@ sub xml_context {
 		$char = $2;
 
 		open my $XML, "<", $file or do {
-			$log->warn("Ne povis malfermi $file:$!\n");
+			$log->warn("xml_context: Ne povis malfermi $file:$!\n");
 			return '';
 		};
 
