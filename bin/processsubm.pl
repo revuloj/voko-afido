@@ -778,7 +778,7 @@ sub submeto_rezulto {
 		[
 			id => $subm_id, 
 			state => $state,
-			result => $detaloj->{mesagho} # encode('utf-8',$detaloj->{mesagho})
+			result => encode('utf-8',$detaloj->{mesagho}) #$detaloj->{mesagho} # 
 		],
 		Content_Type => 'form-data'
 	);
