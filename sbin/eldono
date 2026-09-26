@@ -33,7 +33,7 @@ etikedo)
     ;;   
 shlosiloj)
     echo "Elŝutante la ŝlosilojn de github.com"
-    ssh-keyscan -t ed25519,rsa github.com >> ~/.ssh/known_hosts > etc/known_hosts
+    ssh-keyscan -t ed25519,rsa github.com >> ~/.ssh/known_hosts > ssh/known_hosts
     ;;
 helpo | *)
     echo "---------------------------------------------------------------------------"

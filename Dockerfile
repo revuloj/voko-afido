@@ -42,9 +42,8 @@ RUN useradd -ms /bin/bash -u 1074 -G mail afido && mkdir -p /home/afido/.ssh \
   && cd /usr/local && prove -v tst/00*.t
   
 WORKDIR /home/afido
-#COPY --chown=afido:afido ssh/* .ssh/
-COPY --chown=afido:afido etc/git_repos.json etc/
-COPY etc/known_hosts .ssh/
+COPY --chown=afido:afido ssh/* .ssh/
+COPY --chown=afido:afido etc/* etc/
 
 ## RUN curl -k -LO https://github.com/revuloj/voko-grundo/archive/master.zip \
 ##   && unzip master.zip voko-grundo-master/dtd/* && rm master.zip && mkdir dict \

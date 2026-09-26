@@ -3,6 +3,8 @@
 basedir=/home/afido
 
 # aldonu servilo-ŝlosilon por github.com
+# ni faras tion nun jam ĉe kreo per 
+#   sbin/eldono shlosiloj
 
 # se unua klonado ankoraŭ kaŭzas problemojn pri la servilo-ŝlosilo, jen du priaj diskutoj:
 # https://stackoverflow.com/questions/13363553/git-error-host-key-verification-failed-when-connecting-to-remote-repository
@@ -25,6 +27,8 @@ basedir=/home/afido
 ## 
 ## fi
 
+# ĉu ni bezonas tion ankoraŭ? ni vokas nun "afido" per bash kaj finas
+# tuj post plenumo
 if [ -f "/run/secrets/voko-afido.ssh_key.pub" ]; then
     cat /run/secrets/voko-afido.ssh_key.pub > ${basedir}/.ssh/authorized_keys
 fi
