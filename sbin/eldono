@@ -30,7 +30,11 @@ etikedo)
     echo "Provizante la aktualan staton per etikedo (git tag) v${eldono}"
     echo "kaj puŝante tiun staton al la centra deponejo"
     git tag -f v${eldono} && git push && git push origin v${eldono} -f
-    ;;    
+    ;;   
+shlosiloj)
+    echo "Elŝutante la ŝlosilojn de github.com"
+    ssh-keyscan -t ed25519,rsa github.com >> ~/.ssh/known_hosts > etc/known_hosts
+    ;;
 helpo | *)
     echo "---------------------------------------------------------------------------"
     echo "Per la celo 'kreo' oni povas krei docker-procezujon de voko-afido. "
