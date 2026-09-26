@@ -37,7 +37,9 @@ subm|*)
 git)
   git_cmd="${2:-status}"
   cd dict/revo-fonto
-  git $git_cmd
+  pwd
+  echo "git ${git_cmd}"
+  git ${git_cmd}
   ;;  
 esac
   
