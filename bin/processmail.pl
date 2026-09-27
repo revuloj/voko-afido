@@ -16,6 +16,7 @@ use process qw(sys_run my_name timestamp trim);
 use mailsender;
 
 use utf8; use open ':std', ':encoding(UTF-8)';
+use Encode qw(encode);
 
 use MIME::Parser;
 use MIME::Entity;
