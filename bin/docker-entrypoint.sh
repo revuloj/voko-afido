@@ -2,6 +2,9 @@
 #set -e
 # set -x
 
+export CGI_USER
+export CGI_PASSWORD
+
 # laŭbezone kreu agordon por fetchmail kaj ssmtp - tio okazos nur se la dosieroj
 # ankoraŭ mankas. Por ŝanĝi ilin necesas rekrei la procesumon voko-afido kun ŝanĝitaj sekretoj
 # aŭ forigi fetchmailrc kaj ssmtp.conf
