@@ -34,6 +34,12 @@ subm|*)
   # por uzo en Github-ago, ni prenas redaktojn de reta-vortaro.de/cgi-bin/admin/submetoj.pl (t.e. el tiea mysql-datumbazo)
   source setup_env.sh && prenu_redaktantojn.sh && git-clone-repo.sh && processsubm.pl 
   ;;
+env)
+  echo "REVO_HOST: ${REVO_HOST}"
+  echo "ADM_URL: ${ADM_URL}"  
+  echo "ADM_USER: ${ADM_USER}"  
+  echo "CGI_USER: ${ADM_USER}"  
+  ;;
 git)
   git_cmd="${2:-status}"
   cd dict/revo-fonto
