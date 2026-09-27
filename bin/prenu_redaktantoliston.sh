@@ -14,3 +14,5 @@ url=https://${REVO_HOST}${ADM_URL}/redaktantoj.pl
 # legu aktualan liston de redaktantoj
 echo "${redj} <- ${url}" 
 curl -o ${redj} --fail --user ${ADM_USER}:${ADM_PASSWORD} --max-time ${timeout} --retry ${retry} ${url}
+
+echo"${redj} $(wc ${redj})"

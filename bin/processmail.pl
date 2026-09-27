@@ -39,6 +39,8 @@ our $CFG = {
 	revoservo      => '[Revo-Servo]',
 	revo_mailaddr  => 'revo@reta-vortaro.de',
 	redaktilo_from => 'redaktilo@reta-vortaro.de',
+	redaktilo_from2 => 'noreply@retavortaro.de',
+
 	##$revolist    => 'wolfram',
 
 
@@ -474,7 +476,7 @@ sub is_editor {
     chomp $reply_addr;
 
     my $pos1 = index($from_addr,$CFG->{redaktilo_from});
-    #my $pos2 = index($from_addr,$CFG->{redaktilo_from2});
+    my $pos2 = index($from_addr,$CFG->{redaktilo_from2});
 
 	my $email_addr;
 
@@ -483,7 +485,7 @@ sub is_editor {
 	# (ĉar intertempe la redaktilo submetas al
 	# la datumbazo kaj ne plu sendas redaktojn
 	# retpoŝte, tio ne devus okazi plu!
-    if ($pos1 == 0 || $pos1 == 1) {
+    if ($pos1 == 0 || $pos1 == 1 || $pos2 >= 0) {
 		$email_addr = $reply_addr;
     } else {
 		$email_addr = $from_addr;
