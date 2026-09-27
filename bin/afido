@@ -3,6 +3,8 @@
 # haltigu la skripton ĉe eraro, ĉu tio ankaŭ redonas status=1?
 set -e
 
+echo "afido $1..."
+
 case $1 in
 repo)
   # se ni kontinue uzas Afidon kun retpoŝta preno ni devas unuafoje
