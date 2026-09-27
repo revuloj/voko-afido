@@ -17,4 +17,6 @@ setup_dict.sh
 # anstataŭigu medivariablojn en $@
 # eval "set -- $@"
 echo "lanĉo: $@"
-exec su afido -c "$@"
+# tio ne ĝuste transdonas la argumentojn
+# exec su afido -c "$@"
+exec gosu afido "$@"

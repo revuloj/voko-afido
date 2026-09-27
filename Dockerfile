@@ -10,7 +10,7 @@ FROM ubuntu:24.04
 LABEL Maintainer="<diestel@steloj.de>"
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    openssh-server ca-certificates openssl rsync rxp git curl unzip patch jq \
+    openssh-server ca-certificates openssl rsync rxp git curl unzip patch gosu jq \
     libipc-run-perl libjson-perl libtext-csv-perl libmime-tools-perl liblog-dispatch-perl \
     libnet-ssleay-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libauthen-sasl-perl \
     libauthen-sasl-saslprep-perl libnet-smtp-tls-perl \
