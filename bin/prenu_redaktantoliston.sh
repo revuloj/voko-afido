@@ -15,4 +15,4 @@ url=https://${REVO_HOST}${ADM_URL}/redaktantoj.pl
 echo "${redj} <- ${url}" 
 curl -o ${redj} --fail --user ${ADM_USER}:${ADM_PASSWORD} --max-time ${timeout} --retry ${retry} ${url}
 
-echo"${redj} $(wc ${redj})"
+wc "${redj}"
