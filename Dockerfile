@@ -19,8 +19,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 	&& mkdir -p /var/run/sshd
 
 # se ni bezonus eo.UTF-8, vd. klarigoj ĉe https://hub.docker.com/_/ubuntu
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 #  && cpanm install MIME::Entity Authen::SASL::Perl \
 
