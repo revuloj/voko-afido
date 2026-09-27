@@ -13,6 +13,11 @@ setup_smtp.sh
 setup_var.sh
 setup_dict.sh
 
+echo "entry-point var:"
+echo "ADM_URL: ${ADM_URL}"  
+echo "ADM_USER: ${ADM_USER}"  
+echo "(CGI_USER: ${ADM_USER})"  
+
 # echo "AFIDO_PORT=${AFIDO_PORT}"
 # anstataŭigu medivariablojn en $@
 # eval "set -- $@"

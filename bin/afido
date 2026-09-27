@@ -21,7 +21,7 @@ env)
   echo "REVO_HOST: ${REVO_HOST}"
   echo "ADM_URL: ${ADM_URL}"  
   echo "ADM_USER: ${ADM_USER}"  
-  echo "CGI_USER: ${ADM_USER}"  
+  echo "(CGI_USER: ${ADM_USER})"  
   ;;
 git)
   git_cmd="${2:-status}"
