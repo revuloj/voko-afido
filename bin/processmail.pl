@@ -368,6 +368,8 @@ sub process_ent {
 		}
 
 	# TTT-formularo?
+	# KOREKTU: aperas eraro kiam uzi tradukilon de Vivo / malnovan redaktoformularon:
+	# "Use of uninitialized value in pattern match (m//)" - ĉu mankas ->head aŭ certa tie?
         if ((($entity->head->get('subject')
                  =~ /Microsoft.*Internet.*lorer/sx) 
 
